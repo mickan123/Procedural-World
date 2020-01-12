@@ -73,7 +73,6 @@ public class TerrainGenerator : MonoBehaviour {
 					} else {
 						TerrainChunk newChunk = new TerrainChunk (viewedChunkCoord, 
 																  biomeSettings,
-																  heightMapSettings, 
 																  meshSettings, 
 																  detailLevels, 
 																  colliderLODIndex, 

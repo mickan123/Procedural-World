@@ -21,20 +21,19 @@ public class TerrainChunk {
 	LODMesh[] lodMeshes;
 	int colliderLODIndex;
 
+	BiomeNoiseMaps biomeNoiseMaps;
 	NoiseMap heightMap;
 	bool heightMapReceived;
 	int previousLODIndex = -1;
 	bool hasSetCollider;
 	float maxViewDst;
 
-	NoiseMapSettings heightMapSettings;
 	MeshSettings meshSettings;
 	BiomeSettings biomeSettings;
 	Transform viewer;
 
 	public TerrainChunk(Vector2 coord, 
 						BiomeSettings biomeSettings,
-						NoiseMapSettings heightMapSettings, 
 						MeshSettings meshSettings, 
 						LODInfo[] detailLevels, 
 						int colliderLODIndex, 
@@ -45,7 +44,6 @@ public class TerrainChunk {
 		this.detailLevels = detailLevels;
 		this.colliderLODIndex = colliderLODIndex;
 		this.biomeSettings = biomeSettings;
-		this.heightMapSettings = heightMapSettings;
 		this.meshSettings = meshSettings;
 		this.viewer = viewer;
 
@@ -80,16 +78,17 @@ public class TerrainChunk {
 	public void Load() {
 		ThreadedDataRequester.RequestData(() => BiomeNoiseMapGenerator.GenerateBiomeNoiseMaps(meshSettings.numVerticesPerLine, 
 																							  meshSettings.numVerticesPerLine, 
-																							  heightMapSettings, 
+																							  biomeSettings,
 																							  sampleCentre), 
-											OnHeightMapReceived);
+											OnBiomeMapReceived);
 
 	}
 
-	void OnHeightMapReceived(object heightMapObject) {
-		this.heightMap = (NoiseMap)heightMapObject;
+	void OnBiomeMapReceived(object biomeNoiseMapObject) {
+		this.biomeNoiseMaps = (BiomeNoiseMaps)biomeNoiseMapObject;
+		this.heightMap = this.biomeNoiseMaps.heightNoiseMap;
 		heightMapReceived = true;
-
+		
 		UpdateTerrainChunk ();
 	}
 

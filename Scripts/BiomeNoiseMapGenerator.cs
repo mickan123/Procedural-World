@@ -6,28 +6,26 @@ public static class BiomeNoiseMapGenerator {
 
 	public static BiomeNoiseMaps GenerateBiomeNoiseMaps(int width, 
 														int height, 
-														NoiseMapSettings heightSettings, 
-														NoiseMapSettings temperatureSettings, 
-														NoiseMapSettings humiditySettings, 
+														BiomeSettings biomeSettings, 
 														Vector2 sampleCentre) {
-															
-		NoiseMap heightNoiseMap = NoiseMapGenerator.GenerateNoiseMap(width, height, heightSettings, sampleCentre);
-		NoiseMap temperatureNoiseMap = NoiseMapGenerator.GenerateNoiseMap(width, height, temperatureSettings, sampleCentre);
-		NoiseMap humidityNoiseMap = NoiseMapGenerator.GenerateNoiseMap(width, height, heightSettings, sampleCentre);
 
+		NoiseMap humidityNoiseMap = NoiseMapGenerator.GenerateNoiseMap(width, height, biomeSettings.humidityMapSettings, sampleCentre, biomeSettings.seed);
+		NoiseMap temperatureNoiseMap = NoiseMapGenerator.GenerateNoiseMap(width, height, biomeSettings.temperatureMapSettings, sampleCentre, biomeSettings.seed);
+		NoiseMap heightNoiseMap = NoiseMapGenerator.GenerateBiomeNoiseMap(width, height, biomeSettings, humidityNoiseMap, temperatureNoiseMap, sampleCentre, biomeSettings.seed);
+		
 		return new BiomeNoiseMaps(heightNoiseMap, temperatureNoiseMap, humidityNoiseMap);
 	}
 }
 
-
 public struct BiomeNoiseMaps {
 	public readonly NoiseMap heightNoiseMap;
-	public readonly NoiseMap temperatureNoiseMap;
 	public readonly NoiseMap humidityNoiseMap;
+	public readonly NoiseMap temperatureNoiseMap;
 
-	public BiomeNoiseMaps(NoiseMap heightNoiseMap, NoiseMap temperatureNoiseMap, NoiseMap humidityNoiseMap) {
+
+	public BiomeNoiseMaps(NoiseMap heightNoiseMap, NoiseMap humidityNoiseMap, NoiseMap temperatureNoiseMap) {
 		this.heightNoiseMap = heightNoiseMap;
-		this.temperatureNoiseMap = temperatureNoiseMap;
 		this.humidityNoiseMap = humidityNoiseMap;
+		this.temperatureNoiseMap = temperatureNoiseMap;
 	}
 }

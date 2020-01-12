@@ -5,26 +5,12 @@ using UnityEngine;
 [CreateAssetMenu()]
 public class BiomeSettings : UpdatableData {
 
-	public NoiseSettings humidityMapSettings;
-	public NoiseSettings temperatureMapSettings;
+	public NoiseMapSettings humidityMapSettings;
+	public NoiseMapSettings temperatureMapSettings;
 
 	public Biome[] biomes;
 
-	[System.Serializable]
-	public class Biome {
-		public TextureData textureData;
-		public NoiseMapSettings heightMapSettings;
-
-		[Range(0,1)]
-		public float startHumidity;
-		[Range(0,1)]
-		public float startTemperature;
-		[Range(0,1)]
-		public float endHumidity;
-		[Range(0,1)]
-		public float endTemperature;
-
-	}
+	public int seed;
 
 	#if UNITY_EDITOR
 
@@ -34,5 +20,28 @@ public class BiomeSettings : UpdatableData {
 	}
 
 	#endif
+
+}
+
+[System.Serializable]
+public class Biome {
+	public TextureData textureData;
+	public NoiseMapSettings heightMapSettings;
+	public int transitionDistance;
+
+	public float sqrTransitionDistance {
+		get {
+			return (float)transitionDistance * (float)transitionDistance;
+		}
+	}
+
+	[Range(0,1)]
+	public float startHumidity;
+	[Range(0,1)]
+	public float endHumidity;
+	[Range(0,1)]
+	public float startTemperature;
+	[Range(0,1)]
+	public float endTemperature;
 
 }
