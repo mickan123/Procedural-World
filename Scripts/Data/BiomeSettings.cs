@@ -27,7 +27,8 @@ public class BiomeSettings : UpdatableData {
 public class Biome {
 	public TextureData textureData;
 	public NoiseMapSettings heightMapSettings;
-	public int transitionDistance;
+	[Range(0,1)]
+	public float transitionDistance;
 
 	public float sqrTransitionDistance {
 		get {

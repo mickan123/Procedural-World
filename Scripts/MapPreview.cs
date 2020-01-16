@@ -12,8 +12,6 @@ public class MapPreview : MonoBehaviour {
 	public enum DrawMode { NoiseMap, MeshNoBiome, MeshBiome, FalloffMap, Biomes, HumidityMap, TemperatureMap, NearestBiome };
 	public DrawMode drawMode;
 
-	public int seed;
-
 	public MeshSettings meshSettings;
 	public BiomeSettings biomeSettings;
 	public NoiseMapSettings heightMapSettings;
@@ -30,16 +28,10 @@ public class MapPreview : MonoBehaviour {
 	public void DrawTexture(Texture2D texture) {
 		textureRender.sharedMaterial.mainTexture = texture;
 		textureRender.transform.localScale = new Vector3(-96, 1, 96);
-		
-		//renderer.gameObject.SetActive(true);
-		//meshFilter.gameObject.SetActive(false);
 	}
 
 	public void DrawMesh(MeshData meshData) {
 		meshFilter.sharedMesh = meshData.CreateMesh();
-
-		//textureRender.gameObject.SetActive(false);
-		//meshFilter.gameObject.SetActive(true);
 	}
 
 	public void DrawMapInEditor() {
@@ -49,15 +41,15 @@ public class MapPreview : MonoBehaviour {
 		int width = meshSettings.numVerticesPerLine;
 		int height = meshSettings.numVerticesPerLine;
 
-		NoiseMap humidityMap = NoiseMapGenerator.GenerateNoiseMap(width, height, biomeSettings.humidityMapSettings, Vector2.zero, seed);
-		NoiseMap temperatureMap = NoiseMapGenerator.GenerateNoiseMap(width, height, biomeSettings.temperatureMapSettings, Vector2.zero, seed);
+		NoiseMap humidityMap = NoiseMapGenerator.GenerateNoiseMap(width, height, biomeSettings.humidityMapSettings, biomeSettings, Vector2.zero, biomeSettings.seed);
+		NoiseMap temperatureMap = NoiseMapGenerator.GenerateNoiseMap(width, height, biomeSettings.temperatureMapSettings, biomeSettings, Vector2.zero, biomeSettings.seed);
 		
 		if (drawMode == DrawMode.NoiseMap) {
-			NoiseMap heightMap = NoiseMapGenerator.GenerateNoiseMap(width, height, heightMapSettings, Vector2.zero, seed);
+			NoiseMap heightMap = NoiseMapGenerator.GenerateNoiseMap(width, height, heightMapSettings, biomeSettings, Vector2.zero, biomeSettings.seed);
 			DrawTexture(TextureGenerator.TextureFromHeightMap(heightMap));
 		} 
 		else if (drawMode == DrawMode.MeshNoBiome) {
-			NoiseMap heightMap = NoiseMapGenerator.GenerateNoiseMap(width, height, heightMapSettings, Vector2.zero, seed);
+			NoiseMap heightMap = NoiseMapGenerator.GenerateNoiseMap(width, height, heightMapSettings, biomeSettings, Vector2.zero, biomeSettings.seed);
 			DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, EditorPreviewLOD));
 		}
 		else if (drawMode == DrawMode.FalloffMap) {
@@ -71,20 +63,19 @@ public class MapPreview : MonoBehaviour {
 																		 humidityMap, 
 																		 temperatureMap,
 																		 Vector2.zero,
-																		 seed);
+																		 biomeSettings.seed);
 			DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, EditorPreviewLOD));
 		}
 		else if (drawMode == DrawMode.Biomes) {
-			int[,] biomeMap = NoiseMapGenerator.GenerateBiomeMap(width, height, humidityMap, temperatureMap, biomeSettings);
-			NearestBiomeInfo nearestBiomeInfo = NoiseMapGenerator.GenerateNearestBiomeInfo(width, height, biomeMap, biomeSettings);
+			BiomeInfo biomeInfo = NoiseMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, biomeSettings);
 
 			int numBiomes = biomeSettings.biomes.Length;
 			float[,] biomeTextureMap = new float[width, height];
 			float[,] nearestBiomeTextureMap = new float[width, height];
 			for (int i = 0 ; i < width; i++) {
 				for (int j = 0; j < height; j++) {
-					biomeTextureMap[i, j] = (float)biomeMap[i, j] / (float)(numBiomes - 1);
-					nearestBiomeTextureMap[i, j] = (float)nearestBiomeInfo.nearestBiomeMap[i, j] / (float)(numBiomes - 1);
+					biomeTextureMap[i, j] = (float)biomeInfo.biomeMap[i, j] / (float)(numBiomes - 1);
+					nearestBiomeTextureMap[i, j] = (float)biomeInfo.nearestBiomeMap[i, j] / (float)(numBiomes - 1);
 				}
 			}
 
@@ -98,14 +89,13 @@ public class MapPreview : MonoBehaviour {
 		}
 
 		else if (drawMode == DrawMode.NearestBiome) {
-			int[,] biomeMap = NoiseMapGenerator.GenerateBiomeMap(width, height, humidityMap, temperatureMap, biomeSettings);
-			NearestBiomeInfo nearestBiomeInfo = NoiseMapGenerator.GenerateNearestBiomeInfo(width, height, biomeMap, biomeSettings);
+			BiomeInfo biomeInfo = NoiseMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, biomeSettings);
 
 			int numBiomes = biomeSettings.biomes.Length;
 			float[,] nearestBiomeTextureMap = new float[width, height];
 			for (int i = 0 ; i < width; i++) {
 				for (int j = 0; j < height; j++) {
-					nearestBiomeTextureMap[i, j] = (float)nearestBiomeInfo.nearestBiomeMap[i, j] / (float)(numBiomes - 1);
+					nearestBiomeTextureMap[i, j] = (float)biomeInfo.nearestBiomeMap[i, j] / (float)(numBiomes - 1);
 				}
 			}
 
@@ -135,6 +125,10 @@ public class MapPreview : MonoBehaviour {
 		if (textureData != null) {
 			textureData.OnValuesUpdated -= OnTextureValuesUpdated;
 			textureData.OnValuesUpdated += OnTextureValuesUpdated;
+		}
+		if (biomeSettings != null) {
+			biomeSettings.OnValuesUpdated -= OnValuesUpdated;
+			biomeSettings.OnValuesUpdated += OnValuesUpdated;
 		}
 	}
 }
