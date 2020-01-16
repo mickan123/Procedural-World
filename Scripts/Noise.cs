@@ -16,7 +16,6 @@ public static class Noise {
 
 		float[,] noiseMap = new float[mapWidth, mapHeight];
 		System.Random prng = new System.Random(seed);
-		Debug.Log(seed);
 
 		int maxNumOctaves = 1;
 		float maxPersistance = 0;
