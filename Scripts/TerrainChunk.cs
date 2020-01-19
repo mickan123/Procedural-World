@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -21,7 +22,7 @@ public class TerrainChunk {
 	LODMesh[] lodMeshes;
 	int colliderLODIndex;
 
-	BiomeNoiseMaps biomeNoiseMaps;
+	BiomeData biomeNoiseMaps;
 	NoiseMap heightMap;
 	bool heightMapReceived;
 	int previousLODIndex = -1;
@@ -38,8 +39,7 @@ public class TerrainChunk {
 						LODInfo[] detailLevels, 
 						int colliderLODIndex, 
 						Transform parent, 
-						Transform viewer,
-						Material material) {
+						Transform viewer) {
 		this.coord = coord;
 		this.detailLevels = detailLevels;
 		this.colliderLODIndex = colliderLODIndex;
@@ -55,7 +55,7 @@ public class TerrainChunk {
 		meshRenderer = meshObject.AddComponent<MeshRenderer>();
 		meshFilter = meshObject.AddComponent<MeshFilter>();
 		meshCollider = meshObject.AddComponent<MeshCollider>();
-		meshRenderer.material = material;
+		meshRenderer.material = new Material(Shader.Find("Terrain"));
 
 		meshObject.transform.position = new Vector3(position.x, 0, position.y);
 		meshObject.transform.parent = parent;
@@ -85,14 +85,20 @@ public class TerrainChunk {
 	}
 
 	void OnBiomeMapReceived(object biomeNoiseMapObject) {
-		this.biomeNoiseMaps = (BiomeNoiseMaps)biomeNoiseMapObject;
+		this.biomeNoiseMaps = (BiomeData)biomeNoiseMapObject;
 		this.heightMap = this.biomeNoiseMaps.heightNoiseMap;
 		heightMapReceived = true;
 		
-		UpdateTerrainChunk ();
+		UpdateMaterial();
+		UpdateTerrainChunk();
 	}
 
-	Vector2 viewerPosition {
+    void UpdateMaterial()
+    {
+		throw new NotImplementedException();
+    }
+
+    Vector2 viewerPosition {
 		get {
 			return new Vector2(viewer.position.x, viewer.position.z);
 		}
@@ -177,10 +183,10 @@ class LODMesh {
 	}
 
 	void OnMeshDataReceived(object meshDataObject) {
-		mesh = ((MeshData)meshDataObject).CreateMesh ();
+		mesh = ((MeshData)meshDataObject).CreateMesh();
 		hasMesh = true;
 
-		updateCallback ();
+		updateCallback();
 	}
 
 	public void RequestMesh(NoiseMap heightMap, MeshSettings meshSettings) {

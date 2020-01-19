@@ -18,14 +18,18 @@ public class NoiseMapSettings : UpdatableData {
 
 	public float maxHeight {
 		get {
-			return heightMultiplier* heightCurve.Evaluate(1);
+			return heightMultiplier * heightCurve.Evaluate(1);
 		}
 	}
 
 	#if UNITY_EDITOR
 
-	protected override void OnValidate() {
+	public void ValidateValues() {
 		noiseSettings.ValidateValues();
+	}
+
+	protected override void OnValidate() {
+		ValidateValues();
 		base.OnValidate();
 	}
 

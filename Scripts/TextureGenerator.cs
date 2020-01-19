@@ -20,7 +20,9 @@ public static class TextureGenerator {
 		Color[] colourMap = new Color[width * height];
 		for (int y = 0; y < height; y++) {
 			for (int x = 0; x < width; x++) {
-				colourMap[y * width + x] = Color.Lerp(Color.black, Color.white, Mathf.InverseLerp(heightMap.minValue, heightMap.maxValue, heightMap.values[x, y]));
+				colourMap[y * width + x] = Color.Lerp(Color.black, 
+													  Color.white, 
+													  Mathf.InverseLerp(heightMap.minValue, heightMap.maxValue, heightMap.values[x, y]));
 			}
 		}
 

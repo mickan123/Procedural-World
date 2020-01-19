@@ -17,9 +17,35 @@ public class BiomeSettings : UpdatableData {
 	protected override void OnValidate() {
 		// TODO ensure no overlapping biome values
 		base.OnValidate();
+		humidityMapSettings.ValidateValues();
+		temperatureMapSettings.ValidateValues();
 	}
 
 	#endif
+
+	public float minHeight {
+		get {
+			float minHeight = float.MaxValue;
+			for (int i = 0; i< biomes.Length; i++) {
+				if (biomes[i].heightMapSettings.minHeight < minHeight) {
+					minHeight = biomes[i].heightMapSettings.minHeight;
+				}
+			}
+			return minHeight;
+		}
+	}
+
+	public float maxHeight {
+		get {
+			float maxHeight = float.MinValue;
+			for (int i = 0; i< biomes.Length; i++) {
+				if (biomes[i].heightMapSettings.maxHeight > maxHeight) {
+					maxHeight = biomes[i].heightMapSettings.maxHeight;
+				}
+			}
+			return maxHeight;
+		}
+	}
 
 }
 

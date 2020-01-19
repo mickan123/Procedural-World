@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System;
 
 public static class Noise {
 
@@ -28,14 +29,17 @@ public static class Noise {
 				maxPersistance = noiseSettingArray[i].persistance;
 			}
 		}
+		maxNumOctaves = Math.Max(maxNumOctaves, noiseSettings.octaves);
+		maxPersistance = Mathf.Max(maxPersistance, noiseSettings.persistance);
 
 		// Calculate octave offsets for max num of octaves and calculate max possible height at same time
 		Vector2[] octaveOffsets = new Vector2[maxNumOctaves];
 		float maxPossibleHeight = 0;
 		float amplitude = 1;
 		float frequency = 1;
-		for (int i = 0; i < noiseSettings.octaves; i++) {
+		for (int i = 0; i < maxNumOctaves; i++) {
 			float offsetX = prng.Next(-100000, 100000) + sampleCentre.x;
+			
 			float offsetY = prng.Next(-100000, 100000) - sampleCentre.y;
 			octaveOffsets[i] = new Vector2(offsetX, offsetY);
 			

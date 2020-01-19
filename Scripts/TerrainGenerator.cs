@@ -11,7 +11,6 @@ public class TerrainGenerator : MonoBehaviour {
 	public LODInfo[] detailLevels;
 
 	public MeshSettings meshSettings;
-	public NoiseMapSettings heightMapSettings;
 	public BiomeSettings biomeSettings;
 	public TextureData textureSettings;
 
@@ -28,15 +27,14 @@ public class TerrainGenerator : MonoBehaviour {
 	List<TerrainChunk> visibleTerrainChunks = new List<TerrainChunk>();
 
 	void Start() {
-
 		textureSettings.ApplyToMaterial(mapMaterial);
-		textureSettings.UpdateMeshHeights(mapMaterial, heightMapSettings.minHeight, heightMapSettings.maxHeight);
+		textureSettings.UpdateMeshHeights(mapMaterial, biomeSettings.minHeight, biomeSettings.maxHeight);
 
 		float maxViewDst = detailLevels [detailLevels.Length - 1].visibleDstThreshold;
 		meshWorldSize = meshSettings.meshWorldSize - 1;
 		chunksVisibleInViewDst = Mathf.RoundToInt(maxViewDst / meshWorldSize);
 
-		UpdateVisibleChunks ();
+		UpdateVisibleChunks();
 	}
 
 	void Update() {
@@ -50,7 +48,7 @@ public class TerrainGenerator : MonoBehaviour {
 
 		if ((viewerPositionOld - viewerPosition).sqrMagnitude > sqrViewerMoveThresholdForChunkUpdate) {
 			viewerPositionOld = viewerPosition;
-			UpdateVisibleChunks ();
+			UpdateVisibleChunks();
 		}
 	}
 		
@@ -77,8 +75,7 @@ public class TerrainGenerator : MonoBehaviour {
 																  detailLevels, 
 																  colliderLODIndex, 
 																  transform, 
-																  viewer, 
-																  mapMaterial);
+																  viewer);
 						terrainChunkDictionary.Add (viewedChunkCoord, newChunk);
 						newChunk.onVisibilityChanged += OnTerrainChunkVisibilityChanged;
 						newChunk.Load();

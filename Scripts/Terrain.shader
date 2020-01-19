@@ -1,7 +1,6 @@
 ﻿Shader "Custom/Terrain" {
 	Properties {
-		testTexture("Texture", 2D) = "white"{}
-		testScale("Scale", float) = 1
+
 	}
 	SubShader {
 		Tags { "RenderType"="Opaque" }
@@ -27,9 +26,6 @@
 		float minHeight;
 		float maxHeight;
 
-		sampler2D testTexture;
-		float testScale;
-
 		UNITY_DECLARE_TEX2DARRAY(baseTextures);
 
 		struct Input {
@@ -50,7 +46,7 @@
 		}
 
 		void surf (Input IN, inout SurfaceOutputStandard o) {
-			float heightPercent = inverseLerp(minHeight,maxHeight, IN.worldPos.y);
+			float heightPercent = inverseLerp(minHeight, maxHeight, IN.worldPos.y);
 			float3 blendAxes = abs(IN.worldNormal);
 			blendAxes /= blendAxes.x + blendAxes.y + blendAxes.z;
 
@@ -62,8 +58,6 @@
 
 				o.Albedo = o.Albedo * (1-drawStrength) + (baseColour+textureColour) * drawStrength;
 			}
-
-		
 		}
 
 		ENDCG

@@ -41,52 +41,28 @@ public static class NoiseMapGenerator {
 												 NoiseMap humidityNoiseMap, 
 												 NoiseMap temperatureNoiseMap, 
 												 Vector2 sampleCentre, 
+												 BiomeInfo biomeInfo,
 												 int seed) {
 
-		// Calculate biome at each location of noise map
-		BiomeInfo biomeInfo = GenerateBiomeInfo(width, height, humidityNoiseMap, temperatureNoiseMap, biomeSettings);
 		int[] uniqueBiomes = biomeInfo.biomeMap.Cast<int>().Distinct().ToArray(); // TODO try without this to see perf difference
 
 		// Only 1 biome
 		if (uniqueBiomes.Length == 1) {
-			int biomeIndex = uniqueBiomes[0];
-			NoiseMapSettings settings = biomeSettings.biomes[biomeIndex].heightMapSettings;
+			NoiseMapSettings settings = biomeSettings.biomes[uniqueBiomes[0]].heightMapSettings;
 			return GenerateNoiseMap(width, height, settings, biomeSettings, sampleCentre, seed);
 		}
 
 		// Generate noise maps for all nearby and present biomes
 		int numBiomes = biomeSettings.biomes.Length;
 		NoiseMap[] biomeNoiseMaps = new NoiseMap[numBiomes];
-
-		AnimationCurve[] heightCurves_threadsafe = biomeSettings.biomes.Select(x => new AnimationCurve(x.heightMapSettings.heightCurve.keys)).ToArray();
-
 		for (int i = 0; i < uniqueBiomes.Length; i++) {
 			int biomeIndex = uniqueBiomes[i];
-			float[,] noiseValues = Noise.GenerateNoiseMap(width, 	
-														  height,
-														  biomeSettings.biomes[biomeIndex].heightMapSettings.noiseSettings, 
+			biomeNoiseMaps[biomeIndex] = GenerateNoiseMap(width, 
+														  height, 
+														  biomeSettings.biomes[biomeIndex].heightMapSettings, 
 														  biomeSettings,
 														  sampleCentre, 
 														  seed);
-
-			float biomeMinValue = float.MaxValue;
-			float biomeMaxValue = float.MinValue;
-
-			for (int x = 0; x < width; x++) {
-				for (int y = 0; y < width; y++) {
-					noiseValues[x, y] *= heightCurves_threadsafe[biomeIndex].Evaluate(noiseValues[x, y]) 
-									   * biomeSettings.biomes[biomeIndex].heightMapSettings.heightMultiplier;
-
-					if (noiseValues[x, y] > biomeMaxValue) {
-						biomeMaxValue = noiseValues[x, y];
-					}
-					if (noiseValues[x, y] < biomeMinValue) {
-						biomeMinValue = noiseValues[x, y];
-					}
-				}
-			}
-
-			biomeNoiseMaps[biomeIndex] = new NoiseMap(noiseValues, biomeMinValue, biomeMaxValue);
 		}
 
 		// Calculate final noise map values
@@ -103,24 +79,25 @@ public static class NoiseMapGenerator {
 				if (nearestBiomeIndex != biomeIndex) { // Interpolate between biomes
 					float maxInterpDist = biomeSettings.biomes[biomeIndex].sqrTransitionDistance;
 					float nearestBiomeDist = biomeInfo.sqrDistanceToNearestBiome[x, y];
-					float linearInterpVal = (1f - nearestBiomeDist / maxInterpDist);
+					float linearInterpVal = 1f - (nearestBiomeDist / maxInterpDist);
 					float squareInterpVal = Mathf.Pow(linearInterpVal, 2) / 2f;  // Divide by 2 as at 0 distance we want 50-50 blend
 
 					float curBiomeVal = biomeNoiseMaps[biomeIndex].values[x, y];
 					float nearestBiomeVal = biomeNoiseMaps[nearestBiomeIndex].values[x, y];
 
-					finalNoiseMapValues[x, y] = Mathf.Lerp(curBiomeVal, nearestBiomeVal, squareInterpVal);
-					
-					if (finalNoiseMapValues[x, y] > maxValue) {
-						maxValue = finalNoiseMapValues[x, y];
-					}
-					if (finalNoiseMapValues[x, y] < minValue) {
-						minValue = finalNoiseMapValues[x, y];
-					}
+					float noiseVal = Mathf.Lerp(curBiomeVal, nearestBiomeVal, squareInterpVal);
+
+					finalNoiseMapValues[x, y] = noiseVal;
 				} else {
 					finalNoiseMapValues[x, y] = biomeNoiseMaps[biomeIndex].values[x, y];
 				}
-				
+
+				if (finalNoiseMapValues[x, y] > maxValue) {
+					maxValue = finalNoiseMapValues[x, y];
+				}
+				if (finalNoiseMapValues[x, y] < minValue) {
+					minValue = finalNoiseMapValues[x, y];
+				}
 			}
 		}
 
@@ -135,12 +112,10 @@ public static class NoiseMapGenerator {
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
 
-				float humidity = (humidityNoiseMap.values[i, j] - humidityNoiseMap.minValue) / (humidityNoiseMap.maxValue  - humidityNoiseMap.minValue);
-				float temperature = (temperatureNoiseMap.values[i, j] - temperatureNoiseMap.minValue) / (temperatureNoiseMap.maxValue  - temperatureNoiseMap.minValue);
+				float humidity = humidityNoiseMap.values[i, j];
+				float temperature = temperatureNoiseMap.values[i, j];
 
-				float minDistToClosestBiome = float.MaxValue;
-				int closestBiomeIndex = -1;
-
+				// Get current biome
 				for (int w = 0; w < settings.biomes.Length; w++) {
 					Biome curBiome = settings.biomes[w]; 
 
@@ -148,17 +123,36 @@ public static class NoiseMapGenerator {
 						&& humidity <= curBiome.endHumidity
 						&& temperature >= curBiome.startTemperature 
 						&& temperature <= curBiome.endTemperature) {
-						
+
 						biomeMap[i, j] = w;
 					}
-					else {
+				}
+
+				// Get distance to closest biome
+				float minDistToClosestBiome = float.MaxValue;
+				int closestBiomeIndex = -1;
+
+				for (int w = 0; w < settings.biomes.Length; w++) {
+					if (w != biomeMap[i, j]) {
+						Biome curBiome = settings.biomes[w]; 
 						float humidityDist = Mathf.Min(Mathf.Abs(humidity - curBiome.startHumidity), Mathf.Abs(humidity - curBiome.endHumidity));
 						float tempDist = Mathf.Min(Mathf.Abs(temperature - curBiome.startTemperature), Mathf.Abs(temperature - curBiome.endTemperature));
-						float distToBiome = humidityDist * humidityDist + tempDist * tempDist;
+						
+						if (humidity >= curBiome.startHumidity && humidity <= curBiome.endHumidity) {
+							humidityDist = 0f;
+						}
+						if (temperature >= curBiome.startTemperature && temperature <= curBiome.endTemperature) {
+							tempDist = 0f;
+						}
 
-						if (distToBiome < curBiome.sqrTransitionDistance && distToBiome < minDistToClosestBiome) {
+						float distToBiome = humidityDist + tempDist;
+
+						if (distToBiome < minDistToClosestBiome) {
 							minDistToClosestBiome = distToBiome;
-							closestBiomeIndex = w;
+
+							if (distToBiome < curBiome.sqrTransitionDistance) {
+								closestBiomeIndex = w;
+							}
 						}
 					}
 				}
@@ -166,6 +160,7 @@ public static class NoiseMapGenerator {
 				// If we only have 1 biome we may never set closest biome index and distance so we have to check values
 				sqrDistanceToNearestBiome[i, j] = (closestBiomeIndex != -1) ? minDistToClosestBiome : 0;
 				nearestBiomeMap[i, j] = (closestBiomeIndex != -1) ? closestBiomeIndex : biomeMap[i, j];
+				
 			}
 		}
 
