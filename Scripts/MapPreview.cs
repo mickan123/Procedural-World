@@ -16,7 +16,7 @@ public class MapPreview : MonoBehaviour {
 	public BiomeSettings biomeSettings;
 	public NoiseMapSettings heightMapSettings;
 	
-	public TextureData textureData;
+	public BiomeTextureData textureData;
 
 	public Material terrainMaterial;
 
@@ -35,8 +35,7 @@ public class MapPreview : MonoBehaviour {
 	}
 
 	public void DrawMapInEditor() {
-		textureData.ApplyToMaterial(terrainMaterial);
-		textureData.UpdateMeshHeights(terrainMaterial, heightMapSettings.minHeight, heightMapSettings.maxHeight);
+		biomeSettings.ApplyToMaterial(terrainMaterial);
 
 		int width = meshSettings.numVerticesPerLine;
 		int height = meshSettings.numVerticesPerLine;
@@ -76,7 +75,7 @@ public class MapPreview : MonoBehaviour {
         }
         else if (drawMode == DrawMode.DistanceToNearestBiome) {
 			BiomeInfo biomeInfo = NoiseMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, biomeSettings);
-			DrawTexture(TextureGenerator.TextureFromHeightMap(new NoiseMap(biomeInfo.sqrDistanceToNearestBiome, 0, 1)));
+			DrawTexture(TextureGenerator.TextureFromHeightMap(new NoiseMap(biomeInfo.mainBiomeStrength, 0, 1)));
 		}
 	}
 
@@ -140,7 +139,7 @@ public class MapPreview : MonoBehaviour {
 	}
 
 	void OnTextureValuesUpdated() {
-		textureData.ApplyToMaterial(terrainMaterial);
+		biomeSettings.ApplyToMaterial(terrainMaterial);
 	}
 
 	void OnValidate() {

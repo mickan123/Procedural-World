@@ -17,12 +17,13 @@ public class TerrainChunk {
 	MeshRenderer meshRenderer;
 	MeshFilter meshFilter;
 	MeshCollider meshCollider;
+	MaterialPropertyBlock matBlock;
 
 	LODInfo[] detailLevels;
 	LODMesh[] lodMeshes;
 	int colliderLODIndex;
 
-	BiomeData biomeNoiseMaps;
+	BiomeData biomeData;
 	NoiseMap heightMap;
 	bool heightMapReceived;
 	int previousLODIndex = -1;
@@ -39,6 +40,7 @@ public class TerrainChunk {
 						LODInfo[] detailLevels, 
 						int colliderLODIndex, 
 						Transform parent, 
+						Material material,
 						Transform viewer) {
 		this.coord = coord;
 		this.detailLevels = detailLevels;
@@ -55,7 +57,8 @@ public class TerrainChunk {
 		meshRenderer = meshObject.AddComponent<MeshRenderer>();
 		meshFilter = meshObject.AddComponent<MeshFilter>();
 		meshCollider = meshObject.AddComponent<MeshCollider>();
-		meshRenderer.material = new Material(Shader.Find("Terrain"));
+		meshRenderer.material = material;
+		matBlock = new MaterialPropertyBlock();
 
 		meshObject.transform.position = new Vector3(position.x, 0, position.y);
 		meshObject.transform.parent = parent;
@@ -81,12 +84,23 @@ public class TerrainChunk {
 																							  biomeSettings,
 																							  sampleCentre), 
 											OnBiomeMapReceived);
-
 	}
 
-	void OnBiomeMapReceived(object biomeNoiseMapObject) {
-		this.biomeNoiseMaps = (BiomeData)biomeNoiseMapObject;
-		this.heightMap = this.biomeNoiseMaps.heightNoiseMap;
+	void OnBiomeMapReceived(object biomeDataObject) {
+		this.biomeData = (BiomeData)biomeDataObject;
+
+		int width = this.biomeData.biomeInfo.biomeMap.GetLength(0);
+		for (int x = 0; x < width; x ++) {
+			for (int y = 0; y < width; y ++) {				 
+				this.biomeData.biomeInfo.mainBiomeStrength[x, y] = (float)this.biomeData.biomeInfo.biomeMap[x, y]*100f;
+				this.biomeData.temperatureNoiseMap.values[x, y] *= 500f;
+				this.biomeData.humidityNoiseMap.values[x, y] *= 500f;
+			}
+		}
+		this.heightMap = new NoiseMap(this.biomeData.biomeInfo.mainBiomeStrength, 0f, 1f);
+
+		this.heightMap = this.biomeData.heightNoiseMap;
+		this.heightMap = this.biomeData.temperatureNoiseMap;
 		heightMapReceived = true;
 		
 		UpdateMaterial();
@@ -94,8 +108,29 @@ public class TerrainChunk {
 	}
 
     void UpdateMaterial()
-    {
-		throw new NotImplementedException();
+    {	
+		BiomeInfo info = this.biomeData.biomeInfo;		
+		int width = info.biomeMap.GetLength(0);
+
+		float numBiomes = this.biomeSettings.biomes.Length;
+		Texture2D biomeMapTex = new Texture2D(width, width, TextureFormat.RGB24, false, false);
+		for (int x = 0; x < width; x ++) {
+			for (int y = 0; y < width; y ++) {				 
+				float biome = (float)info.biomeMap[x, y];
+				float nearestBiome = (float)info.nearestBiomeMap[x, y];
+				float mainBiomeStrength = (float)info.mainBiomeStrength[x, y];
+				biomeMapTex.SetPixel(x, y, new Color(biome, nearestBiome, mainBiomeStrength, 0f));
+			}
+		}
+		biomeMapTex.Apply();
+
+		byte[] _bytes = biomeMapTex.EncodeToPNG();
+        System.IO.File.WriteAllBytes("./test.png", _bytes);
+
+		Vector2 position = coord * meshSettings.meshWorldSize; 
+		matBlock.SetVector("centre", new Vector4(position.x, 0, position.y, 0));
+		matBlock.SetTexture("biomeMapTex", biomeMapTex);
+		meshRenderer.SetPropertyBlock(matBlock);
     }
 
     Vector2 viewerPosition {
