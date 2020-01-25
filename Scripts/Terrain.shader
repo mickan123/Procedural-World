@@ -87,7 +87,7 @@
 			return albedo;
 		}
 
-		void surf (Input IN, inout SurfaceOutputStandard o) {
+		void surf(Input IN, inout SurfaceOutputStandard o) {
 			
 			float3 blendAxes = abs(IN.worldNormal);
 			blendAxes /= (blendAxes.x + blendAxes.y + blendAxes.z);
@@ -102,8 +102,6 @@
 			float3 nearestBiomeTex = getBiomeTexture(nearestBiome, o.Albedo, IN.worldPos, blendAxes);
 			
 			o.Albedo = mainBiomeStrength * mainBiomeTex + (1 - mainBiomeStrength) * nearestBiomeTex;
-
-			o.Albedo = float3(nearestBiome, 0, 0);
 		}
 
 		ENDCG

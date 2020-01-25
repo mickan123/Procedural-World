@@ -89,18 +89,19 @@ public class TerrainChunk {
 	void OnBiomeMapReceived(object biomeDataObject) {
 		this.biomeData = (BiomeData)biomeDataObject;
 
-		int width = this.biomeData.biomeInfo.biomeMap.GetLength(0);
-		for (int x = 0; x < width; x ++) {
-			for (int y = 0; y < width; y ++) {				 
-				this.biomeData.biomeInfo.mainBiomeStrength[x, y] = (float)this.biomeData.biomeInfo.biomeMap[x, y]*100f;
-				this.biomeData.temperatureNoiseMap.values[x, y] *= 500f;
-				this.biomeData.humidityNoiseMap.values[x, y] *= 500f;
-			}
-		}
-		this.heightMap = new NoiseMap(this.biomeData.biomeInfo.mainBiomeStrength, 0f, 1f);
+		// int width = this.biomeData.biomeInfo.biomeMap.GetLength(0);
+		// for (int x = 0; x < width; x ++) {
+		// 	for (int y = 0; y < width; y ++) {				 
+		// 		this.biomeData.biomeInfo.mainBiomeStrength[x, y] = (float)this.biomeData.biomeInfo.nearestBiomeMap[x, y]*100f;
+		// 		this.biomeData.biomeInfo.distToNearestBiome[x, y] *= 100f;
+		// 		this.biomeData.temperatureNoiseMap.values[x, y] *= 500f;
+		// 		this.biomeData.humidityNoiseMap.values[x, y] *= 500f;
+		// 	}
+		// }
+		// this.heightMap = new NoiseMap(biomeData.biomeInfo.distToNearestBiome, 0f, 1f);
 
 		this.heightMap = this.biomeData.heightNoiseMap;
-		this.heightMap = this.biomeData.temperatureNoiseMap;
+
 		heightMapReceived = true;
 		
 		UpdateMaterial();

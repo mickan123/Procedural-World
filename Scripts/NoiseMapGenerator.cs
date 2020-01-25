@@ -5,13 +5,23 @@ using System.Linq;
 
 public static class NoiseMapGenerator {
 
+	public enum NormalizeMode { GlobalBiome, Global };
+	
 	public static NoiseMap GenerateNoiseMap(int width, 
 											int height, 
 											NoiseMapSettings noiseSettings, 
 											BiomeSettings biomeSettings,
 											Vector2 sampleCentre, 
+											NormalizeMode normalizeMode,
 											int seed) {
 		float[,] values = Noise.GenerateNoiseMap(width, height, noiseSettings.noiseSettings, biomeSettings, sampleCentre, seed);
+
+		if (normalizeMode == NormalizeMode.GlobalBiome) {
+			values = Noise.normalizeGlobalBiomeValues(values, biomeSettings);
+		}
+		else if (normalizeMode == NormalizeMode.Global) {
+			values = Noise.normalizeGlobalValues(values, noiseSettings.noiseSettings);
+		}
 
 		AnimationCurve heightCurve_threadsafe = new AnimationCurve(noiseSettings.heightCurve.keys);
 
@@ -49,7 +59,7 @@ public static class NoiseMapGenerator {
 		// Only 1 biome
 		if (uniqueBiomes.Length == 1) {
 			NoiseMapSettings settings = biomeSettings.biomes[uniqueBiomes[0]].heightMapSettings;
-			return GenerateNoiseMap(width, height, settings, biomeSettings, sampleCentre, seed);
+			return GenerateNoiseMap(width, height, settings, biomeSettings, sampleCentre, NormalizeMode.GlobalBiome, seed);
 		}
 
 		// Generate noise maps for all nearby and present biomes
@@ -62,6 +72,7 @@ public static class NoiseMapGenerator {
 														  biomeSettings.biomes[biomeIndex].heightMapSettings, 
 														  biomeSettings,
 														  sampleCentre, 
+														  NormalizeMode.GlobalBiome,
 														  seed);
 		}
 
@@ -101,10 +112,11 @@ public static class NoiseMapGenerator {
 		return new NoiseMap(finalNoiseMapValues, minValue, maxValue);
 	}
 
-	public static BiomeInfo GenerateBiomeInfo(int width, int height, NoiseMap humidityNoiseMap, NoiseMap temperatureNoiseMap, BiomeSettings settings) {
+	public static BiomeInfo GenerateBiomeInfo(int width, int height, NoiseMap humidityNoiseMap, NoiseMap temperatureNoiseMap, BiomeSettings settings, Vector2 centre) {
 		int[,] biomeMap = new int[width, height];
 		int[,] nearestBiomeMap = new int[width, height];
 		float[,] mainBiomeStrength = new float[width, height];
+		float[,] distToNearestBiome = new float[width, height];
 
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
@@ -134,8 +146,10 @@ public static class NoiseMapGenerator {
 				for (int w = 0; w < settings.biomes.Length; w++) {
 					if (w != actualBiomeIndex) {
 						Biome curBiome = settings.biomes[w]; 
-						float humidityDist = Mathf.Min(Mathf.Abs(humidity - curBiome.startHumidity), Mathf.Abs(humidity - curBiome.endHumidity));
-						float tempDist = Mathf.Min(Mathf.Abs(temperature - curBiome.startTemperature), Mathf.Abs(temperature - curBiome.endTemperature));
+						float humidityDist = Mathf.Min(Mathf.Abs(humidity - curBiome.startHumidity), 
+													   Mathf.Abs(humidity - curBiome.endHumidity));
+						float tempDist = Mathf.Min(Mathf.Abs(temperature - curBiome.startTemperature), 
+						                    	   Mathf.Abs(temperature - curBiome.endTemperature));
 						
 						if (humidity >= curBiome.startHumidity && humidity <= curBiome.endHumidity) {
 							humidityDist = 0f;
@@ -144,7 +158,7 @@ public static class NoiseMapGenerator {
 							tempDist = 0f;
 						}
 
-						float distToBiome = humidityDist + tempDist;
+						float distToBiome = humidityDist * humidityDist + tempDist * tempDist;
 
 						if (distToBiome < minDistToClosestBiome) {
 							minDistToClosestBiome = distToBiome;
@@ -163,24 +177,27 @@ public static class NoiseMapGenerator {
 				float biomeStrength = (1f + (minDistToClosestBiome / maxDistToClosestBiome)) / 2; // 0.5 when mindist == 0, 1.0 when minDist == maxDist
 				biomeStrength = Mathf.Min(biomeStrength, 1f);
 				mainBiomeStrength[i, j] = biomeStrength;
+				
 				nearestBiomeMap[i, j] = closestBiomeIndex;
+				distToNearestBiome[i, j] = minDistToClosestBiome;
 			}
 		}
 
-		return new BiomeInfo(biomeMap, nearestBiomeMap, mainBiomeStrength);
+		return new BiomeInfo(biomeMap, nearestBiomeMap, mainBiomeStrength, distToNearestBiome);
 	}
 }
-
 
 public struct BiomeInfo {
 	public readonly int[,] biomeMap; // Holds index of biome at each point
 	public readonly int[,] nearestBiomeMap; // Holds index of closest biome at each point
-	public readonly float[,] mainBiomeStrength;
+	public readonly float[,] mainBiomeStrength; // E.g. 0.75 means 75-25 main biome nearest biome blend, has values in range [0.5, 1]
+	public readonly float[,] distToNearestBiome; // Used for debugging
 	
-	public BiomeInfo(int[,] biomeMap, int[,] nearestBiomeMap, float[,] distanceToNearestBiome) {
+	public BiomeInfo(int[,] biomeMap, int[,] nearestBiomeMap, float[,] mainBiomeStrength, float[,] distToNearestBiome) {
 		this.biomeMap = biomeMap;
 		this.nearestBiomeMap = nearestBiomeMap;
-		this.mainBiomeStrength = distanceToNearestBiome;
+		this.mainBiomeStrength = mainBiomeStrength;
+		this.distToNearestBiome = distToNearestBiome;
 	}
 }
 
