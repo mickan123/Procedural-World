@@ -53,11 +53,24 @@ public static class NoiseMapGenerator {
 												 Vector2 sampleCentre, 
 												 BiomeInfo biomeInfo,
 												 int seed) {
+		
+		// TODO: Test performance
+		// Get unqiue biomes in biomeMap and nearestBiomeMap 
+		List<int> uniqueBiomes = new List<int>();
+		for (int x = 0; x < biomeInfo.biomeMap.GetLength(0); x++) {
+			for (int y = 0; y < biomeInfo.biomeMap.GetLength(1); y++) {
+				
+				if (!uniqueBiomes.Contains(biomeInfo.biomeMap[x, y])) {
+					uniqueBiomes.Add(biomeInfo.biomeMap[x, y]);
+				}
+				if (!uniqueBiomes.Contains(biomeInfo.nearestBiomeMap[x, y])) {
+					uniqueBiomes.Add(biomeInfo.nearestBiomeMap[x, y]);
+				}
+			}
+		}		
 
-		int[] uniqueBiomes = biomeInfo.biomeMap.Cast<int>().Distinct().ToArray(); // TODO try without this to see perf difference
-
-		// Only 1 biome
-		if (uniqueBiomes.Length == 1) {
+		// Only 1 biome so no blending between nearest biomes
+		if (uniqueBiomes.Count == 1) {
 			NoiseMapSettings settings = biomeSettings.biomes[uniqueBiomes[0]].heightMapSettings;
 			return GenerateNoiseMap(width, height, settings, biomeSettings, sampleCentre, NormalizeMode.GlobalBiome, seed);
 		}
@@ -65,15 +78,14 @@ public static class NoiseMapGenerator {
 		// Generate noise maps for all nearby and present biomes
 		int numBiomes = biomeSettings.biomes.Length;
 		NoiseMap[] biomeNoiseMaps = new NoiseMap[numBiomes];
-		for (int i = 0; i < uniqueBiomes.Length; i++) {
-			int biomeIndex = uniqueBiomes[i];
-			biomeNoiseMaps[biomeIndex] = GenerateNoiseMap(width, 
-														  height, 
-														  biomeSettings.biomes[biomeIndex].heightMapSettings, 
-														  biomeSettings,
-														  sampleCentre, 
-														  NormalizeMode.GlobalBiome,
-														  seed);
+		for (int i = 0; i < numBiomes; i++) {
+			biomeNoiseMaps[i] = GenerateNoiseMap(width, 
+												height, 
+												biomeSettings.biomes[i].heightMapSettings, 
+												biomeSettings,
+												sampleCentre, 
+												NormalizeMode.GlobalBiome,
+												seed);
 		}
 
 		// Calculate final noise map values
@@ -94,7 +106,7 @@ public static class NoiseMapGenerator {
 					float nearestBiomeVal = biomeNoiseMaps[nearestBiomeIndex].values[x, y];
 
 					float noiseVal = Mathf.SmoothStep(nearestBiomeVal, curBiomeVal, biomeStrength);
-
+	
 					finalNoiseMapValues[x, y] = noiseVal;
 				} else {
 					finalNoiseMapValues[x, y] = biomeNoiseMaps[biomeIndex].values[x, y];
@@ -177,7 +189,7 @@ public static class NoiseMapGenerator {
 				float biomeStrength = (1f + (minDistToClosestBiome / maxDistToClosestBiome)) / 2; // 0.5 when mindist == 0, 1.0 when minDist == maxDist
 				biomeStrength = Mathf.Min(biomeStrength, 1f);
 				mainBiomeStrength[i, j] = biomeStrength;
-				
+
 				nearestBiomeMap[i, j] = closestBiomeIndex;
 				distToNearestBiome[i, j] = minDistToClosestBiome;
 			}

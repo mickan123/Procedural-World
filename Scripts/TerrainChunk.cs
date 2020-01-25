@@ -88,20 +88,7 @@ public class TerrainChunk {
 
 	void OnBiomeMapReceived(object biomeDataObject) {
 		this.biomeData = (BiomeData)biomeDataObject;
-
-		// int width = this.biomeData.biomeInfo.biomeMap.GetLength(0);
-		// for (int x = 0; x < width; x ++) {
-		// 	for (int y = 0; y < width; y ++) {				 
-		// 		this.biomeData.biomeInfo.mainBiomeStrength[x, y] = (float)this.biomeData.biomeInfo.nearestBiomeMap[x, y]*100f;
-		// 		this.biomeData.biomeInfo.distToNearestBiome[x, y] *= 100f;
-		// 		this.biomeData.temperatureNoiseMap.values[x, y] *= 500f;
-		// 		this.biomeData.humidityNoiseMap.values[x, y] *= 500f;
-		// 	}
-		// }
-		// this.heightMap = new NoiseMap(biomeData.biomeInfo.distToNearestBiome, 0f, 1f);
-
 		this.heightMap = this.biomeData.heightNoiseMap;
-
 		heightMapReceived = true;
 		
 		UpdateMaterial();
@@ -113,7 +100,7 @@ public class TerrainChunk {
 		BiomeInfo info = this.biomeData.biomeInfo;		
 		int width = info.biomeMap.GetLength(0);
 
-		float numBiomes = this.biomeSettings.biomes.Length;
+		// Create texture to pass in biome, nearestBiome and mainBiomeStrength as x, y, z coords
 		Texture2D biomeMapTex = new Texture2D(width, width, TextureFormat.RGB24, false, false);
 		for (int x = 0; x < width; x ++) {
 			for (int y = 0; y < width; y ++) {				 
@@ -124,13 +111,11 @@ public class TerrainChunk {
 			}
 		}
 		biomeMapTex.Apply();
-
-		byte[] _bytes = biomeMapTex.EncodeToPNG();
-        System.IO.File.WriteAllBytes("./test.png", _bytes);
+		matBlock.SetTexture("biomeMapTex", biomeMapTex);
 
 		Vector2 position = coord * meshSettings.meshWorldSize; 
 		matBlock.SetVector("centre", new Vector4(position.x, 0, position.y, 0));
-		matBlock.SetTexture("biomeMapTex", biomeMapTex);
+		
 		meshRenderer.SetPropertyBlock(matBlock);
     }
 
