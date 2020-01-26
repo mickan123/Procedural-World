@@ -10,6 +10,9 @@ public class NoiseMapSettings : UpdatableData {
 	public float heightMultiplier;
 	public AnimationCurve heightCurve;
 
+	[HideInInspector]
+	public int seed; // Set by global seed
+
 	public float minHeight {
 		get {
 			return heightMultiplier * heightCurve.Evaluate(0);
@@ -24,7 +27,7 @@ public class NoiseMapSettings : UpdatableData {
 
 	#if UNITY_EDITOR
 
-	public void ValidateValues() {
+	public virtual void ValidateValues() {
 		noiseSettings.ValidateValues();
 	}
 

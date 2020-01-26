@@ -51,8 +51,7 @@ public static class NoiseMapGenerator {
 												 NoiseMap humidityNoiseMap, 
 												 NoiseMap temperatureNoiseMap, 
 												 Vector2 sampleCentre, 
-												 BiomeInfo biomeInfo,
-												 int seed) {
+												 BiomeInfo biomeInfo) {
 		
 		// TODO: Test performance
 		// Get unqiue biomes in biomeMap and nearestBiomeMap 
@@ -72,7 +71,7 @@ public static class NoiseMapGenerator {
 		// Only 1 biome so no blending between nearest biomes
 		if (uniqueBiomes.Count == 1) {
 			NoiseMapSettings settings = biomeSettings.biomes[uniqueBiomes[0]].heightMapSettings;
-			return GenerateNoiseMap(width, height, settings, biomeSettings, sampleCentre, NormalizeMode.GlobalBiome, seed);
+			return GenerateNoiseMap(width, height, settings, biomeSettings, sampleCentre, NormalizeMode.GlobalBiome, settings.seed);
 		}
 
 		// Generate noise maps for all nearby and present biomes
@@ -85,7 +84,7 @@ public static class NoiseMapGenerator {
 												biomeSettings,
 												sampleCentre, 
 												NormalizeMode.GlobalBiome,
-												seed);
+												biomeSettings.biomes[i].heightMapSettings.seed);
 		}
 
 		// Calculate final noise map values

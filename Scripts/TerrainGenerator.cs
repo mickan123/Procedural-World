@@ -28,6 +28,7 @@ public class TerrainGenerator : MonoBehaviour {
 
 	void Start() {
 		biomeSettings.ApplyToMaterial(mapMaterial);
+		biomeSettings.InitSeeds();
 
 		float maxViewDst = detailLevels [detailLevels.Length - 1].visibleDstThreshold;
 		meshWorldSize = meshSettings.meshWorldSize - 1;

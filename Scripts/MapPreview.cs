@@ -46,14 +46,14 @@ public class MapPreview : MonoBehaviour {
                                                             biomeSettings,
                                                             Vector2.zero,
 															NoiseMapGenerator.NormalizeMode.Global,
-                                                            biomeSettings.seed);
+                                                            biomeSettings.humidityMapSettings.seed);
 		NoiseMap temperatureMap = NoiseMapGenerator.GenerateNoiseMap(width,
                                                                height,
                                                                biomeSettings.temperatureMapSettings,
                                                                biomeSettings,
                                                                Vector2.zero,
 															   NoiseMapGenerator.NormalizeMode.Global,
-                                                               biomeSettings.seed);
+                                                               biomeSettings.temperatureMapSettings.seed);
 		
 		if (drawMode == DrawMode.NoiseMap) {
 			NoiseMap heightMap = NoiseMapGenerator.GenerateNoiseMap(width,
@@ -62,7 +62,7 @@ public class MapPreview : MonoBehaviour {
                                                            biomeSettings,
                                                            Vector2.zero,
 														   NoiseMapGenerator.NormalizeMode.GlobalBiome,
-                                                           biomeSettings.seed);
+                                                           heightMapSettings.seed);
 			DrawTexture(TextureGenerator.TextureFromHeightMap(heightMap));
 		} 
 		else if (drawMode == DrawMode.MeshNoBiome) {
@@ -72,7 +72,7 @@ public class MapPreview : MonoBehaviour {
                                                            biomeSettings,
                                                            Vector2.zero,
 														   NoiseMapGenerator.NormalizeMode.GlobalBiome,
-                                                           biomeSettings.seed);
+                                                           heightMapSettings.seed);
 			DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, EditorPreviewLOD));
 		}
 		else if (drawMode == DrawMode.FalloffMap) {
@@ -132,8 +132,7 @@ public class MapPreview : MonoBehaviour {
                                                                      humidityMap,
                                                                      humidityMap,
                                                                      Vector2.zero,
-                                                                     biomeInfo,
-                                                                     biomeSettings.seed);
+                                                                     biomeInfo);
         DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, EditorPreviewLOD));
     }
 

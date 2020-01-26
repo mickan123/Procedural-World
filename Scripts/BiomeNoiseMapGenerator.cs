@@ -16,14 +16,14 @@ public static class BiomeNoiseMapGenerator {
 																	biomeSettings,
 																	sampleCentre,
 																	NoiseMapGenerator.NormalizeMode.Global,
-																	biomeSettings.seed);
+																	biomeSettings.humidityMapSettings.seed);
 		NoiseMap temperatureNoiseMap = NoiseMapGenerator.GenerateNoiseMap(width,
 																		height,
 																		biomeSettings.temperatureMapSettings,
 																		biomeSettings,
 																		sampleCentre,
 																		NoiseMapGenerator.NormalizeMode.Global,
-																		biomeSettings.seed);
+																		biomeSettings.temperatureMapSettings.seed);
 		BiomeInfo biomeInfo = NoiseMapGenerator.GenerateBiomeInfo(width,
 																height,
 																humidityNoiseMap,
@@ -35,8 +35,7 @@ public static class BiomeNoiseMapGenerator {
 																		humidityNoiseMap,
 																		temperatureNoiseMap,
 																		sampleCentre,
-																		biomeInfo,
-																		biomeSettings.seed);
+																		biomeInfo);
 
 		return new BiomeData(heightNoiseMap, temperatureNoiseMap, humidityNoiseMap, biomeInfo);
 	}

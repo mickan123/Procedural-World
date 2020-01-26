@@ -63,6 +63,16 @@ public class BiomeSettings : UpdatableData {
 		material.SetFloat("maxHeight", maxHeight);
 	}
 
+	// Initializes seeds of children
+	public void InitSeeds() {
+		temperatureMapSettings.seed = Random.Range(0, 100000);
+		humidityMapSettings.seed = Random.Range(0, 100000);
+
+		for (int i = 0; i < biomes.Length; i++) {
+			biomes[i].heightMapSettings.seed = Random.Range(0, 100000);
+		}
+	}
+
 	public float minHeight {
 		get {
 			float minHeight = float.MaxValue;
