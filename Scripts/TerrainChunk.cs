@@ -89,6 +89,16 @@ public class TerrainChunk {
 	void OnBiomeMapReceived(object biomeDataObject) {
 		this.biomeData = (BiomeData)biomeDataObject;
 		this.heightMap = this.biomeData.heightNoiseMap;
+		
+		// int width = this.heightMap.values.GetLength(0);
+		// float[,] debugVals = new float[width, width];
+		// for (int i = 0; i < width; i++) {
+		// 	for (int j = 0; j < width; j++) {
+		// 		debugVals[i, j] = (float)this.biomeData.biomeInfo.biomeMap[i, j] * 100f;
+		// 	}
+		// }
+		// this.heightMap = new NoiseMap(debugVals, 0f, 1f);
+		
 		heightMapReceived = true;
 		
 		UpdateMaterial();
@@ -102,6 +112,7 @@ public class TerrainChunk {
 
 		// Create texture to pass in biome, nearestBiome and mainBiomeStrength as x, y, z coords
 		Texture2D biomeMapTex = new Texture2D(width, width, TextureFormat.RGB24, false, false);
+		biomeMapTex.filterMode = FilterMode.Point; // Need this or values get sampled incorrectly
 		for (int x = 0; x < width; x ++) {
 			for (int y = 0; y < width; y ++) {				 
 				float biome = (float)info.biomeMap[x, y];
