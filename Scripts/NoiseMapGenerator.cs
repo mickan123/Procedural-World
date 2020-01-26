@@ -124,7 +124,7 @@ public static class NoiseMapGenerator {
 		return new NoiseMap(finalNoiseMapValues, minValue, maxValue);
 	}
 
-	public static BiomeInfo GenerateBiomeInfo(int width, int height, NoiseMap humidityNoiseMap, NoiseMap temperatureNoiseMap, BiomeSettings settings, Vector2 centre) {
+	public static BiomeInfo GenerateBiomeInfo(int width, int height, NoiseMap humidityNoiseMap, NoiseMap temperatureNoiseMap, BiomeSettings settings) {
 		int[,] biomeMap = new int[width, height];
 		int[,] nearestBiomeMap = new int[width, height];
 		float[,] mainBiomeStrength = new float[width, height];

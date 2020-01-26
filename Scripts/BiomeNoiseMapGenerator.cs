@@ -28,8 +28,7 @@ public static class BiomeNoiseMapGenerator {
 																height,
 																humidityNoiseMap,
 																temperatureNoiseMap,
-																biomeSettings,
-																sampleCentre);
+																biomeSettings);
 		NoiseMap heightNoiseMap = NoiseMapGenerator.GenerateBiomeNoiseMap(width,
 																		height,
 																		biomeSettings,
