@@ -4,9 +4,6 @@ using UnityEngine;
 
 public static class BiomeNoiseMapGenerator {
 
-	public static float maxVal = float.MinValue;
-	public static float minVal = float.MaxValue;
-
 	public static BiomeData GenerateBiomeNoiseMaps(int width, int height, BiomeSettings biomeSettings, Vector2 sampleCentre) {
 		
 		// TODO separate functions for temp/humidity noise generation which normalizes based on a separate global max

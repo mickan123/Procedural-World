@@ -16,18 +16,20 @@ public class BiomeSettings : UpdatableData {
 
 	const int textureSize = 512;
 	const int maxLayerCount = 8;
-	const int maxBiomeCount = 2;
+	const int maxBiomeCount = 4;
 
 	public void Init() {
 		InitSeeds();
 	}
 
 	public void InitSeeds() {
-		temperatureMapSettings.seed = Random.Range(0, 100000);
-		humidityMapSettings.seed = Random.Range(0, 100000);
+		System.Random prng = new System.Random(seed);
+		
+		temperatureMapSettings.seed = prng.Next(-100000, 100000);
+		humidityMapSettings.seed = prng.Next(-100000, 100000);
 
 		for (int i = 0; i < biomes.Length; i++) {
-			biomes[i].heightMapSettings.seed = Random.Range(0, 100000);
+			biomes[i].heightMapSettings.seed = prng.Next(-100000, 100000);
 		}
 	}
 

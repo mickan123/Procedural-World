@@ -87,7 +87,7 @@ public static class NoiseMapGenerator {
 												biomeSettings.biomes[i].heightMapSettings.seed);
 		}
 
-		// Calculate final noise map values
+		// Calculate final noise map values by blending where near another biome
 		float[,] finalNoiseMapValues = new float[width, height];
 
 		float minValue = float.MaxValue;

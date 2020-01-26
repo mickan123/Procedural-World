@@ -115,8 +115,8 @@ public class TerrainChunk {
 		biomeMapTex.filterMode = FilterMode.Point; // Need this or values get sampled incorrectly
 		for (int x = 0; x < width; x ++) {
 			for (int y = 0; y < width; y ++) {				 
-				float biome = (float)info.biomeMap[x, y];
-				float nearestBiome = (float)info.nearestBiomeMap[x, y];
+				float biome = (float)info.biomeMap[x, y] / (this.biomeSettings.biomes.Length - 1);
+				float nearestBiome = (float)info.nearestBiomeMap[x, y]  / (this.biomeSettings.biomes.Length - 1);
 				float mainBiomeStrength = (float)info.mainBiomeStrength[x, y];
 				biomeMapTex.SetPixel(x, y, new Color(biome, nearestBiome, mainBiomeStrength, 0f));
 			}

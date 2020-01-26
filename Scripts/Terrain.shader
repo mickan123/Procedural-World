@@ -6,17 +6,15 @@
 		Tags { "RenderType"="Opaque" }
 		LOD 200
 		
-
 		CGPROGRAM
 		// Physically based Standard lighting model, and enable shadows on all light types
 		#pragma surface surf Standard fullforwardshadows
-
 
 		// Use shader model 3.0 target, to get nicer looking lighting
 		#pragma target 3.0
 
 		const static int maxLayerCount = 8;
-		const static int maxBiomeCount = 2;
+		const static int maxBiomeCount = 4;
 		const static float epsilon = 1E-4;
 
 		int layerCounts[maxBiomeCount];
@@ -27,7 +25,6 @@
 		float baseColourStrengths[maxLayerCount * maxBiomeCount];
 		float baseTextureScales[maxLayerCount * maxBiomeCount];
 		
-
 		float minHeight;
 		float maxHeight;
 
