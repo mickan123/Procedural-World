@@ -36,6 +36,7 @@ public class MapPreview : MonoBehaviour {
 
 	public void DrawMapInEditor() {
 		biomeSettings.ApplyToMaterial(terrainMaterial);
+		biomeSettings.Init();
 
 		int width = meshSettings.numVerticesPerLine;
 		int height = meshSettings.numVerticesPerLine;
@@ -181,6 +182,9 @@ public class MapPreview : MonoBehaviour {
 		if (biomeSettings != null) {
 			biomeSettings.OnValuesUpdated -= OnValuesUpdated;
 			biomeSettings.OnValuesUpdated += OnValuesUpdated;
+
+			biomeSettings.UnsubscribeChildren();
+			biomeSettings.SubscribeChildren();
 		}
 	}
 }

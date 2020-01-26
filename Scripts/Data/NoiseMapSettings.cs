@@ -10,6 +10,8 @@ public class NoiseMapSettings : UpdatableData {
 	public float heightMultiplier;
 	public AnimationCurve heightCurve;
 
+	public event System.Action subscribeUpdatedValues;
+
 	[HideInInspector]
 	public int seed; // Set by global seed
 
@@ -23,6 +25,7 @@ public class NoiseMapSettings : UpdatableData {
 		get {
 			return heightMultiplier * heightCurve.Evaluate(1);
 		}
+		
 	}
 
 	#if UNITY_EDITOR
@@ -33,6 +36,10 @@ public class NoiseMapSettings : UpdatableData {
 
 	protected override void OnValidate() {
 		ValidateValues();
+
+		if (subscribeUpdatedValues != null) {
+			subscribeUpdatedValues();
+		}
 		base.OnValidate();
 	}
 

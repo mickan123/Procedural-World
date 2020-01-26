@@ -128,6 +128,7 @@ public class NoiseSettings {
 	public void ValidateValues() {
 		scale = Mathf.Max(scale, 0.01f);
 		octaves = Mathf.Max(octaves, 1);
+		octaves = Mathf.Min(octaves, 10);
 		lacunarity = Mathf.Max(lacunarity, 1);
 		persistance = Mathf.Clamp01(persistance);
 	}

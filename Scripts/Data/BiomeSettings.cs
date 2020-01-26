@@ -17,7 +17,20 @@ public class BiomeSettings : UpdatableData {
 	const int textureSize = 512;
 	const int maxLayerCount = 8;
 	const int maxBiomeCount = 2;
-	
+
+	public void Init() {
+		InitSeeds();
+	}
+
+	public void InitSeeds() {
+		temperatureMapSettings.seed = Random.Range(0, 100000);
+		humidityMapSettings.seed = Random.Range(0, 100000);
+
+		for (int i = 0; i < biomes.Length; i++) {
+			biomes[i].heightMapSettings.seed = Random.Range(0, 100000);
+		}
+	}
+
 	public void ApplyToMaterial(Material material) {
 
 		float[] layerCounts = new float[biomes.Length];
@@ -63,15 +76,6 @@ public class BiomeSettings : UpdatableData {
 		material.SetFloat("maxHeight", maxHeight);
 	}
 
-	// Initializes seeds of children
-	public void InitSeeds() {
-		temperatureMapSettings.seed = Random.Range(0, 100000);
-		humidityMapSettings.seed = Random.Range(0, 100000);
-
-		for (int i = 0; i < biomes.Length; i++) {
-			biomes[i].heightMapSettings.seed = Random.Range(0, 100000);
-		}
-	}
 
 	public float minHeight {
 		get {
@@ -98,6 +102,16 @@ public class BiomeSettings : UpdatableData {
 	}
 
 	#if UNITY_EDITOR
+
+	public void SubscribeChildren() {
+		humidityMapSettings.subscribeUpdatedValues += OnValidate;
+		temperatureMapSettings.subscribeUpdatedValues += OnValidate;
+	}
+
+	public void UnsubscribeChildren() {
+		humidityMapSettings.subscribeUpdatedValues -= OnValidate;
+		temperatureMapSettings.subscribeUpdatedValues -= OnValidate;
+	}
 
 	protected override void OnValidate() {
 		// TODO ensure no overlapping biome values
