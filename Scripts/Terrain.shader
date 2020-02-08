@@ -31,8 +31,10 @@
 		// Per chunk vars
 		float3 centre;
 		UNITY_DECLARE_TEX2D(biomeMapTex);
+		UNITY_DECLARE_TEX2DARRAY(biomeStrengthMap);
 
 		UNITY_DECLARE_TEX2DARRAY(baseTextures);
+		
 
 		struct Input {
 			float3 worldPos;
@@ -43,13 +45,19 @@
 			return saturate((value - a) / (b - a));
 		}
 
+		const static int chunkWidth = 292;
+		const static int biomeStrengthTextureWidth = 256;
+
 		// Biome data texture is stored as follows:
 		// x: Main biome index
-		// y: Nearest biome index (same as main biome index if not near enough)
-		// z: Nearest biome distance 
 		float4 sampleBiomeData(float3 worldPos) {
-			float3 scaledWorldPos = (worldPos + float3(146, 0, 146)) / 292;
+			float3 scaledWorldPos = ((worldPos + float3(chunkWidth / 2, 0, chunkWidth / 2)) / chunkWidth);
 			return UNITY_SAMPLE_TEX2D(biomeMapTex, float2(scaledWorldPos.x, -scaledWorldPos.z));
+		}
+
+		float4 sampleBiomeStrength(float3 worldPos, int textureIndex) {
+			float3 scaledWorldPos = ((worldPos + float3(chunkWidth / 2, 0, chunkWidth / 2)) / chunkWidth);
+			return UNITY_SAMPLE_TEX2DARRAY(biomeStrengthMap, float3(scaledWorldPos.x, -scaledWorldPos.z, textureIndex));
 		}
 
 		float3 triplanar(float3 worldPos, float scale, float3 blendAxes, int textureIndex) {
@@ -92,13 +100,16 @@
 			float4 biomeData = sampleBiomeData(IN.worldPos);
 
 			int mainBiome = biomeData.x;
-			int nearestBiome = biomeData.y;
-			float mainBiomeStrength = biomeData.z;
 
-			float3 mainBiomeTex = getBiomeTexture(mainBiome, o.Albedo, IN.worldPos, blendAxes);
-			float3 nearestBiomeTex = getBiomeTexture(nearestBiome, o.Albedo, IN.worldPos, blendAxes);
-			
-			o.Albedo = mainBiomeStrength * mainBiomeTex + (1 - mainBiomeStrength) * nearestBiomeTex;
+			float3 finalTex = o.Albedo;
+			for (int i = 0; i < maxBiomeCount; i+=4) {
+				float4 biomeStrengthData = sampleBiomeStrength(IN.worldPos, i / 4);
+				finalTex += biomeStrengthData.x * getBiomeTexture(i, o.Albedo, IN.worldPos, blendAxes);
+				finalTex += biomeStrengthData.y * getBiomeTexture(i + 1, o.Albedo, IN.worldPos, blendAxes);
+				finalTex += biomeStrengthData.z * getBiomeTexture(i + 2, o.Albedo, IN.worldPos, blendAxes);
+				finalTex += biomeStrengthData.w * getBiomeTexture(i + 3, o.Albedo, IN.worldPos, blendAxes);
+			}
+			o.Albedo = finalTex;
 		}
 
 		ENDCG

@@ -32,7 +32,6 @@ public static class Noise {
 		
 		for (int i = 0; i < maxNumOctaves; i++) {
 			float offsetX = prng.Next(-100000, 100000) + sampleCentre.x;
-			
 			float offsetY = prng.Next(-100000, 100000) - sampleCentre.y;
 			octaveOffsets[i] = new Vector2(offsetX, offsetY);
 		}
@@ -90,8 +89,8 @@ public static class Noise {
 
 		for (int i = 0; i < input.GetLength(0); i++) {
 			for (int j = 0 ; j < input.GetLength(1); j++) {
-				float normalizedHeight = (input[i, j] + 1) / (2f * maxPossibleHeight / 1.5f); // MAGIC NUMBER
-				input[i, j] = Mathf.Clamp(normalizedHeight, 0, int.MaxValue);	
+				float normalizedHeight = (input[i, j] + 1) / (2f * maxPossibleHeight); // MAGIC NUMBER
+				input[i, j] = Mathf.Clamp(normalizedHeight, 0, float.MaxValue);	
 			}
 		}
 

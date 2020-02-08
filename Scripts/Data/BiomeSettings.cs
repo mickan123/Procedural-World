@@ -10,13 +10,21 @@ public class BiomeSettings : UpdatableData {
 	public NoiseMapSettings temperatureMapSettings;
 	const TextureFormat textureFormat = TextureFormat.RGB565;
 
-	public Biome[] biomes;
-
+	[Range(0,1)]
+	public float transitionDistance;
 	public int seed;
 
+	public Biome[] biomes;
+
 	const int textureSize = 512;
-	const int maxLayerCount = 8;
-	const int maxBiomeCount = 4;
+	public readonly int maxLayerCount = 8;
+	public readonly int maxBiomeCount = 4;
+	
+	public float sqrTransitionDistance {
+		get {
+			return (float)transitionDistance * (float)transitionDistance;
+		}
+	}
 
 	public void Init() {
 		InitSeeds();
@@ -48,7 +56,7 @@ public class BiomeSettings : UpdatableData {
 		for (int i = 0; i < biomes.Length; i++) {
 
 			layerCounts[i] = biomes[i].textureData.layers.Length;
-			biomeTransitionDistances[i] = biomes[i].sqrTransitionDistance;
+			biomeTransitionDistances[i] = sqrTransitionDistance;
 
 			for (int j = 0; j < biomes[i].textureData.layers.Length; j++) {
 
@@ -130,14 +138,6 @@ public class BiomeSettings : UpdatableData {
 public class Biome {
 	public BiomeTextureData textureData;
 	public NoiseMapSettings heightMapSettings;
-	[Range(0,1)]
-	public float transitionDistance;
-
-	public float sqrTransitionDistance {
-		get {
-			return (float)transitionDistance * (float)transitionDistance;
-		}
-	}
 
 	[Range(0,1)]
 	public float startHumidity;

@@ -94,7 +94,7 @@ public class TerrainChunk {
 		// float[,] debugVals = new float[width, width];
 		// for (int i = 0; i < width; i++) {
 		// 	for (int j = 0; j < width; j++) {
-		// 		debugVals[i, j] = (float)this.biomeData.biomeInfo.biomeMap[i, j] * 100f;
+		// 		debugVals[i, j] = (float)this.biomeData.biomeInfo.biomeStrengths[i, j, 0] * 100f;
 		// 	}
 		// }
 		// this.heightMap = new NoiseMap(debugVals, 0f, 1f);
@@ -110,17 +110,52 @@ public class TerrainChunk {
 		BiomeInfo info = this.biomeData.biomeInfo;		
 		int width = info.biomeMap.GetLength(0);
 
-		// Create texture to pass in biome, nearestBiome and mainBiomeStrength as x, y, z coords
+		// Create texture to pass in biome maps and biome strengths
+		int numBiomes = this.biomeSettings.biomes.Length;
 		Texture2D biomeMapTex = new Texture2D(width, width, TextureFormat.RGB24, false, false);
-		biomeMapTex.filterMode = FilterMode.Point; // Need this or values get sampled incorrectly
+		
+		int finalTexWidth = 256;
+		Texture2D[] biomeStrengthTextures = new Texture2D[this.biomeSettings.maxBiomeCount / 4 + 1];
+		for (int i = 0; i < this.biomeSettings.maxBiomeCount / 4 + 1; i++) {
+			biomeStrengthTextures[i] = new Texture2D(width, width, TextureFormat.RGB24, false, false);
+		}
+		Texture2DArray biomeStrengthTexArray = new Texture2DArray(finalTexWidth,
+																finalTexWidth,
+																this.biomeSettings.maxBiomeCount,
+																TextureFormat.RGB565,
+																false,
+																false);
+
+		// Need these or values get sampled incorrectly
+		biomeMapTex.filterMode = FilterMode.Point; 
+		biomeStrengthTexArray.filterMode = FilterMode.Point;
+
 		for (int x = 0; x < width; x ++) {
 			for (int y = 0; y < width; y ++) {				 
 				float biome = (float)info.biomeMap[x, y] / (this.biomeSettings.biomes.Length - 1);
-				float nearestBiome = (float)info.nearestBiomeMap[x, y]  / (this.biomeSettings.biomes.Length - 1);
-				float mainBiomeStrength = (float)info.mainBiomeStrength[x, y];
-				biomeMapTex.SetPixel(x, y, new Color(biome, nearestBiome, mainBiomeStrength, 0f));
+				biomeMapTex.SetPixel(x, y, new Color(biome, 0f, 0f, 0f));
+
+				for (int w = 0; w < this.biomeSettings.maxBiomeCount; w += 4) {
+					int texIndex = w % 4; // Each texture has 4 channels
+
+					Color biomeStrengths = new Color((w < numBiomes) ? info.biomeStrengths[x, y, w] : 0f,
+													(w + 1 < numBiomes) ? info.biomeStrengths[x, y, w + 1] : 0f,
+													(w + 2 < numBiomes) ? info.biomeStrengths[x, y, w + 2] : 0f,
+													(w + 3 < numBiomes) ? info.biomeStrengths[x, y, w + 3] : 0f);
+					
+					biomeStrengthTextures[texIndex].SetPixel(x, y, biomeStrengths);
+				}
 			}
 		}
+
+		for (int i = 0; i < biomeStrengthTextures.Length; i++) {
+			TextureScale.Bilinear(biomeStrengthTextures[i], finalTexWidth, finalTexWidth);
+			biomeStrengthTextures[i].Apply();
+			biomeStrengthTexArray.SetPixels(biomeStrengthTextures[i].GetPixels(), i);
+		}
+		biomeStrengthTexArray.Apply();
+		matBlock.SetTexture("biomeStrengthMap", biomeStrengthTexArray);
+
 		biomeMapTex.Apply();
 		matBlock.SetTexture("biomeMapTex", biomeMapTex);
 

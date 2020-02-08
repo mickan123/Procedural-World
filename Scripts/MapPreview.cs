@@ -9,7 +9,7 @@ public class MapPreview : MonoBehaviour {
 	public MeshFilter meshFilter;
 	public MeshRenderer meshRenderer;
 
-	public enum DrawMode { NoiseMap, MeshNoBiome, BiomeMesh, FalloffMap, Biomes, HumidityMap, TemperatureMap, NearestBiome, DistanceToNearestBiome };
+	public enum DrawMode { NoiseMap, MeshNoBiome, BiomeMesh, FalloffMap, Biomes, HumidityMap, TemperatureMap };
 	public DrawMode drawMode;
 
 	public MeshSettings meshSettings;
@@ -25,6 +25,8 @@ public class MapPreview : MonoBehaviour {
 	
 	public bool autoUpdate;
 
+	public int seed;
+
 	public void DrawTexture(Texture2D texture) {
 		textureRender.sharedMaterial.mainTexture = texture;
 		textureRender.transform.localScale = new Vector3(-96, 1, 96);
@@ -37,6 +39,7 @@ public class MapPreview : MonoBehaviour {
 	public void DrawMapInEditor() {
 		biomeSettings.ApplyToMaterial(terrainMaterial);
 		biomeSettings.Init();
+		biomeSettings.seed = this.seed;
 
 		int width = meshSettings.numVerticesPerLine;
 		int height = meshSettings.numVerticesPerLine;
@@ -79,12 +82,10 @@ public class MapPreview : MonoBehaviour {
 		else if (drawMode == DrawMode.FalloffMap) {
 			DrawTexture(TextureGenerator.TextureFromHeightMap(new NoiseMap(FalloffGenerator.GenerateFalloffMap(width), 0, 1)));
 		}
-		else if (drawMode == DrawMode.BiomeMesh)
-        {
+		else if (drawMode == DrawMode.BiomeMesh) {
             DrawBiomeMesh(width, height, humidityMap);
         }
-        else if (drawMode == DrawMode.Biomes)
-        {
+        else if (drawMode == DrawMode.Biomes) {
             DrawBiomes(width, height, humidityMap, temperatureMap);
         }
         else if (drawMode == DrawMode.HumidityMap) {
@@ -93,32 +94,7 @@ public class MapPreview : MonoBehaviour {
 		else if (drawMode == DrawMode.TemperatureMap) {
 			DrawTexture(TextureGenerator.TextureFromHeightMap(temperatureMap));
 		}
-
-		else if (drawMode == DrawMode.NearestBiome)
-        {
-            DrawNearestBiomes(width, height, humidityMap, temperatureMap);
-        }
-        else if (drawMode == DrawMode.DistanceToNearestBiome) {
-			BiomeInfo biomeInfo = NoiseMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, biomeSettings);
-			DrawTexture(TextureGenerator.TextureFromHeightMap(new NoiseMap(biomeInfo.mainBiomeStrength, 0, 1)));
-		}
 	}
-
-    private void DrawNearestBiomes(int width, int height, NoiseMap humidityMap, NoiseMap temperatureMap)
-    {
-        BiomeInfo biomeInfo = NoiseMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, biomeSettings);
-
-        int numBiomes = biomeSettings.biomes.Length;
-        float[,] nearestBiomeTextureMap = new float[width, height];
-        for (int i = 0; i < width; i++)
-        {
-            for (int j = 0; j < height; j++)
-            {
-                nearestBiomeTextureMap[i, j] = (float)biomeInfo.nearestBiomeMap[i, j] / (float)(numBiomes - 1);
-            }
-        }
-        DrawTexture(TextureGenerator.TextureFromHeightMap(new NoiseMap(nearestBiomeTextureMap, 0, 1)));
-    }
 
     private void DrawBiomeMesh(int width, int height, NoiseMap humidityMap)
     {
@@ -133,7 +109,7 @@ public class MapPreview : MonoBehaviour {
                                                                      humidityMap,
                                                                      humidityMap,
                                                                      Vector2.zero,
-                                                                     biomeInfo);
+                                                                     biomeInfo);																	 
         DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, EditorPreviewLOD));
     }
 
@@ -143,13 +119,11 @@ public class MapPreview : MonoBehaviour {
 
         int numBiomes = biomeSettings.biomes.Length;
         float[,] biomeTextureMap = new float[width, height];
-        float[,] nearestBiomeTextureMap = new float[width, height];
         for (int i = 0; i < width; i++)
         {
             for (int j = 0; j < height; j++)
             {
                 biomeTextureMap[i, j] = (float)biomeInfo.biomeMap[i, j] / (float)(numBiomes - 1);
-                nearestBiomeTextureMap[i, j] = (float)biomeInfo.nearestBiomeMap[i, j] / (float)(numBiomes - 1);
             }
         }
 
