@@ -9,8 +9,10 @@ public class MapPreview : MonoBehaviour {
 	public MeshFilter meshFilter;
 	public MeshRenderer meshRenderer;
 
-	public enum DrawMode { NoiseMap, MeshNoBiome, BiomeMesh, FalloffMap, Biomes, HumidityMap, TemperatureMap };
+	public enum DrawMode { NoiseMap, MeshNoBiome, BiomesMesh, FalloffMap, Biomes, HumidityMap, TemperatureMap, SingleBiome };
 	public DrawMode drawMode;
+	
+	public int singleBiome;  // If DrawMode is SingleBiome it will render this biome number
 
 	public MeshSettings meshSettings;
 	public WorldSettings worldSettings;
@@ -82,7 +84,7 @@ public class MapPreview : MonoBehaviour {
 		else if (drawMode == DrawMode.FalloffMap) {
 			DrawTexture(TextureGenerator.TextureFromHeightMap(new NoiseMap(FalloffGenerator.GenerateFalloffMap(width), 0, 1)));
 		}
-		else if (drawMode == DrawMode.BiomeMesh) {
+		else if (drawMode == DrawMode.BiomesMesh) {
             DrawBiomeMesh(width, height, humidityMap);
         }
         else if (drawMode == DrawMode.Biomes) {
@@ -94,7 +96,46 @@ public class MapPreview : MonoBehaviour {
 		else if (drawMode == DrawMode.TemperatureMap) {
 			DrawTexture(TextureGenerator.TextureFromHeightMap(temperatureMap));
 		}
-	}
+		else if (drawMode == DrawMode.SingleBiome) {
+            DrawSingleBiome(width, height, humidityMap);
+        }
+    }
+
+    private void DrawSingleBiome(int width, int height, NoiseMap humidityMap)
+    {
+		BiomeSettings[] oldBiomes = new BiomeSettings[worldSettings.biomes.Length];
+		float oldTransitionDistance = worldSettings.transitionDistance;
+        for (int i = 0; i < worldSettings.biomes.Length; i++)
+        {
+			oldBiomes[i] = new BiomeSettings();
+			oldBiomes[i].startHumidity = worldSettings.biomes[i].startHumidity;
+			oldBiomes[i].endHumidity = worldSettings.biomes[i].endHumidity;
+			oldBiomes[i].startTemperature = worldSettings.biomes[i].startTemperature;
+			oldBiomes[i].endTemperature = worldSettings.biomes[i].endTemperature;
+
+            worldSettings.biomes[i].startHumidity = 0f;
+            worldSettings.biomes[i].endHumidity = 0f;
+            worldSettings.biomes[i].startTemperature = 0f;
+            worldSettings.biomes[i].endTemperature = 0f;
+        }
+
+        worldSettings.biomes[singleBiome].endHumidity = 1f;
+        worldSettings.biomes[singleBiome].endTemperature = 1f;
+		worldSettings.transitionDistance = 0f;
+		worldSettings.ApplyToMaterial(terrainMaterial);
+
+        DrawBiomeMesh(width, height, humidityMap);
+
+		// Reset settings
+		for (int i = 0; i < worldSettings.biomes.Length; i++)
+        {
+			worldSettings.biomes[i].startHumidity = oldBiomes[i].startHumidity;
+			worldSettings.biomes[i].endHumidity = oldBiomes[i].endHumidity;
+			worldSettings.biomes[i].startTemperature = oldBiomes[i].startTemperature;
+			worldSettings.biomes[i].endTemperature = oldBiomes[i].endTemperature;
+		}
+		worldSettings.transitionDistance = oldTransitionDistance;
+    }
 
     private void DrawBiomeMesh(int width, int height, NoiseMap humidityMap)
     {
