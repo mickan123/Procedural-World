@@ -4,31 +4,31 @@ using UnityEngine;
 
 public static class BiomeNoiseMapGenerator {
 
-	public static BiomeData GenerateBiomeNoiseMaps(int width, int height, BiomeSettings biomeSettings, Vector2 sampleCentre) {
+	public static BiomeData GenerateBiomeNoiseMaps(int width, int height, WorldSettings worldSettings, Vector2 sampleCentre) {
 		
 		// TODO separate functions for temp/humidity noise generation which normalizes based on a separate global max
 		NoiseMap humidityNoiseMap = NoiseMapGenerator.GenerateNoiseMap(width,
 																	height,
-																	biomeSettings.humidityMapSettings,
-																	biomeSettings,
+																	worldSettings.humidityMapSettings,
+																	worldSettings,
 																	sampleCentre,
 																	NoiseMapGenerator.NormalizeMode.Global,
-																	biomeSettings.humidityMapSettings.seed);
+																	worldSettings.humidityMapSettings.seed);
 		NoiseMap temperatureNoiseMap = NoiseMapGenerator.GenerateNoiseMap(width,
 																		height,
-																		biomeSettings.temperatureMapSettings,
-																		biomeSettings,
+																		worldSettings.temperatureMapSettings,
+																		worldSettings,
 																		sampleCentre,
 																		NoiseMapGenerator.NormalizeMode.Global,
-																		biomeSettings.temperatureMapSettings.seed);
+																		worldSettings.temperatureMapSettings.seed);
 		BiomeInfo biomeInfo = NoiseMapGenerator.GenerateBiomeInfo(width,
 																height,
 																humidityNoiseMap,
 																temperatureNoiseMap,
-																biomeSettings);
+																worldSettings);
 		NoiseMap heightNoiseMap = NoiseMapGenerator.GenerateBiomeNoiseMap(width,
 																		height,
-																		biomeSettings,
+																		worldSettings,
 																		humidityNoiseMap,
 																		temperatureNoiseMap,
 																		sampleCentre,

@@ -10,7 +10,7 @@ public static class Noise {
 	public static float[,] GenerateNoiseMap(int mapWidth, 
 											int mapHeight, 
 											NoiseSettings noiseSettings, 
-											BiomeSettings biomeSettings, 
+											WorldSettings worldSettings, 
 											Vector2 sampleCentre,
 											int seed) {
 
@@ -18,7 +18,7 @@ public static class Noise {
 		System.Random prng = new System.Random(seed);
 
 		int maxNumOctaves = 1;
-		NoiseSettings[] noiseSettingArray = biomeSettings.biomes.Select(x => x.heightMapSettings.noiseSettings).ToArray();
+		NoiseSettings[] noiseSettingArray = worldSettings.biomes.Select(x => x.heightMapSettings.noiseSettings).ToArray();
 		for (int i = 0; i < noiseSettingArray.Length; i++) {
 			if (noiseSettingArray[i].octaves > maxNumOctaves) {
 				maxNumOctaves = noiseSettingArray[i].octaves;
@@ -66,11 +66,11 @@ public static class Noise {
 		return noiseMap;
 	}
 
-	public static float[,] normalizeGlobalBiomeValues(float[,] input, BiomeSettings biomeSettings) {
+	public static float[,] normalizeGlobalBiomeValues(float[,] input, WorldSettings worldSettings) {
 
 		int maxNumOctaves = 1;
 		float maxPersistance = 0;
-		NoiseSettings[] noiseSettingArray = biomeSettings.biomes.Select(x => x.heightMapSettings.noiseSettings).ToArray();
+		NoiseSettings[] noiseSettingArray = worldSettings.biomes.Select(x => x.heightMapSettings.noiseSettings).ToArray();
 		for (int i = 0; i < noiseSettingArray.Length; i++) {
 			if (noiseSettingArray[i].octaves > maxNumOctaves) {
 				maxNumOctaves = noiseSettingArray[i].octaves;

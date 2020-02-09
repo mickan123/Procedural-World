@@ -13,7 +13,7 @@ public class MapPreview : MonoBehaviour {
 	public DrawMode drawMode;
 
 	public MeshSettings meshSettings;
-	public BiomeSettings biomeSettings;
+	public WorldSettings worldSettings;
 	public NoiseMapSettings heightMapSettings;
 	
 	public BiomeTextureData textureData;
@@ -37,33 +37,33 @@ public class MapPreview : MonoBehaviour {
 	}
 
 	public void DrawMapInEditor() {
-		biomeSettings.ApplyToMaterial(terrainMaterial);
-		biomeSettings.Init();
-		biomeSettings.seed = this.seed;
+		worldSettings.ApplyToMaterial(terrainMaterial);
+		worldSettings.Init();
+		worldSettings.seed = this.seed;
 
 		int width = meshSettings.numVerticesPerLine;
 		int height = meshSettings.numVerticesPerLine;
 
 		NoiseMap humidityMap = NoiseMapGenerator.GenerateNoiseMap(width,
                                                             height,
-                                                            biomeSettings.humidityMapSettings,
-                                                            biomeSettings,
+                                                            worldSettings.humidityMapSettings,
+                                                            worldSettings,
                                                             Vector2.zero,
 															NoiseMapGenerator.NormalizeMode.Global,
-                                                            biomeSettings.humidityMapSettings.seed);
+                                                            worldSettings.humidityMapSettings.seed);
 		NoiseMap temperatureMap = NoiseMapGenerator.GenerateNoiseMap(width,
                                                                height,
-                                                               biomeSettings.temperatureMapSettings,
-                                                               biomeSettings,
+                                                               worldSettings.temperatureMapSettings,
+                                                               worldSettings,
                                                                Vector2.zero,
 															   NoiseMapGenerator.NormalizeMode.Global,
-                                                               biomeSettings.temperatureMapSettings.seed);
+                                                               worldSettings.temperatureMapSettings.seed);
 		
 		if (drawMode == DrawMode.NoiseMap) {
 			NoiseMap heightMap = NoiseMapGenerator.GenerateNoiseMap(width,
                                                            height,
                                                            heightMapSettings,
-                                                           biomeSettings,
+                                                           worldSettings,
                                                            Vector2.zero,
 														   NoiseMapGenerator.NormalizeMode.GlobalBiome,
                                                            heightMapSettings.seed);
@@ -73,7 +73,7 @@ public class MapPreview : MonoBehaviour {
 			NoiseMap heightMap = NoiseMapGenerator.GenerateNoiseMap(width,
                                                            height,
                                                            heightMapSettings,
-                                                           biomeSettings,
+                                                           worldSettings,
                                                            Vector2.zero,
 														   NoiseMapGenerator.NormalizeMode.GlobalBiome,
                                                            heightMapSettings.seed);
@@ -102,10 +102,10 @@ public class MapPreview : MonoBehaviour {
 																  height,
 																  humidityMap,
 																  humidityMap,
-																  biomeSettings);
+																  worldSettings);
         NoiseMap heightMap = NoiseMapGenerator.GenerateBiomeNoiseMap(width,
                                                                      height,
-                                                                     biomeSettings,
+                                                                     worldSettings,
                                                                      humidityMap,
                                                                      humidityMap,
                                                                      Vector2.zero,
@@ -115,9 +115,9 @@ public class MapPreview : MonoBehaviour {
 
     private void DrawBiomes(int width, int height, NoiseMap humidityMap, NoiseMap temperatureMap)
     {
-        BiomeInfo biomeInfo = NoiseMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, biomeSettings);
+        BiomeInfo biomeInfo = NoiseMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, worldSettings);
 
-        int numBiomes = biomeSettings.biomes.Length;
+        int numBiomes = worldSettings.biomes.Length;
         float[,] biomeTextureMap = new float[width, height];
         for (int i = 0; i < width; i++)
         {
@@ -137,7 +137,7 @@ public class MapPreview : MonoBehaviour {
 	}
 
 	void OnTextureValuesUpdated() {
-		biomeSettings.ApplyToMaterial(terrainMaterial);
+		worldSettings.ApplyToMaterial(terrainMaterial);
 	}
 
 	void OnValidate() {
@@ -153,12 +153,12 @@ public class MapPreview : MonoBehaviour {
 			textureData.OnValuesUpdated -= OnTextureValuesUpdated;
 			textureData.OnValuesUpdated += OnTextureValuesUpdated;
 		}
-		if (biomeSettings != null) {
-			biomeSettings.OnValuesUpdated -= OnValuesUpdated;
-			biomeSettings.OnValuesUpdated += OnValuesUpdated;
+		if (worldSettings != null) {
+			worldSettings.OnValuesUpdated -= OnValuesUpdated;
+			worldSettings.OnValuesUpdated += OnValuesUpdated;
 
-			biomeSettings.UnsubscribeChildren();
-			biomeSettings.SubscribeChildren();
+			worldSettings.UnsubscribeChildren();
+			worldSettings.SubscribeChildren();
 		}
 	}
 }

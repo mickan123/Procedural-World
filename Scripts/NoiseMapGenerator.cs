@@ -10,14 +10,14 @@ public static class NoiseMapGenerator {
 	public static NoiseMap GenerateNoiseMap(int width, 
 											int height, 
 											NoiseMapSettings noiseSettings, 
-											BiomeSettings biomeSettings,
+											WorldSettings worldSettings,
 											Vector2 sampleCentre, 
 											NormalizeMode normalizeMode,
 											int seed) {
-		float[,] values = Noise.GenerateNoiseMap(width, height, noiseSettings.noiseSettings, biomeSettings, sampleCentre, seed);
+		float[,] values = Noise.GenerateNoiseMap(width, height, noiseSettings.noiseSettings, worldSettings, sampleCentre, seed);
 
 		if (normalizeMode == NormalizeMode.GlobalBiome) {
-			values = Noise.normalizeGlobalBiomeValues(values, biomeSettings);
+			values = Noise.normalizeGlobalBiomeValues(values, worldSettings);
 		}
 		else if (normalizeMode == NormalizeMode.Global) {
 			values = Noise.normalizeGlobalValues(values, noiseSettings.noiseSettings);
@@ -47,23 +47,23 @@ public static class NoiseMapGenerator {
 	// Wrapper to generate noise
 	public static NoiseMap GenerateBiomeNoiseMap(int width, 
 												 int height, 
-												 BiomeSettings biomeSettings,
+												 WorldSettings worldSettings,
 												 NoiseMap humidityNoiseMap, 
 												 NoiseMap temperatureNoiseMap, 
 												 Vector2 sampleCentre, 
 												 BiomeInfo biomeInfo) {
 		
 		// Generate noise maps for all nearby and present biomes
-		int numBiomes = biomeSettings.biomes.Length;
+		int numBiomes = worldSettings.biomes.Length;
 		NoiseMap[] biomeNoiseMaps = new NoiseMap[numBiomes];
 		for (int i = 0; i < numBiomes; i++) {
 			biomeNoiseMaps[i] = GenerateNoiseMap(width, 
 												height, 
-												biomeSettings.biomes[i].heightMapSettings, 
-												biomeSettings,
+												worldSettings.biomes[i].heightMapSettings, 
+												worldSettings,
 												sampleCentre, 
 												NormalizeMode.GlobalBiome,
-												biomeSettings.biomes[i].heightMapSettings.seed);
+												worldSettings.biomes[i].heightMapSettings.seed);
 		}
 
 		// Calculate final noise map values by blending where near another biome
@@ -90,7 +90,7 @@ public static class NoiseMapGenerator {
 		return new NoiseMap(finalNoiseMapValues, minValue, maxValue);
 	}
 
-	public static BiomeInfo GenerateBiomeInfo(int width, int height, NoiseMap humidityNoiseMap, NoiseMap temperatureNoiseMap, BiomeSettings settings) {
+	public static BiomeInfo GenerateBiomeInfo(int width, int height, NoiseMap humidityNoiseMap, NoiseMap temperatureNoiseMap, WorldSettings settings) {
 		int numBiomes = settings.biomes.Length;
 		int[,] biomeMap = new int[width, height];
 		float[,,] biomeStrengths = new float[width, height, numBiomes];
@@ -103,7 +103,7 @@ public static class NoiseMapGenerator {
 
 				// Get current biome
 				for (int w = 0; w < numBiomes; w++) {
-					Biome curBiome = settings.biomes[w]; 
+					BiomeSettings curBiome = settings.biomes[w]; 
 
 					if (humidity > curBiome.startHumidity 
 						&& humidity < curBiome.endHumidity
@@ -123,7 +123,7 @@ public static class NoiseMapGenerator {
 
 				for (int w = 0; w < numBiomes; w++) {
 					if (w != actualBiomeIndex) {
-						Biome curBiome = settings.biomes[w]; 
+						BiomeSettings curBiome = settings.biomes[w]; 
 						float humidityDist = Mathf.Min(Mathf.Abs(humidity - curBiome.startHumidity), 
 													   Mathf.Abs(humidity - curBiome.endHumidity));
 						float tempDist = Mathf.Min(Mathf.Abs(temperature - curBiome.startTemperature), 
