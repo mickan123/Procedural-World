@@ -7,7 +7,6 @@ public class MapPreview : MonoBehaviour {
 
 	public Renderer textureRender;
 	public MeshFilter meshFilter;
-	public MeshRenderer meshRenderer;
 
 	public enum DrawMode { NoiseMap, MeshNoBiome, BiomesMesh, FalloffMap, Biomes, HumidityMap, TemperatureMap, SingleBiome };
 	public DrawMode drawMode;
@@ -107,7 +106,7 @@ public class MapPreview : MonoBehaviour {
 		float oldTransitionDistance = worldSettings.transitionDistance;
         for (int i = 0; i < worldSettings.biomes.Length; i++)
         {
-			oldBiomes[i] = new BiomeSettings();
+			oldBiomes[i] = (BiomeSettings)(BiomeSettings.CreateInstance("BiomeSettings"));
 			oldBiomes[i].startHumidity = worldSettings.biomes[i].startHumidity;
 			oldBiomes[i].endHumidity = worldSettings.biomes[i].endHumidity;
 			oldBiomes[i].startTemperature = worldSettings.biomes[i].startTemperature;

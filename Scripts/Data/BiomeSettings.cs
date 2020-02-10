@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class BiomeSettings {
+[CreateAssetMenu()]
+public class BiomeSettings : UpdatableData {
 	
 	public BiomeTextureData textureData;
 	public NoiseMapSettings heightMapSettings;
+
+	public TerrainObject[] terrainObjects;
 
 	[Range(0,1)]
 	public float startHumidity;
