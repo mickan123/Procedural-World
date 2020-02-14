@@ -6,8 +6,6 @@ using UnityEngine;
 public class ErosionSettings : UpdatableData {
 
     public event System.Action subscribeUpdatedValues;
-
-	public ComputeShader erosionShader;
 	
 	public int numErosionIterations = 50000;
     [Range(2, 10)]

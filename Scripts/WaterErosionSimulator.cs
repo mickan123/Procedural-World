@@ -151,7 +151,7 @@ public static class WaterErosionSimulator {
                 }
 
                 // Update droplet's speed and water content
-                speed = Mathf.Sqrt(speed * speed - deltaHeight * settings.gravity);
+                speed = Mathf.Sqrt(speed * speed + deltaHeight * settings.gravity);
                 water *= (1 - settings.evaporateSpeed);
             }
         }
