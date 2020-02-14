@@ -40,7 +40,7 @@ public static class NoiseMapGenerator {
 				}
 			}
 		}
-
+		
 		return new NoiseMap(values, minValue, maxValue);
 	}
 

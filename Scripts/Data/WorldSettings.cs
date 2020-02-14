@@ -8,6 +8,8 @@ public class WorldSettings : UpdatableData {
 
 	public NoiseMapSettings humidityMapSettings;
 	public NoiseMapSettings temperatureMapSettings;
+	public ErosionSettings erosionSettings;
+	
 	const TextureFormat textureFormat = TextureFormat.RGB565;
 
 	[Range(0,1)]
@@ -35,6 +37,7 @@ public class WorldSettings : UpdatableData {
 		
 		temperatureMapSettings.seed = prng.Next(-100000, 100000);
 		humidityMapSettings.seed = prng.Next(-100000, 100000);
+		erosionSettings.seed = prng.Next(-100000, 100000);
 
 		for (int i = 0; i < biomes.Length; i++) {
 			biomes[i].heightMapSettings.seed = prng.Next(-100000, 100000);
@@ -116,17 +119,20 @@ public class WorldSettings : UpdatableData {
 	public void SubscribeChildren() {
 		humidityMapSettings.subscribeUpdatedValues += OnValidate;
 		temperatureMapSettings.subscribeUpdatedValues += OnValidate;
+		erosionSettings.subscribeUpdatedValues += OnValidate;
 	}
 
 	public void UnsubscribeChildren() {
 		humidityMapSettings.subscribeUpdatedValues -= OnValidate;
 		temperatureMapSettings.subscribeUpdatedValues -= OnValidate;
+		erosionSettings.subscribeUpdatedValues -= OnValidate;
 	}
 
 	protected override void OnValidate() {
 		// TODO ensure no overlapping biome values
 		humidityMapSettings.ValidateValues();
 		temperatureMapSettings.ValidateValues();
+		erosionSettings.ValidateValues();
 		base.OnValidate();
 	}
 

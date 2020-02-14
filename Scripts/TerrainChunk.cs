@@ -74,7 +74,9 @@ public class TerrainChunk {
 		}
 
 		maxViewDst = detailLevels[detailLevels.Length - 1].visibleDstThreshold;
+	}
 
+	public void PrepareComputeBuffers() {
 		
 	}
 
@@ -101,6 +103,10 @@ public class TerrainChunk {
 		
 		heightMapReceived = true;
 		
+		// for (int i = 0; i < this.biomeData.biomeObjects.Count; i++) {
+		// 	this.biomeData.biomeObjects[i].spawn(new Vector3(sampleCentre.x, 0, sampleCentre.y));
+		// }
+
 		UpdateMaterial();
 		UpdateTerrainChunk();
 	}

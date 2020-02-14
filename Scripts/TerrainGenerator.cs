@@ -59,8 +59,8 @@ public class TerrainGenerator : MonoBehaviour {
 			visibleTerrainChunks [i].UpdateTerrainChunk ();
 		}
 			
-		int currentChunkCoordX = Mathf.RoundToInt (viewerPosition.x / meshWorldSize);
-		int currentChunkCoordY = Mathf.RoundToInt (viewerPosition.y / meshWorldSize);
+		int currentChunkCoordX = Mathf.RoundToInt(viewerPosition.x / meshWorldSize);
+		int currentChunkCoordY = Mathf.RoundToInt(viewerPosition.y / meshWorldSize);
 
 		for (int yOffset = -chunksVisibleInViewDst; yOffset <= chunksVisibleInViewDst; yOffset++) {
 			for (int xOffset = -chunksVisibleInViewDst; xOffset <= chunksVisibleInViewDst; xOffset++) {
@@ -69,15 +69,15 @@ public class TerrainGenerator : MonoBehaviour {
 					if (terrainChunkDictionary.ContainsKey (viewedChunkCoord)) {
 						terrainChunkDictionary [viewedChunkCoord].UpdateTerrainChunk ();
 					} else {
-						TerrainChunk newChunk = new TerrainChunk (viewedChunkCoord, 
-																  worldSettings,
-																  meshSettings, 
-																  detailLevels, 
-																  colliderLODIndex, 
-																  transform, 
-																  mapMaterial,
-																  viewer);
-						terrainChunkDictionary.Add (viewedChunkCoord, newChunk);
+						TerrainChunk newChunk = new TerrainChunk(viewedChunkCoord, 
+																 worldSettings,
+																 meshSettings, 
+																 detailLevels, 
+																 colliderLODIndex, 
+																 transform, 
+																 mapMaterial,
+																 viewer);
+						terrainChunkDictionary.Add(viewedChunkCoord, newChunk);
 						newChunk.onVisibilityChanged += OnTerrainChunkVisibilityChanged;
 						newChunk.Load();
 					}

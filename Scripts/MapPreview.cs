@@ -149,8 +149,10 @@ public class MapPreview : MonoBehaviour {
                                                                      humidityMap,
                                                                      humidityMap,
                                                                      Vector2.zero,
-                                                                     biomeInfo);																	 
-        DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, EditorPreviewLOD));
+                                                                     biomeInfo);
+
+		float[,] erodedValues = WaterErosionSimulator.Erode(heightMap.values, worldSettings.erosionSettings);															 
+        DrawMesh(MeshGenerator.GenerateTerrainMesh(erodedValues, meshSettings, EditorPreviewLOD));
     }
 
     private void DrawBiomes(int width, int height, NoiseMap humidityMap, NoiseMap temperatureMap)
