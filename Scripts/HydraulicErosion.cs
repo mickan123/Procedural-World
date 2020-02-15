@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-public static class WaterErosionSimulator {
+public static class HydraulicErosion {
 
-
-    
     private class BrushValues {
         public int[][] erosionBrushIndices;
         public float[][] erosionBrushWeights;
@@ -45,6 +43,7 @@ public static class WaterErosionSimulator {
                                     yOffsets[addIndex] = y;
                                     addIndex++;
                                 }
+                                
                             }
                         }
                     }
@@ -67,11 +66,18 @@ public static class WaterErosionSimulator {
         
         int mapSize = values.GetLength(0);
 
+        float[] map = new float[mapSize * mapSize];
+        for (int i = 0; i < mapSize; i++) {
+            for (int j = 0; j < mapSize; j++) {
+                map[i * mapSize + j] = values[i, j];
+            }
+        }
+
         BrushValues brushValues = new BrushValues(settings, mapSize);
         
         System.Random prng = new System.Random(settings.seed);
         
-        for (int iteration = 0; iteration < settings.numErosionIterations; iteration++) {
+        for (int iteration = 0; iteration < settings.numHydraulicErosionIterations; iteration++) {
             float posX = prng.Next(0, mapSize - 1);
             float posY = prng.Next(0, mapSize - 1);
 
@@ -92,7 +98,7 @@ public static class WaterErosionSimulator {
                 float cellOffsetY = posY - nodeY;
 
                 // Calculate droplet's height and direction of flow with bilinear interpolation of surrounding heights
-                HeightAndGradient heightAndGradient = CalculateHeightAndGradient(values, posX, posY);
+                HeightAndGradient heightAndGradient = CalculateHeightAndGradient(map, mapSize, posX, posY);
 
                 // Update the droplet's direction and position (move position 1 unit regardless of speed)
                 dirX = (dirX * settings.inertia - heightAndGradient.gradientX * (1 - settings.inertia));
@@ -113,7 +119,7 @@ public static class WaterErosionSimulator {
                 }
 
                 // Find the droplet's new height and calculate the deltaHeight
-                float newHeight = CalculateHeightAndGradient(values, posX, posY).height;
+                float newHeight = CalculateHeightAndGradient(map, mapSize, posX, posY).height;
                 float deltaHeight = newHeight - heightAndGradient.height;
 
                 // Calculate the droplet's sediment capacity (higher when moving fast down a slope and contains lots of water)
@@ -127,10 +133,10 @@ public static class WaterErosionSimulator {
 
                     // Add the sediment to the four nodes of the current cell using bilinear interpolation
                     // Deposition is not distributed over a radius (like erosion) so that it can fill small pits
-                    values[nodeX, nodeY] += amountToDeposit * (1 - cellOffsetX) * (1 - cellOffsetY);
-                    values[nodeX + 1, nodeY] += amountToDeposit * cellOffsetX * (1 - cellOffsetY);
-                    values[nodeX, nodeY + 1] += amountToDeposit * (1 - cellOffsetX) * cellOffsetY;
-                    values[nodeX + 1, nodeY + 1] += amountToDeposit * cellOffsetX * cellOffsetY;
+                    map[dropletIndex] += amountToDeposit * (1 - cellOffsetX) * (1 - cellOffsetY);
+                    map[dropletIndex + 1] += amountToDeposit * cellOffsetX * (1 - cellOffsetY);
+                    map[dropletIndex + mapSize] += amountToDeposit * (1 - cellOffsetX) * cellOffsetY;
+                    map[dropletIndex + 1 + mapSize] += amountToDeposit * cellOffsetX * cellOffsetY;
                 }
                 else {
                     // Erode a fraction of the droplet's current carry capacity.
@@ -139,13 +145,10 @@ public static class WaterErosionSimulator {
                     
                     for (int brushIndex = 0; brushIndex < brushValues.erosionBrushIndices[dropletIndex].Length; brushIndex++) {
                         int nodeIndex = brushValues.erosionBrushIndices[dropletIndex][brushIndex];
-                        
-                        int erodeX = (nodeIndex) % mapSize;
-                        int erodeY = (nodeIndex) / mapSize;
 
                         float weightedErodeAmount = amountToErode * brushValues.erosionBrushWeights[dropletIndex][brushIndex];
-                        float deltaSediment = (values[erodeX, erodeY] < weightedErodeAmount) ? values[erodeX, erodeY] : weightedErodeAmount;
-                        values[erodeX, erodeY] -= deltaSediment;
+                        float deltaSediment = (map[nodeIndex] < weightedErodeAmount) ? map[nodeIndex] : weightedErodeAmount;
+                        map[nodeIndex] -= deltaSediment;
                         sediment += deltaSediment;
                     }
                 }
@@ -155,11 +158,16 @@ public static class WaterErosionSimulator {
                 water *= (1 - settings.evaporateSpeed);
             }
         }
+        for (int i = 2; i < mapSize - 2; i++) {
+            for (int j = 2; j < mapSize - 2; j++) {
+                values[i, j] = map[i * mapSize + j];
+            }
+        }
         
         return values;
     }
 
-    private static HeightAndGradient CalculateHeightAndGradient(float[,] map, float posX, float posY) {
+    private static HeightAndGradient CalculateHeightAndGradient(float[] map, int mapSize, float posX, float posY) {
         int coordX = (int) posX;
         int coordY = (int) posY;
 
@@ -168,10 +176,11 @@ public static class WaterErosionSimulator {
         float y = posY - coordY;
 
         // Calculate heights of the four nodes of the droplet's cell'
-        float heightNW = map[coordX, coordY];
-        float heightNE = map[coordX + 1, coordY];
-        float heightSW = map[coordX, coordY + 1];
-        float heightSE = map[coordX + 1, coordY + 1];
+        int nodeIndexNW = coordY * mapSize + coordX;
+        float heightNW = map[nodeIndexNW];
+        float heightNE = map[nodeIndexNW + 1];
+        float heightSW = map[nodeIndexNW + mapSize];
+        float heightSE = map[nodeIndexNW + mapSize + 1];
 
         // Calculate droplet's direction of flow with bilinear interpolation of height difference along the edges
         float gradientX = (heightNE - heightNW) * (1 - y) + (heightSE - heightSW) * y;

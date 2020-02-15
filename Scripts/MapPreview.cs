@@ -60,6 +60,8 @@ public class MapPreview : MonoBehaviour {
 															   NoiseMapGenerator.NormalizeMode.Global,
                                                                worldSettings.temperatureMapSettings.seed);
 		
+
+		var startTime = Time.realtimeSinceStartup;
 		if (drawMode == DrawMode.NoiseMap) {
 			NoiseMap heightMap = NoiseMapGenerator.GenerateNoiseMap(width,
                                                            height,
@@ -98,42 +100,49 @@ public class MapPreview : MonoBehaviour {
 		else if (drawMode == DrawMode.SingleBiome) {
             DrawSingleBiome(width, height, humidityMap);
         }
+
+		var endTime = Time.realtimeSinceStartup;
+        Debug.Log("Time taken: " + (endTime - startTime));
     }
 
     private void DrawSingleBiome(int width, int height, NoiseMap humidityMap)
     {
 		BiomeSettings[] oldBiomes = new BiomeSettings[worldSettings.biomes.Length];
 		float oldTransitionDistance = worldSettings.transitionDistance;
-        for (int i = 0; i < worldSettings.biomes.Length; i++)
-        {
-			oldBiomes[i] = (BiomeSettings)(BiomeSettings.CreateInstance("BiomeSettings"));
-			oldBiomes[i].startHumidity = worldSettings.biomes[i].startHumidity;
-			oldBiomes[i].endHumidity = worldSettings.biomes[i].endHumidity;
-			oldBiomes[i].startTemperature = worldSettings.biomes[i].startTemperature;
-			oldBiomes[i].endTemperature = worldSettings.biomes[i].endTemperature;
 
-            worldSettings.biomes[i].startHumidity = 0f;
-            worldSettings.biomes[i].endHumidity = 0f;
-            worldSettings.biomes[i].startTemperature = 0f;
-            worldSettings.biomes[i].endTemperature = 0f;
-        }
+		try {
+			for (int i = 0; i < worldSettings.biomes.Length; i++)
+			{
+				oldBiomes[i] = (BiomeSettings)(BiomeSettings.CreateInstance("BiomeSettings"));
+				oldBiomes[i].startHumidity = worldSettings.biomes[i].startHumidity;
+				oldBiomes[i].endHumidity = worldSettings.biomes[i].endHumidity;
+				oldBiomes[i].startTemperature = worldSettings.biomes[i].startTemperature;
+				oldBiomes[i].endTemperature = worldSettings.biomes[i].endTemperature;
 
-        worldSettings.biomes[singleBiome].endHumidity = 1f;
-        worldSettings.biomes[singleBiome].endTemperature = 1f;
-		worldSettings.transitionDistance = 0f;
-		worldSettings.ApplyToMaterial(terrainMaterial);
+				worldSettings.biomes[i].startHumidity = 0f;
+				worldSettings.biomes[i].endHumidity = 0f;
+				worldSettings.biomes[i].startTemperature = 0f;
+				worldSettings.biomes[i].endTemperature = 0f;
+			}
 
-        DrawBiomeMesh(width, height, humidityMap);
+			worldSettings.biomes[singleBiome].endHumidity = 1f;
+			worldSettings.biomes[singleBiome].endTemperature = 1f;
+			worldSettings.transitionDistance = 0f;
+			worldSettings.ApplyToMaterial(terrainMaterial);
 
-		// Reset settings
-		for (int i = 0; i < worldSettings.biomes.Length; i++)
-        {
-			worldSettings.biomes[i].startHumidity = oldBiomes[i].startHumidity;
-			worldSettings.biomes[i].endHumidity = oldBiomes[i].endHumidity;
-			worldSettings.biomes[i].startTemperature = oldBiomes[i].startTemperature;
-			worldSettings.biomes[i].endTemperature = oldBiomes[i].endTemperature;
+			DrawBiomeMesh(width, height, humidityMap);
+
+		} finally {
+			// Reset settings
+			for (int i = 0; i < worldSettings.biomes.Length; i++)
+			{
+				worldSettings.biomes[i].startHumidity = oldBiomes[i].startHumidity;
+				worldSettings.biomes[i].endHumidity = oldBiomes[i].endHumidity;
+				worldSettings.biomes[i].startTemperature = oldBiomes[i].startTemperature;
+				worldSettings.biomes[i].endTemperature = oldBiomes[i].endTemperature;
+			}
+			worldSettings.transitionDistance = oldTransitionDistance;
 		}
-		worldSettings.transitionDistance = oldTransitionDistance;
     }
 
     private void DrawBiomeMesh(int width, int height, NoiseMap humidityMap)
@@ -151,8 +160,11 @@ public class MapPreview : MonoBehaviour {
                                                                      Vector2.zero,
                                                                      biomeInfo);
 
-		float[,] erodedValues = WaterErosionSimulator.Erode(heightMap.values, worldSettings.erosionSettings);															 
+		float[,] erodedValues = HydraulicErosion.Erode(heightMap.values, worldSettings.erosionSettings);	
+		erodedValues = ThermalErosion.Erode(erodedValues, worldSettings.erosionSettings);														 
         DrawMesh(MeshGenerator.GenerateTerrainMesh(erodedValues, meshSettings, EditorPreviewLOD));
+
+		
     }
 
     private void DrawBiomes(int width, int height, NoiseMap humidityMap, NoiseMap temperatureMap)
