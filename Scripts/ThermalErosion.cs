@@ -4,11 +4,7 @@ using UnityEngine;
 
 public static class ThermalErosion  {
 
-	private static readonly int[,] offsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1} };
-
-	private static bool Inside(int x, int y, int mapSize) {
-		return (x >= 0 && y >= 0 && x < mapSize && y < mapSize);
-	}
+	private static readonly int[,] offsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1}, { 1 , 1}, { 1 , -1}, { -1, 1}, { -1 , -1} };
 
 	public static float[,] Erode(float[,] values, ErosionSettings settings) {
 		
@@ -26,8 +22,7 @@ public static class ThermalErosion  {
 					for (int i = 0; i < numNeighbours; i++) {
 						int offsetX = x + offsets[i, 0];
 						int offsetY = y + offsets[i, 1];
-
-						if (Inside(offsetX, offsetY, mapSize)) {
+						if (offsetX >= 0 && offsetY >= 0 && offsetX < mapSize && offsetY < mapSize) {
 							heightDifferences[i] = (values[offsetX, offsetY] - values[x, y]);
 							sumHeightDifferences += Mathf.Max(0f, heightDifferences[i]);
 						} else {
@@ -39,8 +34,8 @@ public static class ThermalErosion  {
 					for (int i = 0; i < numNeighbours; i++) {
 						int offsetX = x + offsets[i, 0];
 						int offsetY = y + offsets[i, 1];
-
-						if (Inside(offsetX, offsetY, mapSize) && heightDifferences[i] > settings.talusAngle) {
+						if (offsetX >= 0 && offsetY >= 0 && offsetX < mapSize && offsetY < mapSize 
+						    && heightDifferences[i] > settings.talusAngle) {
 							
 							float volumeToBeMoved = (heightDifferences[i] / sumHeightDifferences) * settings.thermalErosionRate * settings.hardness * 0.5f;
 
