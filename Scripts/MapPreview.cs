@@ -61,7 +61,6 @@ public class MapPreview : MonoBehaviour {
                                                                worldSettings.temperatureMapSettings.seed);
 		
 
-		var startTime = Time.realtimeSinceStartup;
 		if (drawMode == DrawMode.NoiseMap) {
 			NoiseMap heightMap = NoiseMapGenerator.GenerateNoiseMap(width,
                                                            height,
@@ -100,9 +99,6 @@ public class MapPreview : MonoBehaviour {
 		else if (drawMode == DrawMode.SingleBiome) {
             DrawSingleBiome(width, height, humidityMap);
         }
-
-		var endTime = Time.realtimeSinceStartup;
-        Debug.Log("Time taken: " + (endTime - startTime));
     }
 
     private void DrawSingleBiome(int width, int height, NoiseMap humidityMap)
@@ -160,11 +156,25 @@ public class MapPreview : MonoBehaviour {
                                                                      Vector2.zero,
                                                                      biomeInfo);
 
+		var startTime = Time.realtimeSinceStartup;
 		float[,] erodedValues = HydraulicErosion.Erode(heightMap.values, worldSettings.erosionSettings);	
-		erodedValues = ThermalErosion.Erode(erodedValues, worldSettings.erosionSettings);														 
+
+		var endTime = Time.realtimeSinceStartup;
+        Debug.Log("Hydraulic Erosion Time: " + (endTime - startTime));
+		startTime = Time.realtimeSinceStartup;
+
+		erodedValues = ThermalErosion.Erode(erodedValues, worldSettings.erosionSettings);		
+
+		endTime = Time.realtimeSinceStartup;
+        Debug.Log("Thermal Erosion Time: " + (endTime - startTime));
+		startTime = Time.realtimeSinceStartup;
+
         DrawMesh(MeshGenerator.GenerateTerrainMesh(erodedValues, meshSettings, EditorPreviewLOD));
 
-		
+		endTime = Time.realtimeSinceStartup;
+        Debug.Log("Draw Time: " + (endTime - startTime));
+		startTime = Time.realtimeSinceStartup;
+				
     }
 
     private void DrawBiomes(int width, int height, NoiseMap humidityMap, NoiseMap temperatureMap)
