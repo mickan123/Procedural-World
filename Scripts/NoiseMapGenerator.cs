@@ -25,23 +25,13 @@ public static class NoiseMapGenerator {
 
 		AnimationCurve heightCurve_threadsafe = new AnimationCurve(noiseSettings.heightCurve.keys);
 
-		float minValue = float.MaxValue;
-		float maxValue = float.MinValue;
-
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
 				values[i, j] *= heightCurve_threadsafe.Evaluate(values[i, j]) * noiseSettings.heightMultiplier;
-
-				if (values[i, j] > maxValue) {
-					maxValue = values[i, j];
-				}
-				if (values[i, j] < minValue) {
-					minValue = values[i, j];
-				}
 			}
 		}
 		
-		return new NoiseMap(values, minValue, maxValue);
+		return new NoiseMap(values);
 	}
 
 	// Wrapper to generate noise
@@ -69,25 +59,15 @@ public static class NoiseMapGenerator {
 		// Calculate final noise map values by blending where near another biome
 		float[,] finalNoiseMapValues = new float[width, height];
 
-		float minValue = float.MaxValue;
-		float maxValue = float.MinValue;
-
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
 				for (int biome = 0; biome < numBiomes; biome++) {
 					finalNoiseMapValues[x, y] += biomeNoiseMaps[biome].values[x, y] * biomeInfo.biomeStrengths[x, y, biome];
 				}
-
-				if (finalNoiseMapValues[x, y] > maxValue) {
-					maxValue = finalNoiseMapValues[x, y];
-				}
-				if (finalNoiseMapValues[x, y] < minValue) {
-					minValue = finalNoiseMapValues[x, y];
-				}
 			}
 		}
 
-		return new NoiseMap(finalNoiseMapValues, minValue, maxValue);
+		return new NoiseMap(finalNoiseMapValues);
 	}
 
 	public static BiomeInfo GenerateBiomeInfo(int width, int height, NoiseMap humidityNoiseMap, NoiseMap temperatureNoiseMap, WorldSettings settings) {
@@ -167,12 +147,8 @@ public struct BiomeInfo {
 
 public struct NoiseMap {
 	public readonly float[,] values;
-	public readonly float minValue;
-	public readonly float maxValue;
 
-	public NoiseMap(float[,] values, float minValue, float maxValue) {
+	public NoiseMap(float[,] values) {
 		this.values = values;
-		this.minValue = minValue;
-		this.maxValue = maxValue;
 	}
 }

@@ -18,11 +18,27 @@ public static class TextureGenerator {
 		int height = heightMap.values.GetLength(1);
 
 		Color[] colourMap = new Color[width * height];
+
+		float minValue = float.MaxValue;
+		float maxValue = float.MinValue;
+
+		for (int x = 0; x < height; x++) {
+			for (int y = 0; y < width; y++) {
+
+				if (heightMap.values[x, y] < minValue) {
+					minValue = heightMap.values[x, y];
+				}
+				if (heightMap.values[x, y] > maxValue) {
+					maxValue = heightMap.values[x, y];
+				}
+			}
+		}
+
 		for (int y = 0; y < height; y++) {
 			for (int x = 0; x < width; x++) {
 				colourMap[y * width + x] = Color.Lerp(Color.black, 
 													  Color.white, 
-													  Mathf.InverseLerp(heightMap.minValue, heightMap.maxValue, heightMap.values[x, y]));
+													  Mathf.InverseLerp(minValue, maxValue, heightMap.values[x, y]));
 			}
 		}
 

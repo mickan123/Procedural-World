@@ -82,7 +82,7 @@ public class MapPreview : MonoBehaviour {
 			DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, EditorPreviewLOD));
 		}
 		else if (drawMode == DrawMode.FalloffMap) {
-			DrawTexture(TextureGenerator.TextureFromHeightMap(new NoiseMap(FalloffGenerator.GenerateFalloffMap(width), 0, 1)));
+			DrawTexture(TextureGenerator.TextureFromHeightMap(new NoiseMap(FalloffGenerator.GenerateFalloffMap(width))));
 		}
 		else if (drawMode == DrawMode.BiomesMesh) {
             DrawBiomeMesh(width, height, humidityMap);
@@ -191,7 +191,7 @@ public class MapPreview : MonoBehaviour {
             }
         }
 
-        DrawTexture(TextureGenerator.TextureFromHeightMap(new NoiseMap(biomeTextureMap, 0, 1)));
+        DrawTexture(TextureGenerator.TextureFromHeightMap(new NoiseMap(biomeTextureMap)));
     }
 
     void OnValuesUpdated() {
