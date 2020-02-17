@@ -10,27 +10,16 @@ public static class Noise {
 	public static float[,] GenerateNoiseMap(int mapWidth, 
 											int mapHeight, 
 											NoiseSettings noiseSettings, 
-											WorldSettings worldSettings, 
 											Vector2 sampleCentre,
 											int seed) {
 
 		float[,] noiseMap = new float[mapWidth, mapHeight];
 		System.Random prng = new System.Random(seed);
 
-		int maxNumOctaves = 1;
-		NoiseSettings[] noiseSettingArray = worldSettings.biomes.Select(x => x.heightMapSettings.noiseSettings).ToArray();
-		for (int i = 0; i < noiseSettingArray.Length; i++) {
-			if (noiseSettingArray[i].octaves > maxNumOctaves) {
-				maxNumOctaves = noiseSettingArray[i].octaves;
-			}
-		}
-
-		maxNumOctaves = Math.Max(maxNumOctaves, noiseSettings.octaves);
-
 		// Calculate octave offsets for max num of octaves and calculate max possible height at same time
-		Vector2[] octaveOffsets = new Vector2[maxNumOctaves];
+		Vector2[] octaveOffsets = new Vector2[noiseSettings.octaves];
 		
-		for (int i = 0; i < maxNumOctaves; i++) {
+		for (int i = 0; i < noiseSettings.octaves; i++) {
 			float offsetX = prng.Next(-100000, 100000) + sampleCentre.x;
 			float offsetY = prng.Next(-100000, 100000) - sampleCentre.y;
 			octaveOffsets[i] = new Vector2(offsetX, offsetY);

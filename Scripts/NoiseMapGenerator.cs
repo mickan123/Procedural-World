@@ -14,7 +14,7 @@ public static class NoiseMapGenerator {
 											Vector2 sampleCentre, 
 											NormalizeMode normalizeMode,
 											int seed) {
-		float[,] values = Noise.GenerateNoiseMap(width, height, noiseSettings.noiseSettings, worldSettings, sampleCentre, seed);
+		float[,] values = Noise.GenerateNoiseMap(width, height, noiseSettings.noiseSettings, sampleCentre, seed);
 
 		if (normalizeMode == NormalizeMode.GlobalBiome) {
 			values = Noise.normalizeGlobalBiomeValues(values, worldSettings);

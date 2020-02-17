@@ -41,6 +41,10 @@ public class WorldSettings : UpdatableData {
 
 		for (int i = 0; i < biomes.Length; i++) {
 			biomes[i].heightMapSettings.seed = prng.Next(-100000, 100000);
+
+			for (int j = 0; j < biomes[i].terrainObjects.Count; j++) {
+				biomes[i].terrainObjects[j].noiseMapSettings.seed = prng.Next(-100000, 100000);
+			}
 		}
 	}
 

@@ -9,6 +9,11 @@ public class TerrainObject : UpdatableData {
 
 	public GameObject terrainObject;
 
+	// Allow us to spawn certain objects in clumps
+	public NoiseMapSettings noiseMapSettings;  
+
+	
+
 	public void spawn(Vector3 position) {
 		Instantiate(terrainObject, position, Quaternion.identity);
 	}

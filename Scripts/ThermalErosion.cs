@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class ThermalErosion  {
 
-	private static readonly int[,] offsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1}, { 1 , 1}, { 1 , -1}, { -1, 1}, { -1 , -1} };
+	private static readonly int[,] offsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1} };
 
 	public static float[,] Erode(float[,] values, ErosionSettings settings) {
 		
