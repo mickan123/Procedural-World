@@ -71,7 +71,6 @@ public class TerrainGenerator : MonoBehaviour {
 					} else {
 						TerrainChunk newChunk = new TerrainChunk(viewedChunkCoord, 
 																 worldSettings,
-																 meshSettings, 
 																 detailLevels, 
 																 colliderLODIndex, 
 																 transform, 

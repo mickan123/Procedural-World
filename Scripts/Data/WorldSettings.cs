@@ -9,6 +9,7 @@ public class WorldSettings : UpdatableData {
 	public NoiseMapSettings humidityMapSettings;
 	public NoiseMapSettings temperatureMapSettings;
 	public ErosionSettings erosionSettings;
+	public MeshSettings meshSettings;
 	
 	const TextureFormat textureFormat = TextureFormat.RGB565;
 
@@ -42,8 +43,10 @@ public class WorldSettings : UpdatableData {
 		for (int i = 0; i < biomes.Length; i++) {
 			biomes[i].heightMapSettings.seed = prng.Next(-100000, 100000);
 
-			for (int j = 0; j < biomes[i].terrainObjects.Count; j++) {
-				biomes[i].terrainObjects[j].noiseMapSettings.seed = prng.Next(-100000, 100000);
+			for (int j = 0; j < biomes[i].terrainObjectSettings.Length; j++) {
+				if (biomes[i].terrainObjectSettings[j] != null) {
+					biomes[i].terrainObjectSettings[j].noiseMapSettings.seed = prng.Next(-100000, 100000);
+				}
 			}
 		}
 	}
@@ -91,6 +94,7 @@ public class WorldSettings : UpdatableData {
 		material.SetTexture("baseTextures", texturesArray);
 		material.SetFloat("minHeight", minHeight);
 		material.SetFloat("maxHeight", maxHeight);
+		material.SetInt("chunkWidth", meshSettings.meshWorldSize);
 	}
 
 

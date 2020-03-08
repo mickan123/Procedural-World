@@ -38,11 +38,9 @@ public static class BiomeNoiseMapGenerator {
 
 		float[,] values = HydraulicErosion.Erode(heightNoiseMap.values, worldSettings.erosionSettings);
 		values = ThermalErosion.Erode(heightNoiseMap.values, worldSettings.erosionSettings);
-		NoiseMap erodedNoiseMap = new NoiseMap(values);
+		NoiseMap erodedNoiseMap = new NoiseMap(values);	
 
-		List<TerrainObject> biomeObjects = ObjectGenerator.GenerateBiomeObjects(erodedNoiseMap, biomeInfo, worldSettings);	
-
-		return new BiomeData(erodedNoiseMap, temperatureNoiseMap, humidityNoiseMap, biomeInfo, biomeObjects);
+		return new BiomeData(erodedNoiseMap, temperatureNoiseMap, humidityNoiseMap, biomeInfo);
 	}
 }
 
@@ -52,13 +50,11 @@ public struct BiomeData {
 	public readonly NoiseMap humidityNoiseMap;
 	public readonly NoiseMap temperatureNoiseMap;
 	public readonly BiomeInfo biomeInfo;
-	public readonly List<TerrainObject> biomeObjects;
 
-	public BiomeData(NoiseMap heightNoiseMap, NoiseMap humidityNoiseMap, NoiseMap temperatureNoiseMap, BiomeInfo biomeInfo, List<TerrainObject> biomeObjects) {
+	public BiomeData(NoiseMap heightNoiseMap, NoiseMap humidityNoiseMap, NoiseMap temperatureNoiseMap, BiomeInfo biomeInfo) {
 		this.heightNoiseMap = heightNoiseMap;
 		this.humidityNoiseMap = humidityNoiseMap;
 		this.temperatureNoiseMap = temperatureNoiseMap;
 		this.biomeInfo = biomeInfo;
-		this.biomeObjects = biomeObjects;
 	}
 }

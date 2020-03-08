@@ -36,7 +36,6 @@ public class TerrainChunk {
 
 	public TerrainChunk(Vector2 coord, 
 						WorldSettings worldSettings,
-						MeshSettings meshSettings, 
 						LODInfo[] detailLevels, 
 						int colliderLODIndex, 
 						Transform parent, 
@@ -46,7 +45,7 @@ public class TerrainChunk {
 		this.detailLevels = detailLevels;
 		this.colliderLODIndex = colliderLODIndex;
 		this.worldSettings = worldSettings;
-		this.meshSettings = meshSettings;
+		this.meshSettings = worldSettings.meshSettings;
 		this.viewer = viewer;
 
 		sampleCentre = coord * meshSettings.meshWorldSize / meshSettings.meshScale;
@@ -92,23 +91,16 @@ public class TerrainChunk {
 		this.biomeData = (BiomeData)biomeDataObject;
 		this.heightMap = this.biomeData.heightNoiseMap;
 		
-		// int width = this.heightMap.values.GetLength(0);
-		// float[,] debugVals = new float[width, width];
-		// for (int i = 0; i < width; i++) {
-		// 	for (int j = 0; j < width; j++) {
-		// 		debugVals[i, j] = (float)this.biomeData.biomeInfo.biomeStrengths[i, j, 0] * 100f;
-		// 	}
-		// }
-		// this.heightMap = new NoiseMap(debugVals, 0f, 1f);
-		
 		heightMapReceived = true;
 		
-		// for (int i = 0; i < this.biomeData.biomeObjects.Count; i++) {
-		// 	this.biomeData.biomeObjects[i].spawn(new Vector3(sampleCentre.x, 0, sampleCentre.y));
-		// }
-
 		UpdateMaterial();
 		UpdateTerrainChunk();
+
+		ThreadedDataRequester.RequestData(() => ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 
+																					biomeData.biomeInfo, 
+																					worldSettings, 
+																					sampleCentre),
+										    OnBiomeObjectsReceived);
 	}
 
     void UpdateMaterial()
@@ -214,6 +206,15 @@ public class TerrainChunk {
 			}
 		}
 	}
+
+	void OnBiomeObjectsReceived(object biomeObjects) {
+		List<TerrainObject> terrainObjects = (List<TerrainObject>)biomeObjects;
+
+		for (int i = 0; i < terrainObjects.Count; i++) {
+			terrainObjects[i].Spawn(meshObject.transform);
+		}
+	}
+
 
 	public void UpdateCollisionMesh() {
 		if (!hasSetCollider) {

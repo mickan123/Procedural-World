@@ -13,7 +13,6 @@ public class MapPreview : MonoBehaviour {
 	
 	public int singleBiome;  // If DrawMode is SingleBiome it will render this biome number
 
-	public MeshSettings meshSettings;
 	public WorldSettings worldSettings;
 	public NoiseMapSettings heightMapSettings;
 	
@@ -42,8 +41,10 @@ public class MapPreview : MonoBehaviour {
 		worldSettings.Init();
 		worldSettings.seed = this.seed;
 
-		int width = meshSettings.numVerticesPerLine;
-		int height = meshSettings.numVerticesPerLine;
+		ResetMapPreview();
+
+		int width = worldSettings.meshSettings.numVerticesPerLine;
+		int height = worldSettings.meshSettings.numVerticesPerLine;
 
 		NoiseMap humidityMap = NoiseMapGenerator.GenerateNoiseMap(width,
                                                             height,
@@ -79,7 +80,7 @@ public class MapPreview : MonoBehaviour {
                                                            Vector2.zero,
 														   NoiseMapGenerator.NormalizeMode.GlobalBiome,
                                                            heightMapSettings.seed);
-			DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, EditorPreviewLOD));
+			DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, worldSettings.meshSettings, EditorPreviewLOD));
 		}
 		else if (drawMode == DrawMode.FalloffMap) {
 			DrawTexture(TextureGenerator.TextureFromHeightMap(new NoiseMap(FalloffGenerator.GenerateFalloffMap(width))));
@@ -100,6 +101,16 @@ public class MapPreview : MonoBehaviour {
             DrawSingleBiome(width, height, humidityMap);
         }
     }
+
+	private void ResetMapPreview() {
+		// Cleanup previously spawned objects
+		for (int i = 0; i < this.transform.childCount; i++) {
+			Transform child = this.transform.GetChild(i);
+			if (child.name != "Preview Texture" && child.name != "Preview Mesh") {
+				DestroyImmediate(child.gameObject);
+			}
+		}
+	}
 
     private void DrawSingleBiome(int width, int height, NoiseMap humidityMap)
     {
@@ -143,38 +154,20 @@ public class MapPreview : MonoBehaviour {
 
     private void DrawBiomeMesh(int width, int height, NoiseMap humidityMap)
     {
-        BiomeInfo biomeInfo = NoiseMapGenerator.GenerateBiomeInfo(width,
-																  height,
-																  humidityMap,
-																  humidityMap,
-																  worldSettings);
-        NoiseMap heightMap = NoiseMapGenerator.GenerateBiomeNoiseMap(width,
-                                                                     height,
-                                                                     worldSettings,
-                                                                     humidityMap,
-                                                                     humidityMap,
-                                                                     Vector2.zero,
-                                                                     biomeInfo);
 
-		var startTime = Time.realtimeSinceStartup;
-		float[,] erodedValues = HydraulicErosion.Erode(heightMap.values, worldSettings.erosionSettings);	
+		BiomeData biomeData = BiomeNoiseMapGenerator.GenerateBiomeNoiseMaps(width,
+																			height,
+																			worldSettings,
+																			Vector2.zero);
 
-		var endTime = Time.realtimeSinceStartup;
-        Debug.Log("Hydraulic Erosion Time: " + (endTime - startTime));
-		startTime = Time.realtimeSinceStartup;
+		MeshData meshData = MeshGenerator.GenerateTerrainMesh(biomeData.heightNoiseMap.values, worldSettings.meshSettings, EditorPreviewLOD);
+        DrawMesh(meshData);
 
-		erodedValues = ThermalErosion.Erode(erodedValues, worldSettings.erosionSettings);		
+		List<TerrainObject> terrainObjects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, biomeData.biomeInfo, worldSettings, Vector2.zero);
 
-		endTime = Time.realtimeSinceStartup;
-        Debug.Log("Thermal Erosion Time: " + (endTime - startTime));
-		startTime = Time.realtimeSinceStartup;
-
-        DrawMesh(MeshGenerator.GenerateTerrainMesh(erodedValues, meshSettings, EditorPreviewLOD));
-
-		endTime = Time.realtimeSinceStartup;
-        Debug.Log("Draw Time: " + (endTime - startTime));
-		startTime = Time.realtimeSinceStartup;
-				
+		for (int i = 0; i < terrainObjects.Count; i++) {
+			terrainObjects[i].Spawn(this.transform);
+		}				
     }
 
     private void DrawBiomes(int width, int height, NoiseMap humidityMap, NoiseMap temperatureMap)
@@ -205,9 +198,9 @@ public class MapPreview : MonoBehaviour {
 	}
 
 	void OnValidate() {
-		if (meshSettings != null) {
-			meshSettings.OnValuesUpdated -= OnValuesUpdated; // Ensure we don't subscribe multiple times
-			meshSettings.OnValuesUpdated += OnValuesUpdated;
+		if (worldSettings.meshSettings != null) {
+			worldSettings.meshSettings.OnValuesUpdated -= OnValuesUpdated; // Ensure we don't subscribe multiple times
+			worldSettings.meshSettings.OnValuesUpdated += OnValuesUpdated;
 		}
 		if (heightMapSettings != null) {
 			heightMapSettings.OnValuesUpdated -= OnValuesUpdated;

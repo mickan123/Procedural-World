@@ -8,7 +8,7 @@ public class BiomeSettings : UpdatableData {
 	public BiomeTextureData textureData;
 	public NoiseMapSettings heightMapSettings;
 
-	public List<TerrainObject> terrainObjects = new List<TerrainObject>();
+	public TerrainObjectSettings[] terrainObjectSettings;
 
 	[Range(0,1)]
 	public float startHumidity;

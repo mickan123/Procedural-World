@@ -18,6 +18,7 @@
 		const static float epsilon = 1E-4;
 
 		int layerCounts[maxBiomeCount];
+		int chunkWidth;
 		float biomeTransitionDistances[maxBiomeCount];
 		float3 baseColours[maxLayerCount * maxBiomeCount];
 		float baseStartHeights[maxLayerCount * maxBiomeCount];
@@ -45,7 +46,6 @@
 			return saturate((value - a) / (b - a));
 		}
 
-		const static int chunkWidth = 292;
 		const static int biomeStrengthTextureWidth = 256;
 
 		// Biome data texture is stored as follows:
