@@ -8,7 +8,7 @@ public static class PoissonDiskSampling {
 												int mapSize, 
 												Vector2 sampleCentre, 
 												float[,] spawnNoiseMap, 
-												int numSamplesBeforeRejection = 2000) {
+												int numSamplesBeforeRejection = 200) {
 
 		float cellSize = settings.maxRadius / Mathf.Sqrt(2);
 
