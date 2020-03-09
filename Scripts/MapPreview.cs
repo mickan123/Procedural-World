@@ -14,10 +14,8 @@ public class MapPreview : MonoBehaviour {
 	public int singleBiome;  // If DrawMode is SingleBiome it will render this biome number
 
 	public WorldSettings worldSettings;
-	public NoiseMapSettings heightMapSettings;
+	private NoiseMapSettings heightMapSettings;
 	
-	public BiomeTextureData textureData;
-
 	public Material terrainMaterial;
 
 	[Range(0, MeshSettings.numSupportedLODs - 1)]
@@ -40,6 +38,8 @@ public class MapPreview : MonoBehaviour {
 		worldSettings.ApplyToMaterial(terrainMaterial);
 		worldSettings.Init();
 		worldSettings.seed = this.seed;
+
+		this.heightMapSettings = worldSettings.biomes[0].heightMapSettings;
 
 		ResetMapPreview();
 
@@ -164,7 +164,12 @@ public class MapPreview : MonoBehaviour {
 		MeshData meshData = MeshGenerator.GenerateTerrainMesh(biomeData.heightNoiseMap.values, worldSettings.meshSettings, EditorPreviewLOD);
         DrawMesh(meshData);
 
-		List<TerrainObject> terrainObjects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, biomeData.biomeInfo, worldSettings, Vector2.zero);
+		TerrainChunk.UpdateMaterial(biomeData.biomeInfo, worldSettings, Vector2.zero, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
+
+		List<TerrainObject> terrainObjects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 
+																					biomeData.biomeInfo, 
+																					worldSettings, 
+																					Vector2.zero);
 
 		for (int i = 0; i < terrainObjects.Count; i++) {
 			terrainObjects[i].Spawn(this.transform);
@@ -194,10 +199,6 @@ public class MapPreview : MonoBehaviour {
 		}
 	}
 
-	void OnTextureValuesUpdated() {
-		worldSettings.ApplyToMaterial(terrainMaterial);
-	}
-
 	void OnValidate() {
 		if (worldSettings.meshSettings != null) {
 			worldSettings.meshSettings.OnValuesUpdated -= OnValuesUpdated; // Ensure we don't subscribe multiple times
@@ -206,10 +207,6 @@ public class MapPreview : MonoBehaviour {
 		if (heightMapSettings != null) {
 			heightMapSettings.OnValuesUpdated -= OnValuesUpdated;
 			heightMapSettings.OnValuesUpdated += OnValuesUpdated;
-		}
-		if (textureData != null) {
-			textureData.OnValuesUpdated -= OnTextureValuesUpdated;
-			textureData.OnValuesUpdated += OnTextureValuesUpdated;
 		}
 		if (worldSettings != null) {
 			worldSettings.OnValuesUpdated -= OnValuesUpdated;

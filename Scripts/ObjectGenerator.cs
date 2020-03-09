@@ -35,12 +35,18 @@ public static class ObjectGenerator {
 		float[,] spawnNoiseMap = Noise.GenerateNoiseMap(mapSize, mapSize, settings.noiseMapSettings.noiseSettings, sampleCentre, settings.noiseMapSettings.seed);
 		for (int x = 0; x < spawnNoiseMap.GetLength(0); x++) {
 			for (int y = 0; y < spawnNoiseMap.GetLength(0); y++) {
-				spawnNoiseMap[x, y] = (spawnNoiseMap[x, y] + 1f) / 2f;
+				spawnNoiseMap[x, y] = (spawnNoiseMap[x, y] + 1f) / 2f; // Normalize between [0, 1]
 			}
 		}
 		
-		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings, worldSettings.meshSettings.meshWorldSize, biome, info, sampleCentre, spawnNoiseMap);
-		List<ObjectPosition> spawnPositions = new List<ObjectPosition>();		
+		System.Random prng = new System.Random((int)(sampleCentre.x + sampleCentre.y));
+
+		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings, worldSettings.meshSettings.meshWorldSize, sampleCentre, spawnNoiseMap);
+		points = FilterPointsByBiome(points, biome, info, prng);
+		points = FilterPointsBySlope(points, settings.minSlope, settings.maxSlope, heightMap.values);
+		points = FilterPointsByHeight(points, settings.minHeight, settings.maxHeight, heightMap.values);
+
+		List<ObjectPosition> spawnPositions = new List<ObjectPosition>();
 
 		for (int point = 0; point < points.Count; point++) {
 			Vector2 spawnPoint = points[point];
@@ -48,7 +54,8 @@ public static class ObjectGenerator {
 			Vector3 position = new Vector3(Mathf.FloorToInt(spawnPoint.x + sampleCentre.x) - (float)mapSize / 2f,
 											heightMap.values[Mathf.FloorToInt(spawnPoint.x), Mathf.FloorToInt(spawnPoint.y)], 
 											-Mathf.FloorToInt(spawnPoint.y - sampleCentre.y) + (float)mapSize / 2f);
-			Quaternion rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+
+			Quaternion rotation = Quaternion.Euler(0f, Common.NextFloat(prng, 0f, 360f), 0f);
 
 			spawnPositions.Add(new ObjectPosition(position, rotation));
 		}
@@ -56,4 +63,64 @@ public static class ObjectGenerator {
 		return new TerrainObject(settings.terrainObject, spawnPositions);
 	}
 
+
+	public static List<Vector2> FilterPointsByBiome(List<Vector2> points, int biome, BiomeInfo info, System.Random prng) {
+
+		for (int i = 0; i < points.Count; i++) {
+			float rand = (float)prng.NextDouble(); 
+
+			int coordX = (int) points[i].x;
+        	int coordY = (int) points[i].y;
+
+			if (info.biomeMap[coordX, coordY] != biome
+			&& rand > info.biomeStrengths[coordX, coordY, biome]) {
+				points.RemoveAt(i);
+				i--;
+			}
+		}
+		return points;
+	}
+
+	public static List<Vector2> FilterPointsBySlope(List<Vector2> points, float minSlope, float maxSlope, float[,] heightMap) {
+
+		for (int i = 0; i < points.Count; i++) {
+			
+			int coordX = (int) points[i].x;
+        	int coordY = (int) points[i].y;
+
+			// Calculate offset inside the cell (0,0) = at NW node, (1,1) = at SE node
+			float x = points[i].x - coordX;
+			float y = points[i].y - coordY;
+
+			float heightNW = heightMap[coordX, coordY];
+			float heightNE = heightMap[coordX + 1, coordY];
+			float heightSW = heightMap[coordX, coordY + 1];
+			float heightSE = heightMap[coordX + 1, coordY + 1];
+
+			float gradientX = (heightNE - heightNW) * (1 - y) + (heightSE - heightSW) * y;
+        	float gradientY = (heightSW - heightNW) * (1 - x) + (heightSE - heightNE) * x;
+
+			float slope = Mathf.Sqrt(gradientX * gradientX + gradientY * gradientY);
+
+			if (slope > maxSlope || slope < minSlope) {
+				points.RemoveAt(i);
+				i--;
+			}
+		}
+
+		return points;
+	}
+
+	public static List<Vector2> FilterPointsByHeight(List<Vector2> points, float minHeight, float maxHeight, float[,] heightMap) {
+
+		for (int i = 0; i < points.Count; i++) {
+			float height = heightMap[(int)points[i].x, (int)points[i].y];
+			if (height > maxHeight || height < minHeight) {
+				points.RemoveAt(i);
+				i--;
+			}
+		}
+
+		return points;
+	}
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,4 +19,34 @@ public class BiomeSettings : UpdatableData {
 	public float startTemperature;
 	[Range(0,1)]
 	public float endTemperature;
+	
+	public event System.Action subscribeUpdatedValues;
+
+	public void SubscribeChildren(Action onValidate) {
+		for (int i = 0; i < terrainObjectSettings.Length; i++) {
+			terrainObjectSettings[i].subscribeUpdatedValues += onValidate;
+		}
+    }
+
+	public void UnsubscribeChildren(Action onValidate) {
+		for (int i = 0; i < terrainObjectSettings.Length; i++) {
+			terrainObjectSettings[i].subscribeUpdatedValues -= onValidate;
+		}
+	}
+
+	public virtual void ValidateValues() {
+		for (int i = 0; i < terrainObjectSettings.Length; i++) {
+			terrainObjectSettings[i].ValidateValues();
+		}
+	}
+
+	protected override void OnValidate() {
+		ValidateValues();
+		if (subscribeUpdatedValues != null) {
+			subscribeUpdatedValues();
+		}
+		base.OnValidate();
+	}
+
+    
 }

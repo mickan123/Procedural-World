@@ -19,9 +19,11 @@ public class WorldSettings : UpdatableData {
 
 	public BiomeSettings[] biomes;
 
-	const int textureSize = 512;
+	private const int textureSize = 512;
+	private const int biomeStrengthTextureWidth = 256;
 	public readonly int maxLayerCount = 8;
 	public readonly int maxBiomeCount = 4;
+	
 	
 	public float sqrTransitionDistance {
 		get {
@@ -95,6 +97,7 @@ public class WorldSettings : UpdatableData {
 		material.SetFloat("minHeight", minHeight);
 		material.SetFloat("maxHeight", maxHeight);
 		material.SetInt("chunkWidth", meshSettings.meshWorldSize);
+		material.SetInt("biomeStrengthTextureWidth", biomeStrengthTextureWidth);
 	}
 
 
@@ -128,12 +131,20 @@ public class WorldSettings : UpdatableData {
 		humidityMapSettings.subscribeUpdatedValues += OnValidate;
 		temperatureMapSettings.subscribeUpdatedValues += OnValidate;
 		erosionSettings.subscribeUpdatedValues += OnValidate;
+		for (int i = 0; i < biomes.Length; i++) {
+			biomes[i].subscribeUpdatedValues += OnValidate;
+			biomes[i].SubscribeChildren(OnValidate);
+		}
 	}
 
 	public void UnsubscribeChildren() {
 		humidityMapSettings.subscribeUpdatedValues -= OnValidate;
 		temperatureMapSettings.subscribeUpdatedValues -= OnValidate;
 		erosionSettings.subscribeUpdatedValues -= OnValidate;
+		for (int i = 0; i < biomes.Length; i++) {
+			biomes[i].subscribeUpdatedValues -= OnValidate;
+			biomes[i].UnsubscribeChildren(OnValidate);
+		}
 	}
 
 	protected override void OnValidate() {
@@ -141,6 +152,10 @@ public class WorldSettings : UpdatableData {
 		humidityMapSettings.ValidateValues();
 		temperatureMapSettings.ValidateValues();
 		erosionSettings.ValidateValues();
+
+		for (int i = 0; i < biomes.Length; i++) {
+			biomes[i].ValidateValues();
+		}
 		base.OnValidate();
 	}
 

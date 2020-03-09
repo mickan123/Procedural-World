@@ -19,6 +19,7 @@
 
 		int layerCounts[maxBiomeCount];
 		int chunkWidth;
+		int biomeStrengthTextureWidth;
 		float biomeTransitionDistances[maxBiomeCount];
 		float3 baseColours[maxLayerCount * maxBiomeCount];
 		float baseStartHeights[maxLayerCount * maxBiomeCount];
@@ -45,8 +46,6 @@
 		float inverseLerp(float a, float b, float value) {
 			return saturate((value - a) / (b - a));
 		}
-
-		const static int biomeStrengthTextureWidth = 256;
 
 		// Biome data texture is stored as follows:
 		// x: Main biome index

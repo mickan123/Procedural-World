@@ -4,15 +4,43 @@ using UnityEngine;
 
 [CreateAssetMenu()]
 public class TerrainObjectSettings : UpdatableData {
-	[Range(0, 1)]
-	public float probability;
-	public float minRadius;
-	public float maxRadius; // TODO: Enforce maxRadius > minRadius
+	public float minRadius = 5f;
+	public float maxRadius = 50f; 
 
+	public float minHeight = 0f;
+	public float maxHeight = 100f;
+
+	public float minSlope = 0f;
+	public float maxSlope = 1f;
 
 	public GameObject terrainObject;
 
 	public NoiseMapSettings noiseMapSettings;
+
+	public event System.Action subscribeUpdatedValues;
+
+	public virtual void ValidateValues() {
+		noiseMapSettings.ValidateValues();
+
+		minRadius = Mathf.Max(minRadius, 0f);
+		maxRadius = Mathf.Max(maxRadius, minRadius);
+
+		minHeight = Mathf.Max(minHeight, 0f);
+		maxHeight = Mathf.Max(maxHeight, minHeight);
+
+		minSlope = Mathf.Max(minSlope, 0f);
+		maxSlope = Mathf.Max(maxSlope, minSlope);
+	}
+
+	protected override void OnValidate() {
+		ValidateValues();
+
+		if (subscribeUpdatedValues != null) {
+			subscribeUpdatedValues();
+		}
+		base.OnValidate();
+	}
+
 }
 
 public class TerrainObject {

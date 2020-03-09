@@ -93,7 +93,7 @@ public class TerrainChunk {
 		
 		heightMapReceived = true;
 		
-		UpdateMaterial();
+		UpdateMaterial(biomeData.biomeInfo, worldSettings, coord, matBlock, meshRenderer);
 		UpdateTerrainChunk();
 
 		ThreadedDataRequester.RequestData(() => ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 
@@ -103,23 +103,21 @@ public class TerrainChunk {
 										    OnBiomeObjectsReceived);
 	}
 
-    void UpdateMaterial()
-    {	
-		BiomeInfo info = this.biomeData.biomeInfo;		
+	public static void UpdateMaterial(BiomeInfo info, WorldSettings worldSettings, Vector2 coord, MaterialPropertyBlock matBlock, MeshRenderer renderer) {
 		int width = info.biomeMap.GetLength(0);
 
 		// Create texture to pass in biome maps and biome strengths
-		int numBiomes = this.worldSettings.biomes.Length;
+		int numBiomes = worldSettings.biomes.Length;
 		Texture2D biomeMapTex = new Texture2D(width, width, TextureFormat.RGB24, false, false);
 		
 		int finalTexWidth = 256;
-		Texture2D[] biomeStrengthTextures = new Texture2D[this.worldSettings.maxBiomeCount / 4 + 1];
-		for (int i = 0; i < this.worldSettings.maxBiomeCount / 4 + 1; i++) {
+		Texture2D[] biomeStrengthTextures = new Texture2D[worldSettings.maxBiomeCount / 4 + 1];
+		for (int i = 0; i < worldSettings.maxBiomeCount / 4 + 1; i++) {
 			biomeStrengthTextures[i] = new Texture2D(width, width, TextureFormat.RGB24, false, false);
 		}
 		Texture2DArray biomeStrengthTexArray = new Texture2DArray(finalTexWidth,
 																finalTexWidth,
-																this.worldSettings.maxBiomeCount,
+																worldSettings.maxBiomeCount,
 																TextureFormat.RGB565,
 																false,
 																false);
@@ -130,10 +128,10 @@ public class TerrainChunk {
 
 		for (int x = 0; x < width; x ++) {
 			for (int y = 0; y < width; y ++) {				 
-				float biome = (float)info.biomeMap[x, y] / (this.worldSettings.biomes.Length - 1);
+				float biome = (float)info.biomeMap[x, y] / (worldSettings.biomes.Length - 1);
 				biomeMapTex.SetPixel(x, y, new Color(biome, 0f, 0f, 0f));
 
-				for (int w = 0; w < this.worldSettings.maxBiomeCount; w += 4) {
+				for (int w = 0; w < worldSettings.maxBiomeCount; w += 4) {
 					int texIndex = w % 4; // Each texture has 4 channels
 
 					Color biomeStrengths = new Color((w < numBiomes) ? info.biomeStrengths[x, y, w] : 0f,
@@ -157,11 +155,11 @@ public class TerrainChunk {
 		biomeMapTex.Apply();
 		matBlock.SetTexture("biomeMapTex", biomeMapTex);
 
-		Vector2 position = coord * meshSettings.meshWorldSize; 
+		Vector2 position = coord * worldSettings.meshSettings.meshWorldSize; 
 		matBlock.SetVector("centre", new Vector4(position.x, 0, position.y, 0));
 		
-		meshRenderer.SetPropertyBlock(matBlock);
-    }
+		renderer.SetPropertyBlock(matBlock);
+	}
 
     Vector2 viewerPosition {
 		get {
