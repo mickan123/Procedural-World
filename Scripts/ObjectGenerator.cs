@@ -32,9 +32,14 @@ public static class ObjectGenerator {
 
 		int mapSize = heightMap.values.GetLength(0);
 
-		// float[,] spawnNoiseMap = Noise.GenerateNoiseMap(mapSize, mapSize, settings.noiseMapSettings.noiseSettings, sampleCentre, settings.noiseMapSettings.seed);
+		float[,] spawnNoiseMap = Noise.GenerateNoiseMap(mapSize, mapSize, settings.noiseMapSettings.noiseSettings, sampleCentre, settings.noiseMapSettings.seed);
+		for (int x = 0; x < spawnNoiseMap.GetLength(0); x++) {
+			for (int y = 0; y < spawnNoiseMap.GetLength(0); y++) {
+				spawnNoiseMap[x, y] = (spawnNoiseMap[x, y] + 1f) / 2f;
+			}
+		}
 		
-		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings.minRadius, worldSettings.meshSettings.meshWorldSize, biome, info, sampleCentre);
+		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings, worldSettings.meshSettings.meshWorldSize, biome, info, sampleCentre, spawnNoiseMap);
 		List<Vector3> spawnPositions = new List<Vector3>();		
 
 		for (int point = 0; point < points.Count; point++) {

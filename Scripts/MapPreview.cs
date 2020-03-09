@@ -108,6 +108,7 @@ public class MapPreview : MonoBehaviour {
 			Transform child = this.transform.GetChild(i);
 			if (child.name != "Preview Texture" && child.name != "Preview Mesh") {
 				DestroyImmediate(child.gameObject);
+				i--;
 			}
 		}
 	}

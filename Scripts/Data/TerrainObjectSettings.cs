@@ -7,6 +7,8 @@ public class TerrainObjectSettings : UpdatableData {
 	[Range(0, 1)]
 	public float probability;
 	public float minRadius;
+	public float maxRadius; // TODO: Enforce maxRadius > minRadius
+
 
 	public GameObject terrainObject;
 
