@@ -6,7 +6,6 @@ public static class BiomeNoiseMapGenerator {
 
 	public static BiomeData GenerateBiomeNoiseMaps(int width, int height, WorldSettings worldSettings, Vector2 sampleCentre) {
 		
-		// TODO separate functions for temp/humidity noise generation which normalizes based on a separate global max
 		NoiseMap humidityNoiseMap = NoiseMapGenerator.GenerateNoiseMap(width,
 																	height,
 																	worldSettings.humidityMapSettings,
