@@ -206,10 +206,10 @@ public class TerrainChunk {
 	}
 
 	void OnBiomeObjectsReceived(object biomeObjects) {
-		List<TerrainObject> terrainObjects = (List<TerrainObject>)biomeObjects;
+		List<SpawnObject> spawnObjects = (List<SpawnObject>)biomeObjects;
 
-		for (int i = 0; i < terrainObjects.Count; i++) {
-			terrainObjects[i].Spawn(meshObject.transform);
+		for (int i = 0; i < spawnObjects.Count; i++) {
+			spawnObjects[i].Spawn(meshObject.transform);
 		}
 	}
 

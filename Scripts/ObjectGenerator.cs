@@ -5,8 +5,8 @@ using System.Linq;
 
 public static class ObjectGenerator {
 
-	public static List<TerrainObject> GenerateBiomeObjects(NoiseMap heightMap, BiomeInfo info, WorldSettings settings, Vector2 sampleCentre) {
-		List<TerrainObject> biomeObjects = new List<TerrainObject>();
+	public static List<SpawnObject> GenerateBiomeObjects(NoiseMap heightMap, BiomeInfo info, WorldSettings settings, Vector2 sampleCentre) {
+		List<SpawnObject> biomeObjects = new List<SpawnObject>();
 		
 		for (int biome = 0; biome < settings.biomes.Length; biome++) {
 			
@@ -23,7 +23,7 @@ public static class ObjectGenerator {
 		return biomeObjects;
 	}
 
-	public static TerrainObject GenerateTerrainObject(TerrainObjectSettings settings, 
+	public static SpawnObject GenerateTerrainObject(TerrainObjectSettings settings, 
 														int biome,
 														NoiseMap heightMap, 
 														BiomeInfo info, 
@@ -60,7 +60,7 @@ public static class ObjectGenerator {
 			spawnPositions.Add(new ObjectPosition(position, rotation));
 		}
 
-		return new TerrainObject(settings.terrainObject, spawnPositions);
+		return new SpawnObject(settings.terrainObjects, spawnPositions, settings.scale, prng);
 	}
 
 

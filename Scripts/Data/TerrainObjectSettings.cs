@@ -13,7 +13,9 @@ public class TerrainObjectSettings : UpdatableData {
 	public float minSlope = 0f;
 	public float maxSlope = 1f;
 
-	public GameObject terrainObject;
+	public float scale = 1f;
+
+	public TerrainObject[] terrainObjects;
 
 	public NoiseMapSettings noiseMapSettings;
 
@@ -43,26 +45,57 @@ public class TerrainObjectSettings : UpdatableData {
 
 }
 
-public class TerrainObject {
-	public GameObject terrainObject;
+public class SpawnObject {
+	public TerrainObject[] terrainObjects;
 	public List<ObjectPosition> positions;
+
+	private System.Random prng;
+	private float scale;
 	
-	public TerrainObject(GameObject terrainObject, List<ObjectPosition> positions) {
-		this.terrainObject = terrainObject;
+	public SpawnObject(TerrainObject[] terrainObjects, List<ObjectPosition> positions, float scale, System.Random prng) {
+		if (terrainObjects == null) {
+			this.terrainObjects = new TerrainObject[0];
+		} else {
+			this.terrainObjects = terrainObjects;
+		}
 		this.positions = positions;
+		this.scale = scale;
+		this.prng = prng;
 	}
 
 	public void SetParent(Transform transform) {
-		terrainObject.transform.parent = transform;
+		for (int i = 0; i < terrainObjects.Length; i++) {
+			terrainObjects[i].gameObject.transform.parent = transform;
+		}
 	}
 
 	public void Spawn(Transform parent) {
 		for (int i = 0; i < positions.Count; i++) {
-			GameObject obj = Object.Instantiate(terrainObject);
-			obj.transform.parent = parent;
-			obj.transform.position = positions[i].position;
-			obj.transform.rotation = positions[i].rotation;
+			
+			float rand = (float)prng.NextDouble();
+
+			for (int j = 0; j < terrainObjects.Length; j++) {
+				if (rand < terrainObjects[j].probability) {
+					GameObject obj = Object.Instantiate(terrainObjects[j].gameObject);
+					obj.transform.parent = parent;
+					obj.transform.position = positions[i].position;
+					obj.transform.rotation = positions[i].rotation;
+					obj.transform.localScale = new Vector3(scale, scale, scale);
+					break;
+				}
+			}
 		}
+	}
+}
+
+[System.Serializable]
+public struct TerrainObject {
+	public GameObject gameObject;
+	public float probability;
+
+	public TerrainObject(GameObject gameObject, float probability) {
+		this.gameObject = gameObject;
+		this.probability = probability;
 	}
 }
 

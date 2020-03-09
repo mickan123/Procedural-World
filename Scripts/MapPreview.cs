@@ -166,7 +166,7 @@ public class MapPreview : MonoBehaviour {
 
 		TerrainChunk.UpdateMaterial(biomeData.biomeInfo, worldSettings, Vector2.zero, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
 
-		List<TerrainObject> terrainObjects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 
+		List<SpawnObject> terrainObjects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 
 																					biomeData.biomeInfo, 
 																					worldSettings, 
 																					Vector2.zero);
