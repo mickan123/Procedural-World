@@ -40,13 +40,17 @@ public static class ObjectGenerator {
 		}
 		
 		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings, worldSettings.meshSettings.meshWorldSize, biome, info, sampleCentre, spawnNoiseMap);
-		List<Vector3> spawnPositions = new List<Vector3>();		
+		List<ObjectPosition> spawnPositions = new List<ObjectPosition>();		
 
 		for (int point = 0; point < points.Count; point++) {
 			Vector2 spawnPoint = points[point];
-			spawnPositions.Add(new Vector3(Mathf.FloorToInt(spawnPoint.x + sampleCentre.x) - (float)mapSize / 2f,
+
+			Vector3 position = new Vector3(Mathf.FloorToInt(spawnPoint.x + sampleCentre.x) - (float)mapSize / 2f,
 											heightMap.values[Mathf.FloorToInt(spawnPoint.x), Mathf.FloorToInt(spawnPoint.y)], 
-											-Mathf.FloorToInt(spawnPoint.y - sampleCentre.y) + (float)mapSize / 2f));
+											-Mathf.FloorToInt(spawnPoint.y - sampleCentre.y) + (float)mapSize / 2f);
+			Quaternion rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+
+			spawnPositions.Add(new ObjectPosition(position, rotation));
 		}
 
 		return new TerrainObject(settings.terrainObject, spawnPositions);

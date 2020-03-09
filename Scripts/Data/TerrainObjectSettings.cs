@@ -17,9 +17,9 @@ public class TerrainObjectSettings : UpdatableData {
 
 public class TerrainObject {
 	public GameObject terrainObject;
-	public List<Vector3> positions;
+	public List<ObjectPosition> positions;
 	
-	public TerrainObject(GameObject terrainObject, List<Vector3> positions) {
+	public TerrainObject(GameObject terrainObject, List<ObjectPosition> positions) {
 		this.terrainObject = terrainObject;
 		this.positions = positions;
 	}
@@ -32,8 +32,18 @@ public class TerrainObject {
 		for (int i = 0; i < positions.Count; i++) {
 			GameObject obj = Object.Instantiate(terrainObject);
 			obj.transform.parent = parent;
-			obj.transform.position = positions[i];
-			obj.transform.rotation = Quaternion.identity;
+			obj.transform.position = positions[i].position;
+			obj.transform.rotation = positions[i].rotation;
 		}
+	}
+}
+
+public struct ObjectPosition {
+	public Vector3 position;
+	public Quaternion rotation;
+
+	public ObjectPosition(Vector3 position, Quaternion rotation) {
+		this.position = position;
+		this.rotation = rotation;
 	}
 }
