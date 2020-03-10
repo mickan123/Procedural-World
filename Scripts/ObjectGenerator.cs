@@ -5,7 +5,7 @@ using System.Linq;
 
 public static class ObjectGenerator {
 
-	public static List<SpawnObject> GenerateBiomeObjects(NoiseMap heightMap, BiomeInfo info, WorldSettings settings, Vector2 sampleCentre) {
+	public static List<SpawnObject> GenerateBiomeObjects(HeightMap heightMap, BiomeInfo info, WorldSettings settings, Vector2 sampleCentre) {
 		List<SpawnObject> biomeObjects = new List<SpawnObject>();
 		
 		for (int biome = 0; biome < settings.biomes.Length; biome++) {
@@ -25,7 +25,7 @@ public static class ObjectGenerator {
 
 	public static SpawnObject GenerateTerrainObject(TerrainObjectSettings settings, 
 														int biome,
-														NoiseMap heightMap, 
+														HeightMap heightMap, 
 														BiomeInfo info, 
 														WorldSettings worldSettings, 
 														Vector2 sampleCentre) {

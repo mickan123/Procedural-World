@@ -13,7 +13,7 @@ public static class TextureGenerator {
 		return texture;
 	}
 
-	public static Texture2D TextureFromHeightMap(NoiseMap heightMap) {
+	public static Texture2D TextureFromHeightMap(HeightMap heightMap) {
 		int width = heightMap.values.GetLength(0);
 		int height = heightMap.values.GetLength(1);
 

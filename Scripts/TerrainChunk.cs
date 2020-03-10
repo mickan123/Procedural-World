@@ -24,7 +24,7 @@ public class TerrainChunk {
 	int colliderLODIndex;
 
 	BiomeData biomeData;
-	NoiseMap heightMap;
+	HeightMap heightMap;
 	bool heightMapReceived;
 	int previousLODIndex = -1;
 	bool hasSetCollider;
@@ -80,7 +80,7 @@ public class TerrainChunk {
 	}
 
 	public void Load() {
-		ThreadedDataRequester.RequestData(() => BiomeNoiseMapGenerator.GenerateBiomeNoiseMaps(meshSettings.numVerticesPerLine, 
+		ThreadedDataRequester.RequestData(() => BiomeHeightMapGenerator.GenerateBiomeNoiseMaps(meshSettings.numVerticesPerLine, 
 																							  meshSettings.numVerticesPerLine, 
 																							  worldSettings,
 																							  sampleCentre), 
@@ -261,7 +261,7 @@ class LODMesh {
 		updateCallback();
 	}
 
-	public void RequestMesh(NoiseMap heightMap, MeshSettings meshSettings) {
+	public void RequestMesh(HeightMap heightMap, MeshSettings meshSettings) {
 		hasRequestedMesh = true;
 		ThreadedDataRequester.RequestData(() => MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, lod), OnMeshDataReceived);
 	}
