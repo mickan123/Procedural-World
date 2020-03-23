@@ -37,7 +37,6 @@ public static class BiomeHeightMapGenerator {
 
 		float[,] values = HydraulicErosion.Erode(heightNoiseMap.values, worldSettings.erosionSettings);
 		values = ThermalErosion.Erode(values, worldSettings.erosionSettings);
-		values = MaxErosion.Erode(values, worldSettings.erosionSettings);
 		HeightMap erodedNoiseMap = new HeightMap(values);	
 
 		return new BiomeData(erodedNoiseMap, temperatureNoiseMap, humidityNoiseMap, biomeInfo);
@@ -106,7 +105,7 @@ public static class BiomeHeightMapGenerator {
 				
 				// Get strengths of all other biomes for blending
 				int actualBiomeIndex = biomeMap[i, j];
-				float actualBiomeTransitionDist = settings.sqrTransitionDistance;
+				float actualBiomeTransitionDist = Mathf.Max(settings.sqrTransitionDistance, 0.00001f);
 				float totalBiomeStrength = 1f; // Start at 1 for base biome
 
 				for (int w = 0; w < numBiomes; w++) {
