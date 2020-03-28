@@ -166,14 +166,14 @@ public class MapPreview : MonoBehaviour {
 
 		TerrainChunk.UpdateMaterial(biomeData.biomeInfo, worldSettings, Vector2.zero, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
 
-		// List<SpawnObject> terrainObjects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 
-		// 																			biomeData.biomeInfo, 
-		// 																			worldSettings, 
-		// 																			Vector2.zero);
+		List<SpawnObject> terrainObjects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 
+																					biomeData.biomeInfo, 
+																					worldSettings, 
+																					Vector2.zero);
 
-		// for (int i = 0; i < terrainObjects.Count; i++) {
-		// 	terrainObjects[i].Spawn(this.transform);
-		// }				
+		for (int i = 0; i < terrainObjects.Count; i++) {
+			terrainObjects[i].Spawn(this.transform);
+		}
     }
 
     private void DrawBiomes(int width, int height, HeightMap humidityMap, HeightMap temperatureMap)
@@ -200,20 +200,13 @@ public class MapPreview : MonoBehaviour {
 	}
 
 	void OnValidate() {
-		if (worldSettings.meshSettings != null) {
-			worldSettings.meshSettings.OnValuesUpdated -= OnValuesUpdated; // Ensure we don't subscribe multiple times
-			worldSettings.meshSettings.OnValuesUpdated += OnValuesUpdated;
-		}
 		if (heightMapSettings != null) {
-			heightMapSettings.OnValuesUpdated -= OnValuesUpdated;
-			heightMapSettings.OnValuesUpdated += OnValuesUpdated;
+			heightMapSettings.UnsubscribeChanges(OnValuesUpdated);
+			heightMapSettings.SubscribeChanges(OnValuesUpdated);
 		}
 		if (worldSettings != null) {
-			worldSettings.OnValuesUpdated -= OnValuesUpdated;
-			worldSettings.OnValuesUpdated += OnValuesUpdated;
-
-			worldSettings.UnsubscribeChildren();
-			worldSettings.SubscribeChildren();
+			worldSettings.UnsubscribeChanges(OnValuesUpdated);
+			worldSettings.SubscribeChanges(OnValuesUpdated);
 		}
 	}
 }

@@ -19,26 +19,30 @@ public class BiomeSettings : UpdatableData {
 	public float startTemperature;
 	[Range(0,1)]
 	public float endTemperature;
-	
-	public event System.Action subscribeUpdatedValues;
 
-	public void SubscribeChildren(Action onValidate) {
+	#if UNITY_EDITOR
+	
+	private event System.Action validateValuesSubscription;
+
+	public void SubscribeChanges(Action onValidate) {
+		this.validateValuesSubscription += onValidate;
 		for (int i = 0; i < terrainObjectSettings.Length; i++) {
-			terrainObjectSettings[i].subscribeUpdatedValues += onValidate;
+			terrainObjectSettings[i].SubscribeChanges(onValidate);
 		}
-		heightMapSettings.subscribeUpdatedValues += onValidate;
-		textureData.subscribeUpdatedValues += onValidate;
+		heightMapSettings.SubscribeChanges(onValidate);
+		textureData.SubscribeChanges(onValidate);
     }
 
-	public void UnsubscribeChildren(Action onValidate) {
+	public void UnsubscribeChanges(Action onValidate) {
+		this.validateValuesSubscription -= onValidate;
 		for (int i = 0; i < terrainObjectSettings.Length; i++) {
-			terrainObjectSettings[i].subscribeUpdatedValues -= onValidate;
+			terrainObjectSettings[i].UnsubscribeChanges(onValidate);
 		}
-		heightMapSettings.subscribeUpdatedValues -= onValidate;
-		textureData.subscribeUpdatedValues -= onValidate;
+		heightMapSettings.UnsubscribeChanges(onValidate);
+		textureData.UnsubscribeChanges(onValidate);
 	}
 
-	public virtual void ValidateValues() {
+	public void ValidateValues() {
 		for (int i = 0; i < terrainObjectSettings.Length; i++) {
 			terrainObjectSettings[i].ValidateValues();
 		}
@@ -52,11 +56,12 @@ public class BiomeSettings : UpdatableData {
 
 	protected override void OnValidate() {
 		ValidateValues();
-		if (subscribeUpdatedValues != null) {
-			subscribeUpdatedValues();
+		if (validateValuesSubscription != null) {
+			validateValuesSubscription();
 		}
 		base.OnValidate();
 	}
 
+	#endif
     
 }

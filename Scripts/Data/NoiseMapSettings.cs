@@ -18,7 +18,7 @@ public class NoiseMapSettings : UpdatableData {
 	public float heightMultiplier;
 	public AnimationCurve heightCurve;
 
-	public event System.Action subscribeUpdatedValues;
+	private event System.Action subscribeUpdatedValues;
 
 	[HideInInspector]
 	public int seed; // Set by global seed
@@ -37,6 +37,14 @@ public class NoiseMapSettings : UpdatableData {
 	}
 
 	#if UNITY_EDITOR
+
+	public void SubscribeChanges(System.Action onValidate) {
+		this.subscribeUpdatedValues += onValidate;
+	}
+
+	public void UnsubscribeChanges(System.Action onValidate) {
+		this.subscribeUpdatedValues -= onValidate;
+	}
 
 	public virtual void ValidateValues() {
 		perlinNoiseSettings.ValidateValues();

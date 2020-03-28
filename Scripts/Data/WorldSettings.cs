@@ -127,23 +127,25 @@ public class WorldSettings : UpdatableData {
 
 	#if UNITY_EDITOR
 
-	public void SubscribeChildren() {
-		humidityMapSettings.subscribeUpdatedValues += OnValidate;
-		temperatureMapSettings.subscribeUpdatedValues += OnValidate;
-		erosionSettings.subscribeUpdatedValues += OnValidate;
+	public void SubscribeChanges(System.Action callback) {
+		this.onValuesUpdate += callback;
+		humidityMapSettings.SubscribeChanges(OnValidate);
+		temperatureMapSettings.SubscribeChanges(OnValidate);
+		erosionSettings.SubscribeChanges(OnValidate);
+		meshSettings.SubscribeChanges(OnValidate);
 		for (int i = 0; i < biomes.Length; i++) {
-			biomes[i].subscribeUpdatedValues += OnValidate;
-			biomes[i].SubscribeChildren(OnValidate);
+			biomes[i].SubscribeChanges(OnValidate);
 		}
 	}
 
-	public void UnsubscribeChildren() {
-		humidityMapSettings.subscribeUpdatedValues -= OnValidate;
-		temperatureMapSettings.subscribeUpdatedValues -= OnValidate;
-		erosionSettings.subscribeUpdatedValues -= OnValidate;
+	public void UnsubscribeChanges(System.Action callback) {
+		this.onValuesUpdate -= callback;
+		humidityMapSettings.UnsubscribeChanges(OnValidate);
+		temperatureMapSettings.UnsubscribeChanges(OnValidate);
+		erosionSettings.UnsubscribeChanges(OnValidate);
+		meshSettings.UnsubscribeChanges(OnValidate);
 		for (int i = 0; i < biomes.Length; i++) {
-			biomes[i].subscribeUpdatedValues -= OnValidate;
-			biomes[i].UnsubscribeChildren(OnValidate);
+			biomes[i].UnsubscribeChanges(OnValidate);
 		}
 	}
 
@@ -152,6 +154,7 @@ public class WorldSettings : UpdatableData {
 		humidityMapSettings.ValidateValues();
 		temperatureMapSettings.ValidateValues();
 		erosionSettings.ValidateValues();
+		meshSettings.ValidateValues();
 
 		for (int i = 0; i < biomes.Length; i++) {
 			biomes[i].ValidateValues();
@@ -160,5 +163,4 @@ public class WorldSettings : UpdatableData {
 	}
 
 	#endif
-
 }

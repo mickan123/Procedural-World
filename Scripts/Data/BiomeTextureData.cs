@@ -8,12 +8,22 @@ public class BiomeTextureData : UpdatableData {
 
 	public TextureLayer[] layers;
 
-	public event System.Action subscribeUpdatedValues;
+	#if UNITY_EDITOR
 
-	public virtual void ValidateValues() {
+	private event System.Action subscribeUpdatedValues;
+
+	public void ValidateValues() {
 		for (int i = 0; i < layers.Length; i++) {
 			layers[i].ValidateValues();
 		}		
+	}
+
+	public void SubscribeChanges(System.Action onValidate) {
+		this.subscribeUpdatedValues += onValidate;
+	}
+
+	public void UnsubscribeChanges(System.Action onValidate) {
+		this.subscribeUpdatedValues -= onValidate;
 	}
 
 	protected override void OnValidate() {
@@ -23,6 +33,8 @@ public class BiomeTextureData : UpdatableData {
 		}
 		base.OnValidate();
 	}
+
+	#endif
 }
 
 [System.Serializable]

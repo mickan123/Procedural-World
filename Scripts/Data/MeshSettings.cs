@@ -18,6 +18,33 @@ public class MeshSettings : UpdatableData {
 	[Range(0, numSupportedFlatshadedChunkSizes - 1)]
 	public int flatshadedChunkSizeIndex; 
 
+	#if UNITY_EDITOR
+
+	private event System.Action validateValuesSubscription;
+
+	public void SubscribeChanges(System.Action onValidate) {
+		this.validateValuesSubscription += onValidate;
+    }
+
+    public void UnsubscribeChanges(System.Action onValidate) {
+		this.validateValuesSubscription += onValidate;
+    }
+
+	public void ValidateValues() {
+		
+	}
+
+	protected override void OnValidate() {
+		ValidateValues();
+
+		if (validateValuesSubscription != null) {
+			validateValuesSubscription();
+		}
+		base.OnValidate();
+	}
+
+	#endif
+
 	// Num vertices per line of a mesh rendered at LOD = 0. Includes the two extra vertices that are excluded from final mesh, but used for calculating normals. 
 	public int numVerticesPerLine {
 		get {

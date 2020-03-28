@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class UpdatableData : ScriptableObject {
 
-	public event System.Action OnValuesUpdated;
+	protected event System.Action onValuesUpdate;
 	public bool autoUpdate;
 
 	#if UNITY_EDITOR
@@ -15,10 +15,18 @@ public class UpdatableData : ScriptableObject {
 		}
 	}
 
+	public void SubscribeValuesUpdated(System.Action callback) {
+		this.onValuesUpdate += callback;
+	}
+
+	public void UnsubscribeValuesUpdated(System.Action callback) {
+		this.onValuesUpdate -= callback;
+	}
+
 	public void NotifyOfUpdatedValues() {
 		UnityEditor.EditorApplication.update -= NotifyOfUpdatedValues;
-		if (OnValuesUpdated != null) {
-			OnValuesUpdated();
+		if (onValuesUpdate != null) {
+			onValuesUpdate();
 		}
 	}
 

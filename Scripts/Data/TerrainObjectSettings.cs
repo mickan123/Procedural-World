@@ -20,17 +20,21 @@ public class TerrainObjectSettings : UpdatableData {
 
 	public NoiseMapSettings noiseMapSettings;
 
-	public event System.Action subscribeUpdatedValues;
+	#if UNITY_EDITOR
 
-	public void SubscribeChildren(Action onValidate) {
-		noiseMapSettings.subscribeUpdatedValues += onValidate;
+	private event System.Action validateValuesSubscription;
+
+	public void SubscribeChanges(Action onValidate) {
+		this.validateValuesSubscription += onValidate;
+		noiseMapSettings.SubscribeChanges(onValidate);
     }
 
-	public void UnsubscribeChildren(Action onValidate) {
-		noiseMapSettings.subscribeUpdatedValues -= onValidate;
+	public void UnsubscribeChanges(Action onValidate) {
+		this.validateValuesSubscription -= onValidate;
+		noiseMapSettings.UnsubscribeChanges(onValidate);
 	}
 
-	public virtual void ValidateValues() {
+	public void ValidateValues() {
 		noiseMapSettings.ValidateValues();
 
 		minRadius = Mathf.Max(minRadius, 0f);
@@ -46,12 +50,13 @@ public class TerrainObjectSettings : UpdatableData {
 	protected override void OnValidate() {
 		ValidateValues();
 
-		if (subscribeUpdatedValues != null) {
-			subscribeUpdatedValues();
+		if (validateValuesSubscription != null) {
+			validateValuesSubscription();
 		}
 		base.OnValidate();
 	}
 
+	#endif
 }
 
 public class SpawnObject {

@@ -5,8 +5,6 @@ using UnityEngine;
 [CreateAssetMenu()]
 public class ErosionSettings : UpdatableData {
 
-    public event System.Action subscribeUpdatedValues;
-
     public float gravity = 4;
 	
     [Header("Hydraulic Erosion Settings")]
@@ -43,19 +41,28 @@ public class ErosionSettings : UpdatableData {
 
     #if UNITY_EDITOR
 
-	public virtual void ValidateValues() {
+	private event System.Action validateValuesSubscription;
+
+    public void SubscribeChanges(System.Action onValidate) {
+		this.validateValuesSubscription += onValidate;
+    }
+
+    public void UnsubscribeChanges(System.Action onValidate) {
+		this.validateValuesSubscription += onValidate;
+    }
+
+	public void ValidateValues() {
 		
 	}
 
 	protected override void OnValidate() {
 		ValidateValues();
 
-		if (subscribeUpdatedValues != null) {
-			subscribeUpdatedValues();
+		if (validateValuesSubscription != null) {
+			validateValuesSubscription();
 		}
 		base.OnValidate();
 	}
 
 	#endif
-
 }
