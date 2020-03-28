@@ -166,14 +166,14 @@ public class MapPreview : MonoBehaviour {
 
 		TerrainChunk.UpdateMaterial(biomeData.biomeInfo, worldSettings, Vector2.zero, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
 
-		List<SpawnObject> terrainObjects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 
-																					biomeData.biomeInfo, 
-																					worldSettings, 
-																					Vector2.zero);
+		// List<SpawnObject> terrainObjects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 
+		// 																			biomeData.biomeInfo, 
+		// 																			worldSettings, 
+		// 																			Vector2.zero);
 
-		for (int i = 0; i < terrainObjects.Count; i++) {
-			terrainObjects[i].Spawn(this.transform);
-		}				
+		// for (int i = 0; i < terrainObjects.Count; i++) {
+		// 	terrainObjects[i].Spawn(this.transform);
+		// }				
     }
 
     private void DrawBiomes(int width, int height, HeightMap humidityMap, HeightMap temperatureMap)

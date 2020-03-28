@@ -26,17 +26,27 @@ public class BiomeSettings : UpdatableData {
 		for (int i = 0; i < terrainObjectSettings.Length; i++) {
 			terrainObjectSettings[i].subscribeUpdatedValues += onValidate;
 		}
+		heightMapSettings.subscribeUpdatedValues += onValidate;
+		textureData.subscribeUpdatedValues += onValidate;
     }
 
 	public void UnsubscribeChildren(Action onValidate) {
 		for (int i = 0; i < terrainObjectSettings.Length; i++) {
 			terrainObjectSettings[i].subscribeUpdatedValues -= onValidate;
 		}
+		heightMapSettings.subscribeUpdatedValues -= onValidate;
+		textureData.subscribeUpdatedValues -= onValidate;
 	}
 
 	public virtual void ValidateValues() {
 		for (int i = 0; i < terrainObjectSettings.Length; i++) {
 			terrainObjectSettings[i].ValidateValues();
+		}
+		if (heightMapSettings != null) {
+			heightMapSettings.ValidateValues();
+		}
+		if (textureData != null) {
+			textureData.ValidateValues();
 		}
 	}
 

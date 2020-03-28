@@ -83,7 +83,7 @@
 				float drawStrength = inverseLerp(-baseBlends[idx] / 2, baseBlends[idx] / 2, heightPercent - baseStartHeights[idx]);
 
 				float3 baseColour = baseColours[idx] * baseColourStrengths[idx];
-				float3 textureColour = triplanar(worldPos, baseTextureScales[idx], blendAxes, idx) * (1-baseColourStrengths[idx]);
+				float3 textureColour = triplanar(worldPos, baseTextureScales[idx], blendAxes, idx) * (1 - baseColourStrengths[idx]);
 
 				albedo = albedo * (1 - drawStrength) + (baseColour + textureColour) * drawStrength;
 			}

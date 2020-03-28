@@ -8,6 +8,21 @@ public class BiomeTextureData : UpdatableData {
 
 	public TextureLayer[] layers;
 
+	public event System.Action subscribeUpdatedValues;
+
+	public virtual void ValidateValues() {
+		for (int i = 0; i < layers.Length; i++) {
+			layers[i].ValidateValues();
+		}		
+	}
+
+	protected override void OnValidate() {
+		ValidateValues();
+		if (subscribeUpdatedValues != null) {
+			subscribeUpdatedValues();
+		}
+		base.OnValidate();
+	}
 }
 
 [System.Serializable]
@@ -21,4 +36,8 @@ public class TextureLayer {
 	[Range(0,1)]
 	public float blendStrength;
 	public float textureScale;
+
+	public void ValidateValues() {
+		
+	}
 }

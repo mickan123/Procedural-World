@@ -80,7 +80,7 @@ public class WorldSettings : UpdatableData {
 				baseTextureScales[i * maxLayerCount + j] = curLayer.textureScale;
 
 				if (curLayer.texture != null) {
-					texturesArray.SetPixels(curLayer.texture.GetPixels(), i * maxLayerCount + j);
+					texturesArray.SetPixels(curLayer.texture.GetPixels(0, 0, textureSize, textureSize), i * maxLayerCount + j);
 				}	
 			}
 		}

@@ -10,7 +10,7 @@ public class BiomeNoiseMapSettings : NoiseMapSettings {
 
 	// Ensure height variables are at most 1 to ensure 0-1 range
 	public override void ValidateValues() {
-		noiseSettings.ValidateValues();
+		base.ValidateValues();
 		heightMultiplier = 1.0f;
 
 		// TODO: Ensure heightcurve in range [0, 1]

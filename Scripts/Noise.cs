@@ -9,7 +9,7 @@ public static class Noise {
 
 	public static float[,] GenerateNoiseMap(int mapWidth, 
 											int mapHeight, 
-											NoiseSettings noiseSettings, 
+											PerlinNoiseSettings noiseSettings, 
 											Vector2 sampleCentre,
 											int seed) {
 
@@ -59,7 +59,7 @@ public static class Noise {
 
 		int maxNumOctaves = 1;
 		float maxPersistance = 0;
-		NoiseSettings[] noiseSettingArray = worldSettings.biomes.Select(x => x.heightMapSettings.noiseSettings).ToArray();
+		PerlinNoiseSettings[] noiseSettingArray = worldSettings.biomes.Select(x => x.heightMapSettings.perlinNoiseSettings).ToArray();
 		for (int i = 0; i < noiseSettingArray.Length; i++) {
 			if (noiseSettingArray[i].octaves > maxNumOctaves) {
 				maxNumOctaves = noiseSettingArray[i].octaves;
@@ -86,7 +86,7 @@ public static class Noise {
 		return input;
 	}
 
-	public static float[,] normalizeGlobalValues(float[,] input, NoiseSettings noiseSettings) {
+	public static float[,] normalizeGlobalValues(float[,] input, PerlinNoiseSettings noiseSettings) {
 		float maxPossibleHeight = 0;
 		float amplitude = 1;
 		for (int i = 0; i < noiseSettings.octaves; i++) {
@@ -104,20 +104,3 @@ public static class Noise {
 	}
 }
 
-[System.Serializable]
-public class NoiseSettings {
-	public float scale = 50;
-
-	public int octaves = 4;
-	[Range(0, 1)]
-	public float persistance = 0.3f;
-	public float lacunarity = 2.8f;
-
-	public void ValidateValues() {
-		scale = Mathf.Max(scale, 0.01f);
-		octaves = Mathf.Max(octaves, 1);
-		octaves = Mathf.Min(octaves, 10);
-		lacunarity = Mathf.Max(lacunarity, 1);
-		persistance = Mathf.Clamp01(persistance);
-	}
-}

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -20,6 +21,14 @@ public class TerrainObjectSettings : UpdatableData {
 	public NoiseMapSettings noiseMapSettings;
 
 	public event System.Action subscribeUpdatedValues;
+
+	public void SubscribeChildren(Action onValidate) {
+		noiseMapSettings.subscribeUpdatedValues += onValidate;
+    }
+
+	public void UnsubscribeChildren(Action onValidate) {
+		noiseMapSettings.subscribeUpdatedValues -= onValidate;
+	}
 
 	public virtual void ValidateValues() {
 		noiseMapSettings.ValidateValues();
@@ -76,7 +85,7 @@ public class SpawnObject {
 
 			for (int j = 0; j < terrainObjects.Length; j++) {
 				if (rand < terrainObjects[j].probability) {
-					GameObject obj = Object.Instantiate(terrainObjects[j].gameObject);
+					GameObject obj = UnityEngine.Object.Instantiate(terrainObjects[j].gameObject);
 					obj.transform.parent = parent;
 					obj.transform.position = positions[i].position;
 					obj.transform.rotation = positions[i].rotation;
