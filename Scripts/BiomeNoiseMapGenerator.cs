@@ -32,9 +32,7 @@ public static class BiomeHeightMapGenerator {
 															temperatureNoiseMap,
 															sampleCentre,
 															biomeInfo);
-																		
-																			
-
+																
 		// float[,] values = HydraulicErosion.Erode(heightNoiseMap.values, worldSettings.erosionSettings);
 		// values = ThermalErosion.Erode(values, worldSettings.erosionSettings);
 		// HeightMap erodedNoiseMap = new HeightMap(values);	

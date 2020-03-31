@@ -12,7 +12,7 @@ public class NoiseMapSettings : UpdatableData {
 	public PerlinNoiseSettings perlinNoiseSettings;
 
 	[Header("Sand Dune Settings")]
-	public SandDuneSettings sandDuneSettings;
+	public SandDuneSettings[] sandDuneSettings;
 	
 	[Header("Height Settings")]
 	public float heightMultiplier;
@@ -48,7 +48,11 @@ public class NoiseMapSettings : UpdatableData {
 
 	public virtual void ValidateValues() {
 		perlinNoiseSettings.ValidateValues();
-		sandDuneSettings.ValidateValues();
+		if (sandDuneSettings != null) {
+			for (int i = 0; i < sandDuneSettings.Length; i++) {
+				sandDuneSettings[i].ValidateValues();
+			}
+		}
 	}
 
 	protected override void OnValidate() {
@@ -87,10 +91,11 @@ public class SandDuneSettings {
 	[Range(0, 1)]
 	public float p = 1f; // Profile of sand dune
 	public float duneWidth = 25f;
-	public float minDuneOffset = 5f;
-	public float maxDuneOffset = 25f;
+	public float maxDuneOffset = 50f;
 	public float minDuneGap = 3f;
 	public float maxDuneGap = 15f;
+	[Range(0, 1)]
+	public float duneThreshold = 0.3f; // Height needs to be above this value to spawn a dune
 
 	private readonly float reposeAngle = 34.0f; // Maximum slope of sand is 34 degrees
 	public float sigma {
@@ -100,8 +105,7 @@ public class SandDuneSettings {
 	}
 
 	public void ValidateValues() {
-		minDuneOffset = Mathf.Max(0, minDuneOffset);
-		maxDuneOffset = Mathf.Max(minDuneOffset, maxDuneOffset);
+		maxDuneOffset = Mathf.Max(0, maxDuneOffset);
 		minDuneGap = Mathf.Max(0, minDuneGap);
 		maxDuneGap = Mathf.Max(minDuneGap, maxDuneGap);
 		duneWidth = Mathf.Max(1, duneWidth);
