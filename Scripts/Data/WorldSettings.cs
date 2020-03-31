@@ -93,11 +93,11 @@ public class WorldSettings : UpdatableData {
 		material.SetFloatArray("baseBlends", baseBlends);
 		material.SetFloatArray("baseColourStrengths", baseColourStrength);
 		material.SetFloatArray("baseTextureScales", baseTextureScales);
+		
 		material.SetTexture("baseTextures", texturesArray);
 		material.SetFloat("minHeight", minHeight);
 		material.SetFloat("maxHeight", maxHeight);
 		material.SetInt("chunkWidth", meshSettings.meshWorldSize);
-		material.SetInt("biomeStrengthTextureWidth", biomeStrengthTextureWidth);
 	}
 
 
