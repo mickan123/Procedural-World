@@ -14,12 +14,13 @@
 		#pragma target 3.0
 
 		const static int maxLayerCount = 8;
-		const static int maxBiomeCount = 4;
+		const static int maxBiomeCount = 8; // Must be multiple of 4 >= actual biome count
 		const static float epsilon = 1E-4;
-
-		int layerCounts[maxBiomeCount];
+		
 		int chunkWidth;
-		float biomeTransitionDistances[maxBiomeCount];
+		
+		int layerCounts[maxBiomeCount];
+
 		float3 baseColours[maxLayerCount * maxBiomeCount];
 		float baseStartHeights[maxLayerCount * maxBiomeCount];
 		float baseBlends[maxLayerCount * maxBiomeCount];
@@ -36,7 +37,6 @@
 
 		UNITY_DECLARE_TEX2DARRAY(baseTextures);
 		
-
 		struct Input {
 			float3 worldPos;
 			float3 worldNormal;
@@ -107,8 +107,6 @@
 				finalTex += biomeStrengthData.w * getBiomeTexture(i + 3, o.Albedo, IN.worldPos, blendAxes);
 			}
 			o.Albedo = finalTex;
-			
-			// o.Albedo = float3(biomeData.x, 0, 0);
 		}
 
 		ENDCG

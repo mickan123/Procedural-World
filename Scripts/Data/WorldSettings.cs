@@ -22,7 +22,7 @@ public class WorldSettings : UpdatableData {
 	private const int textureSize = 512;
 	private const int biomeStrengthTextureWidth = 256;
 	public readonly int maxLayerCount = 8;
-	public readonly int maxBiomeCount = 4;
+	public readonly int maxBiomeCount = 8;
 	
 	
 	public float sqrTransitionDistance {
@@ -56,7 +56,6 @@ public class WorldSettings : UpdatableData {
 	public void ApplyToMaterial(Material material) {
 
 		float[] layerCounts = new float[biomes.Length];
-		float[] biomeTransitionDistances = new float[biomes.Length];
 
 		Color[] baseColours = new Color[maxLayerCount * maxBiomeCount];
 		float[] baseStartHeights = new float[maxLayerCount * maxBiomeCount];
@@ -68,7 +67,6 @@ public class WorldSettings : UpdatableData {
 		for (int i = 0; i < biomes.Length; i++) {
 
 			layerCounts[i] = biomes[i].textureData.layers.Length;
-			biomeTransitionDistances[i] = sqrTransitionDistance;
 
 			for (int j = 0; j < biomes[i].textureData.layers.Length; j++) {
 
@@ -87,7 +85,6 @@ public class WorldSettings : UpdatableData {
 		texturesArray.Apply();
 
 		material.SetFloatArray("layerCounts", layerCounts);
-		material.SetFloatArray("biomeTransitionDistances", biomeTransitionDistances);
 		material.SetColorArray("baseColours", baseColours);
 		material.SetFloatArray("baseStartHeights", baseStartHeights);
 		material.SetFloatArray("baseBlends", baseBlends);

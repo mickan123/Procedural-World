@@ -133,7 +133,7 @@ public class TerrainChunk {
 				biomeMapTex.SetPixel(x, y, new Color(biome, 0f, 0f, 0f));
 
 				for (int w = 0; w < worldSettings.maxBiomeCount; w += biomesPerTexture) {
-					int texIndex = w % biomesPerTexture; // Each texture has 4 channels
+					int texIndex = w / biomesPerTexture; // Each texture has 4 channels
 
 					Color biomeStrengths = new Color((w < numBiomes) ? info.biomeStrengths[x, y, w] : 0f,
 													(w + 1 < numBiomes) ? info.biomeStrengths[x, y, w + 1] : 0f,
