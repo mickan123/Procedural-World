@@ -19,7 +19,6 @@
 
 		int layerCounts[maxBiomeCount];
 		int chunkWidth;
-		int biomeStrengthTextureWidth;
 		float biomeTransitionDistances[maxBiomeCount];
 		float3 baseColours[maxLayerCount * maxBiomeCount];
 		float baseStartHeights[maxLayerCount * maxBiomeCount];
@@ -59,12 +58,12 @@
 			return UNITY_SAMPLE_TEX2DARRAY(biomeStrengthMap, float3(scaledWorldPos.x, -scaledWorldPos.z, textureIndex));
 		}
 
-		float3 triplanar(float3 worldPos, float scale, float3 blendAxes, int textureIndex) {
-			float3 scaledWorldPos = worldPos / scale;
+		float3 triplanar(float3 worldPos, float3 blendAxes, int texIndex) {
+			float3 texturePos = worldPos / baseTextureScales[texIndex];
 			
-			float3 xProjection = UNITY_SAMPLE_TEX2DARRAY(baseTextures, float3(scaledWorldPos.y, scaledWorldPos.z, textureIndex)) * blendAxes.x;
-			float3 yProjection = UNITY_SAMPLE_TEX2DARRAY(baseTextures, float3(scaledWorldPos.x, scaledWorldPos.z, textureIndex)) * blendAxes.y;
-			float3 zProjection = UNITY_SAMPLE_TEX2DARRAY(baseTextures, float3(scaledWorldPos.x, scaledWorldPos.y, textureIndex)) * blendAxes.z;
+			float3 xProjection = UNITY_SAMPLE_TEX2DARRAY(baseTextures, float3(texturePos.y, texturePos.z, texIndex)) * blendAxes.x;
+			float3 yProjection = UNITY_SAMPLE_TEX2DARRAY(baseTextures, float3(texturePos.x, texturePos.z, texIndex)) * blendAxes.y;
+			float3 zProjection = UNITY_SAMPLE_TEX2DARRAY(baseTextures, float3(texturePos.x, texturePos.y, texIndex)) * blendAxes.z;
 
 			return xProjection + yProjection + zProjection;
 		}
@@ -83,7 +82,7 @@
 				float drawStrength = inverseLerp(-baseBlends[idx] / 2, baseBlends[idx] / 2, heightPercent - baseStartHeights[idx]);
 
 				float3 baseColour = baseColours[idx] * baseColourStrengths[idx];
-				float3 textureColour = triplanar(worldPos, baseTextureScales[idx], blendAxes, idx) * (1 - baseColourStrengths[idx]);
+				float3 textureColour = triplanar(worldPos, blendAxes, idx) * (1 - baseColourStrengths[idx]);
 
 				albedo = albedo * (1 - drawStrength) + (baseColour + textureColour) * drawStrength;
 			}
@@ -96,10 +95,6 @@
 			float3 blendAxes = abs(IN.worldNormal);
 			blendAxes /= (blendAxes.x + blendAxes.y + blendAxes.z);
 
-			float4 biomeData = sampleBiomeData(IN.worldPos);
-
-			int mainBiome = biomeData.x;
-
 			float3 finalTex = o.Albedo;
 			for (int i = 0; i < maxBiomeCount; i+=4) {
 				float4 biomeStrengthData = sampleBiomeStrength(IN.worldPos, i / 4);
@@ -109,6 +104,7 @@
 				finalTex += biomeStrengthData.w * getBiomeTexture(i + 3, o.Albedo, IN.worldPos, blendAxes);
 			}
 			o.Albedo = finalTex;
+			
 		}
 
 		ENDCG

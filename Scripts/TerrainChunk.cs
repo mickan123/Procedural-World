@@ -108,17 +108,18 @@ public class TerrainChunk {
 
 		// Create texture to pass in biome maps and biome strengths
 		int numBiomes = worldSettings.biomes.Length;
-		Texture2D biomeMapTex = new Texture2D(width, width, TextureFormat.RGB24, false, false);
+		Texture2D biomeMapTex = new Texture2D(width, width, TextureFormat.RGBA32, false, false);
 		
 		int finalTexWidth = 256;
-		Texture2D[] biomeStrengthTextures = new Texture2D[worldSettings.maxBiomeCount / 4 + 1];
-		for (int i = 0; i < worldSettings.maxBiomeCount / 4 + 1; i++) {
-			biomeStrengthTextures[i] = new Texture2D(width, width, TextureFormat.RGB24, false, false);
+		int biomesPerTexture = 4;
+		Texture2D[] biomeStrengthTextures = new Texture2D[worldSettings.maxBiomeCount / biomesPerTexture + 1];
+		for (int i = 0; i < worldSettings.maxBiomeCount / biomesPerTexture + 1; i++) {
+			biomeStrengthTextures[i] = new Texture2D(width, width, TextureFormat.RGBA32, false, false);
 		}
 		Texture2DArray biomeStrengthTexArray = new Texture2DArray(finalTexWidth,
 																finalTexWidth,
 																worldSettings.maxBiomeCount,
-																TextureFormat.RGB565,
+																TextureFormat.RGBA32,
 																false,
 																false);
 
@@ -131,8 +132,8 @@ public class TerrainChunk {
 				float biome = (float)info.biomeMap[x, y] / (worldSettings.biomes.Length - 1);
 				biomeMapTex.SetPixel(x, y, new Color(biome, 0f, 0f, 0f));
 
-				for (int w = 0; w < worldSettings.maxBiomeCount; w += 4) {
-					int texIndex = w % 4; // Each texture has 4 channels
+				for (int w = 0; w < worldSettings.maxBiomeCount; w += biomesPerTexture) {
+					int texIndex = w % biomesPerTexture; // Each texture has 4 channels
 
 					Color biomeStrengths = new Color((w < numBiomes) ? info.biomeStrengths[x, y, w] : 0f,
 													(w + 1 < numBiomes) ? info.biomeStrengths[x, y, w + 1] : 0f,
@@ -143,7 +144,7 @@ public class TerrainChunk {
 				}
 			}
 		}
-
+		
 		for (int i = 0; i < biomeStrengthTextures.Length; i++) {
 			TextureScale.Bilinear(biomeStrengthTextures[i], finalTexWidth, finalTexWidth);
 			biomeStrengthTextures[i].Apply();
@@ -159,6 +160,13 @@ public class TerrainChunk {
 		matBlock.SetVector("centre", new Vector4(position.x, 0, position.y, 0));
 		
 		renderer.SetPropertyBlock(matBlock);
+	}
+
+	public static void SaveTextureAsPNG(Texture2D _texture, string _fullPath)
+	{
+		byte[] _bytes =_texture.EncodeToPNG();
+		System.IO.File.WriteAllBytes(_fullPath, _bytes);
+		Debug.Log(_bytes.Length / 1024  + "Kb was saved as: " + _fullPath);
 	}
 
     Vector2 viewerPosition {

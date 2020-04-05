@@ -7,9 +7,11 @@ public class MapPreview : MonoBehaviour {
 
 	public Renderer textureRender;
 	public MeshFilter meshFilter;
+	public MeshFilter meshFilter2;
 
 	public enum DrawMode { NoiseMap, MeshNoBiome, BiomesMesh, FalloffMap, Biomes, HumidityMap, TemperatureMap, SingleBiome };
 	public DrawMode drawMode;
+	public Vector2 centre;
 	
 	public int singleBiome;  // If DrawMode is SingleBiome it will render this biome number
 
@@ -50,14 +52,14 @@ public class MapPreview : MonoBehaviour {
                                                             height,
                                                             worldSettings.humidityMapSettings,
                                                             worldSettings,
-                                                            Vector2.zero,
+                                                            centre,
 															HeightMapGenerator.NormalizeMode.Global,
                                                             worldSettings.humidityMapSettings.seed);
 		HeightMap temperatureMap = HeightMapGenerator.GenerateHeightMap(width,
                                                                height,
                                                                worldSettings.temperatureMapSettings,
                                                                worldSettings,
-                                                               Vector2.zero,
+                                                               centre,
 															   HeightMapGenerator.NormalizeMode.Global,
                                                                worldSettings.temperatureMapSettings.seed);
 		
@@ -67,7 +69,7 @@ public class MapPreview : MonoBehaviour {
                                                            height,
                                                            heightMapSettings,
                                                            worldSettings,
-                                                           Vector2.zero,
+                                                           centre,
 														   HeightMapGenerator.NormalizeMode.GlobalBiome,
                                                            heightMapSettings.seed);
 			DrawTexture(TextureGenerator.TextureFromHeightMap(heightMap));
@@ -77,7 +79,7 @@ public class MapPreview : MonoBehaviour {
                                                            height,
                                                            heightMapSettings,
                                                            worldSettings,
-                                                           Vector2.zero,
+                                                           centre,
 														   HeightMapGenerator.NormalizeMode.GlobalBiome,
                                                            heightMapSettings.seed);
 			DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, worldSettings.meshSettings, EditorPreviewLOD));
@@ -159,17 +161,18 @@ public class MapPreview : MonoBehaviour {
 		BiomeData biomeData = BiomeHeightMapGenerator.GenerateBiomeNoiseMaps(width,
 																			height,
 																			worldSettings,
-																			Vector2.zero);
+																			centre);
 
 		MeshData meshData = MeshGenerator.GenerateTerrainMesh(biomeData.heightNoiseMap.values, worldSettings.meshSettings, EditorPreviewLOD);
         DrawMesh(meshData);
 
-		TerrainChunk.UpdateMaterial(biomeData.biomeInfo, worldSettings, Vector2.zero, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
+		
+		TerrainChunk.UpdateMaterial(biomeData.biomeInfo, worldSettings, centre, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
 
 		List<SpawnObject> terrainObjects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 
 																					biomeData.biomeInfo, 
 																					worldSettings, 
-																					Vector2.zero);
+																					centre);
 
 		for (int i = 0; i < terrainObjects.Count; i++) {
 			terrainObjects[i].Spawn(this.transform);
