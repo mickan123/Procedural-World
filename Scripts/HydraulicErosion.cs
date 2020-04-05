@@ -62,7 +62,7 @@ public static class HydraulicErosion {
         }   
     }
 
-    public static float[,] Erode(float[,] values, ErosionSettings settings) {
+    public static float[,] Erode(float[,] values, WorldSettings worldSettings, BiomeInfo info) {
         
         int mapSize = values.GetLength(0);
 
@@ -73,8 +73,8 @@ public static class HydraulicErosion {
             }
         }
 
+        ErosionSettings settings = worldSettings.erosionSettings;
         BrushValues brushValues = new BrushValues(settings, mapSize);
-        
         System.Random prng = new System.Random(settings.seed);
         
         for (int iteration = 0; iteration < settings.numHydraulicErosionIterations; iteration++) {
@@ -158,9 +158,20 @@ public static class HydraulicErosion {
                 water *= (1 - settings.evaporateSpeed);
             }
         }
-        for (int i = 2; i < mapSize - 2; i++) {
-            for (int j = 2; j < mapSize - 2; j++) {
-                values[i, j] = map[i * mapSize + j];
+
+        // Weight erosion by biome strengths and whether erosion is enabled
+        int numBiomes = worldSettings.biomes.Length;
+        for (int i = 2; i < mapSize - 3; i++) { // Don't erode border elements as otherwise chunks don't align correctly
+            for (int j = 2; j < mapSize - 3; j++) {
+                float val = 0;
+                for (int w = 0; w < numBiomes; w++) {
+                    if (worldSettings.biomes[w].hydraulicErosion) {
+                        val += info.biomeStrengths[i, j, w] * map[i * mapSize + j];
+                    } else {
+                        val += info.biomeStrengths[i, j, w] * values[i, j];
+                    }
+                }
+                values[i, j] = val;
             }
         }
         

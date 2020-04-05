@@ -95,6 +95,9 @@
 			float3 blendAxes = abs(IN.worldNormal);
 			blendAxes /= (blendAxes.x + blendAxes.y + blendAxes.z);
 
+			float4 biomeData = sampleBiomeData(IN.worldPos);
+			int mainBiome = biomeData.x;
+
 			float3 finalTex = o.Albedo;
 			for (int i = 0; i < maxBiomeCount; i+=4) {
 				float4 biomeStrengthData = sampleBiomeStrength(IN.worldPos, i / 4);
@@ -105,6 +108,7 @@
 			}
 			o.Albedo = finalTex;
 			
+			// o.Albedo = float3(biomeData.x, 0, 0);
 		}
 
 		ENDCG

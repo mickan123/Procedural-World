@@ -7,7 +7,6 @@ public class MapPreview : MonoBehaviour {
 
 	public Renderer textureRender;
 	public MeshFilter meshFilter;
-	public MeshFilter meshFilter2;
 
 	public enum DrawMode { NoiseMap, MeshNoBiome, BiomesMesh, FalloffMap, Biomes, HumidityMap, TemperatureMap, SingleBiome };
 	public DrawMode drawMode;

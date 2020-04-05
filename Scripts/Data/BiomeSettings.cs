@@ -11,6 +11,9 @@ public class BiomeSettings : UpdatableData {
 
 	public TerrainObjectSettings[] terrainObjectSettings;
 
+	public bool hydraulicErosion = true;
+	public bool thermalErosion = true;
+
 	[Range(0,1)]
 	public float startHumidity;
 	[Range(0,1)]

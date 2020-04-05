@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public static class BiomeHeightMapGenerator {
 
@@ -32,10 +33,9 @@ public static class BiomeHeightMapGenerator {
 															temperatureNoiseMap,
 															sampleCentre,
 															biomeInfo);
-																
-		// float[,] values = HydraulicErosion.Erode(heightNoiseMap.values, worldSettings.erosionSettings);
-		// values = ThermalErosion.Erode(values, worldSettings.erosionSettings);
-		// HeightMap erodedNoiseMap = new HeightMap(values);	
+
+		HydraulicErosion.Erode(heightNoiseMap.values, worldSettings, biomeInfo);
+		ThermalErosion.Erode(heightNoiseMap.values, worldSettings, biomeInfo);
 
 		return new BiomeData(heightNoiseMap, temperatureNoiseMap, humidityNoiseMap, biomeInfo);
 	}
@@ -136,7 +136,26 @@ public static class BiomeHeightMapGenerator {
 				}
 			}
 		}
-		return new BiomeInfo(biomeMap, biomeStrengths);
+
+		// Calculate main Biome by summing strength at every location
+		float[] totalBiomeStrenths = new float[numBiomes];
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				for (int w = 0; w < numBiomes; w++) {
+					totalBiomeStrenths[w] += biomeStrengths[i, j, w];
+				}	
+			}
+		}
+		float maxValue = float.MinValue;
+ 		int maxIndex = 0;
+		for (int i = 0; i < numBiomes; i++) {
+			if (totalBiomeStrenths[i] > maxValue) {
+				maxValue = totalBiomeStrenths[i];
+				maxIndex = i;
+			}
+		}
+
+		return new BiomeInfo(biomeMap, biomeStrengths, maxIndex);
 	}
 }
 
