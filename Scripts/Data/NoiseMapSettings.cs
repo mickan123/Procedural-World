@@ -91,7 +91,8 @@ public class SandDuneSettings {
 	[Range(0, 1)]
 	public float p = 1f; // Profile of sand dune
 	public float duneWidth = 25f;
-	public float duneOffset = 50f;
+	public float duneOffset = 0f;
+	public float maxDuneVariation = 50f;
 	public float duneGap = 3f;
 	[Range(0, 1)]
 	public float duneThreshold = 0.3f; // Height needs to be above this value to spawn a dune
@@ -105,6 +106,7 @@ public class SandDuneSettings {
 
 	public void ValidateValues() {
 		duneOffset = Mathf.Max(0, duneOffset);
+		maxDuneVariation = Mathf.Max(0, maxDuneVariation);
 		duneGap = Mathf.Max(0, duneGap);
 		duneWidth = Mathf.Max(1, duneWidth);
 	}

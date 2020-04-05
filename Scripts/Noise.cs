@@ -2,15 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
-using System;
 
 public static class Noise {
-
 
 	public static float[,] GenerateNoiseMap(int mapWidth, 
 											int mapHeight, 
 											PerlinNoiseSettings noiseSettings, 
 											Vector2 sampleCentre,
+											NoiseMapSettings.NoiseType noiseType,
 											int seed) {
 
 		float[,] noiseMap = new float[mapWidth, mapHeight];
@@ -42,8 +41,16 @@ public static class Noise {
 					float sampleX = (x - halfWidth + octaveOffsets[i].x) / noiseSettings.scale * frequency;
 					float sampleY = (y - halfHeight + octaveOffsets[i].y) / noiseSettings.scale * frequency;
 					
-					float perlinValue = Mathf.PerlinNoise(sampleX, sampleY) * 2 - 1;
-					noiseHeight += perlinValue * amplitude; 
+					float noiseValue = 0f;
+					if (noiseType == NoiseMapSettings.NoiseType.Perlin) {
+						noiseValue = Mathf.PerlinNoise(sampleX, sampleY);
+					} 
+					else if (noiseType == NoiseMapSettings.NoiseType.Simplex) {
+						float simplexNoiseVal = NoiseFunctions.Simplex2D(new Vector3(sampleX, sampleY, 0f), 1f).value;
+						noiseValue = (simplexNoiseVal + 1f) / 2; // Convert from [-1, 1] to [0, 1]
+					}
+					
+					noiseHeight += noiseValue * amplitude; 
 
 					amplitude *= noiseSettings.persistance;
 					frequency *= noiseSettings.lacunarity; 
@@ -56,7 +63,8 @@ public static class Noise {
 	}
 
 	public static float[,] normalizeGlobalBiomeValues(float[,] input, WorldSettings worldSettings) {
-
+		
+		// Get noiseSetting values that result in max possible height
 		int maxNumOctaves = 1;
 		float maxPersistance = 0;
 		PerlinNoiseSettings[] noiseSettingArray = worldSettings.biomes.Select(x => x.heightMapSettings.perlinNoiseSettings).ToArray();
@@ -69,6 +77,7 @@ public static class Noise {
 			}
 		}
 
+		// Calculate max possible height
 		float maxPossibleHeight = 0;
 		float amplitude = 1;
 		for (int i = 0; i < maxNumOctaves; i++) {
@@ -76,9 +85,10 @@ public static class Noise {
 			amplitude *= maxPersistance;
 		}
 
+		// Normalize by max possible height
 		for (int i = 0; i < input.GetLength(0); i++) {
 			for (int j = 0 ; j < input.GetLength(1); j++) {
-				float normalizedHeight = (input[i, j] + 1) / (2f * maxPossibleHeight); // MAGIC NUMBER
+				float normalizedHeight = input[i, j] / maxPossibleHeight;
 				input[i, j] = Mathf.Clamp(normalizedHeight, 0, float.MaxValue);	
 			}
 		}
@@ -87,16 +97,19 @@ public static class Noise {
 	}
 
 	public static float[,] normalizeGlobalValues(float[,] input, PerlinNoiseSettings noiseSettings) {
+
+		// Calculate max possible height
 		float maxPossibleHeight = 0;
 		float amplitude = 1;
 		for (int i = 0; i < noiseSettings.octaves; i++) {
 			maxPossibleHeight += amplitude; 
 			amplitude *= noiseSettings.persistance;
 		}
-
+		
+		// Normalize by max possible height
 		for (int i = 0; i < input.GetLength(0); i++) {
 			for (int j = 0 ; j < input.GetLength(1); j++) {
-				input[i, j] = (input[i, j] + maxPossibleHeight) / (2 * maxPossibleHeight);
+				input[i, j] = input[i, j] / maxPossibleHeight;
 			}
 		}
 

@@ -32,12 +32,12 @@ public static class ObjectGenerator {
 
 		int mapSize = heightMap.values.GetLength(0);
 
-		float[,] spawnNoiseMap = Noise.GenerateNoiseMap(mapSize, mapSize, settings.noiseMapSettings.perlinNoiseSettings, sampleCentre, settings.noiseMapSettings.seed);
-		for (int x = 0; x < spawnNoiseMap.GetLength(0); x++) {
-			for (int y = 0; y < spawnNoiseMap.GetLength(0); y++) {
-				spawnNoiseMap[x, y] = (spawnNoiseMap[x, y] + 1f) / 2f; // Normalize between [0, 1]
-			}
-		}
+		float[,] spawnNoiseMap = Noise.GenerateNoiseMap(mapSize,
+														mapSize,
+														settings.noiseMapSettings.perlinNoiseSettings,
+														sampleCentre,
+														worldSettings.biomes[biome].heightMapSettings.noiseType,
+														settings.noiseMapSettings.seed);
 		
 		System.Random prng = new System.Random((int)(sampleCentre.x + sampleCentre.y));
 

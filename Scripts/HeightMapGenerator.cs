@@ -16,14 +16,15 @@ public static class HeightMapGenerator {
 											int seed) {
 												
 		HeightMap heightMap;
-		if (noiseSettings.noiseType == NoiseMapSettings.NoiseType.Simplex) {
-			heightMap = GeneratePerlinHeightMap(width, height, noiseSettings, worldSettings, sampleCentre, normalizeMode, seed);
+		if (noiseSettings.noiseType == NoiseMapSettings.NoiseType.Simplex ||
+		    noiseSettings.noiseType == NoiseMapSettings.NoiseType.Perlin) {
+			heightMap = GenerateDefaultHeightMap(width, height, noiseSettings, worldSettings, sampleCentre, normalizeMode, seed);
 		} 
 		else if (noiseSettings.noiseType == NoiseMapSettings.NoiseType.SandDune) {
 			heightMap = GenerateSandDuneHeightMap(width, height, noiseSettings, worldSettings.meshSettings, sampleCentre, seed);
 		}
 		else {
-			heightMap = GeneratePerlinHeightMap(width, height, noiseSettings, worldSettings, sampleCentre, normalizeMode, seed);
+			heightMap = GenerateDefaultHeightMap(width, height, noiseSettings, worldSettings, sampleCentre, normalizeMode, seed);
 		}
 		
 		AnimationCurve heightCurve_threadsafe = new AnimationCurve(noiseSettings.heightCurve.keys);
@@ -37,15 +38,15 @@ public static class HeightMapGenerator {
 		return heightMap;
 	}
 
-	public static HeightMap GeneratePerlinHeightMap(int width, 
+	public static HeightMap GenerateDefaultHeightMap(int width, 
 											int height, 
 											NoiseMapSettings noiseSettings, 
 											WorldSettings worldSettings,
 											Vector2 sampleCentre, 
 											NormalizeMode normalizeMode,
 											int seed) {
-
-		float[,] values = Noise.GenerateNoiseMap(width, height, noiseSettings.perlinNoiseSettings, sampleCentre, seed);
+		
+		float[,] values = Noise.GenerateNoiseMap(width, height, noiseSettings.perlinNoiseSettings, sampleCentre, noiseSettings.noiseType, seed);
 
 		if (normalizeMode == NormalizeMode.GlobalBiome) {
 			values = Noise.normalizeGlobalBiomeValues(values, worldSettings);
@@ -61,8 +62,6 @@ public static class HeightMapGenerator {
 			}
 		}
 
-		
-
 		return new HeightMap(values);
 	}
 
@@ -75,41 +74,33 @@ public static class HeightMapGenerator {
 		
 		float[,] values = new float[width, height];
 
-		float[,] perlinValues = Noise.GenerateNoiseMap(width, height, noiseSettings.perlinNoiseSettings, sampleCentre, seed);
-		for (int i = 0; i < perlinValues.GetLength(0); i++) {
-			for (int j = 0; j < perlinValues.GetLength(1); j++) {
-				perlinValues[i, j] = (perlinValues[i, j] + 1) / 2;
-			}
-		}
+		float[,] noiseValues = Noise.GenerateNoiseMap(width,
+													height,
+													noiseSettings.perlinNoiseSettings,
+													sampleCentre,
+													NoiseMapSettings.NoiseType.Simplex,
+													seed);
 
 		int chunkIdxX = (int)sampleCentre.x / meshSettings.meshWorldSize;
 		int chunkIdxY = (int)sampleCentre.y / meshSettings.meshWorldSize;
-
+		
 		for (int w = 0; w < noiseSettings.sandDuneSettings.Length; w++) {
 
 			SandDuneSettings settings = noiseSettings.sandDuneSettings[w];
 			float duneHeight = ((2 * settings.sigma * settings.duneWidth) / Mathf.PI) * Mathf.Max(1 - settings.xm, 0.01f);
 
 			for (int i = 0; i < width; i++) {
-				for (int j = 0; j < height; j++) {
-					
-					// Calculate where along sand dune we are:
-					// [0, xm] = on the curve upwards to peak 
-					// [xm, 1) = on the downwards curve
-					// [1, inf] = gap between dunes
-					float duneOffset = perlinValues[i, j] * settings.duneOffset; // Random offset to generate wavey peaks
-					float duneLength = settings.duneWidth + settings.duneGap;
-					float x = (j + duneOffset + chunkIdxY * (3 - height)) % duneLength; // height - 1 is max value for height, subtract another 
-					x = x < 0 ? x + duneLength : x;
-					float side = (x > settings.xm * settings.duneWidth) ? 1f : 0f;
-					x = Mathf.Clamp(x / settings.duneWidth, 0, 1);
+				for (int j = 0; j < height; j++) {	
+
+					float x = CalculateDunePos(settings, height, chunkIdxY, w, j, noiseValues[i, j]);
 
 					// Calculate dune height and equation according to Laurent Avenel (Wiwine) Terragen tutorial
+					float side = (x > settings.xm) ? 1f : 0f;
 					float cosTerm = 1f - Mathf.Cos((Mathf.PI / (settings.p * side + 1)) * ((x - side) / (settings.xm - side)));
 					float constant = ((settings.p * side + 1) / 2f);
 					
 					// Calculate height multiplier with range[0, 1], perlin height value must be > duneThreshold or it is clamped to 0 
-					float duneThresholdMultiplier = Mathf.Max(0, perlinValues[i, j] - settings.duneThreshold) / (Mathf.Max(1f - settings.duneThreshold, 0.01f));
+					float duneThresholdMultiplier = Mathf.Max(0, noiseValues[i, j] - settings.duneThreshold) / (Mathf.Max(1f - settings.duneThreshold, 0.01f));
 
 					values[i, j] += (constant * cosTerm) * duneHeight * duneThresholdMultiplier;
 				}
@@ -118,11 +109,25 @@ public static class HeightMapGenerator {
 
 		return new HeightMap(values);
 	}
+
+	public static float CalculateDunePos(SandDuneSettings settings, int height, int chunkIdxY, int dune, int j, float noiseVal) {
+		// Calculate where along sand dune we are:
+		// [0, xm] = on the curve upwards to peak 
+		// [xm, 1) = on the downwards curve
+		// [1, inf] = gap between dunes
+		 // Random offset to generate wavey peaks
+		float duneOffset = noiseVal * settings.maxDuneVariation + settings.duneOffset; // height - 1 is max value for height, subtract another 
+		float duneLength = settings.duneWidth + settings.duneGap;
+		float x = (j + duneOffset + chunkIdxY * (3 - height)) % duneLength; 
+		x = x < 0 ? x + duneLength : x;
+		x = Mathf.Clamp(x / settings.duneWidth, 0, 1);
+		return x;
+	}
 }
 
 public struct BiomeInfo {
 	public readonly int[,] biomeMap; // Holds index of biome at each point
-	public readonly float[,,] biomeStrengths; // E.g. 0.75 means 75-25 main biome nearest biome blend, has values in range [0.5, 1]
+	public readonly float[,,] biomeStrengths; // E.g. 0.75 means 75-25 main biome nearest biome blend, has values in range [0, 1]
 	public readonly int mainBiome;
 	
 	public BiomeInfo(int[,] biomeMap, float[,,] biomeStrengths, int mainBiome) {
