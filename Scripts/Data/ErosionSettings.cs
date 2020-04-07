@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu()]
+[CreateAssetMenu(), System.Serializable]
 public class ErosionSettings : UpdatableData {
 
     public float gravity = 4;
@@ -41,26 +41,12 @@ public class ErosionSettings : UpdatableData {
 
     #if UNITY_EDITOR
 
-	private event System.Action validateValuesSubscription;
-
-    public void SubscribeChanges(System.Action onValidate) {
-		this.validateValuesSubscription += onValidate;
-    }
-
-    public void UnsubscribeChanges(System.Action onValidate) {
-		this.validateValuesSubscription += onValidate;
-    }
-
 	public void ValidateValues() {
-		
+		// Placeholder for custom value validation
 	}
 
 	protected override void OnValidate() {
 		ValidateValues();
-
-		if (validateValuesSubscription != null) {
-			validateValuesSubscription();
-		}
 		base.OnValidate();
 	}
 

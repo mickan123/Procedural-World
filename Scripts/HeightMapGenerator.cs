@@ -81,7 +81,6 @@ public static class HeightMapGenerator {
 													NoiseMapSettings.NoiseType.Simplex,
 													seed);
 
-		int chunkIdxX = (int)sampleCentre.x / meshSettings.meshWorldSize;
 		int chunkIdxY = (int)sampleCentre.y / meshSettings.meshWorldSize;
 		
 		for (int w = 0; w < noiseSettings.sandDuneSettings.Length; w++) {

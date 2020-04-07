@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu()]
+[CreateAssetMenu(), System.Serializable]
 public class NoiseMapSettings : UpdatableData {
 
 	public enum NoiseType { Perlin, Simplex, SandDune }
@@ -17,8 +17,6 @@ public class NoiseMapSettings : UpdatableData {
 	[Header("Height Settings")]
 	public float heightMultiplier;
 	public AnimationCurve heightCurve;
-
-	private event System.Action subscribeUpdatedValues;
 
 	[HideInInspector]
 	public int seed; // Set by global seed
@@ -38,14 +36,6 @@ public class NoiseMapSettings : UpdatableData {
 
 	#if UNITY_EDITOR
 
-	public void SubscribeChanges(System.Action onValidate) {
-		this.subscribeUpdatedValues += onValidate;
-	}
-
-	public void UnsubscribeChanges(System.Action onValidate) {
-		this.subscribeUpdatedValues -= onValidate;
-	}
-
 	public virtual void ValidateValues() {
 		perlinNoiseSettings.ValidateValues();
 		if (sandDuneSettings != null) {
@@ -57,10 +47,6 @@ public class NoiseMapSettings : UpdatableData {
 
 	protected override void OnValidate() {
 		ValidateValues();
-
-		if (subscribeUpdatedValues != null) {
-			subscribeUpdatedValues();
-		}
 		base.OnValidate();
 	}
 

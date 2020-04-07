@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu()]
+[CreateAssetMenu(), System.Serializable]
 public class MeshSettings : UpdatableData {
 
 	public const int numSupportedLODs = 5;
@@ -20,26 +20,12 @@ public class MeshSettings : UpdatableData {
 
 	#if UNITY_EDITOR
 
-	private event System.Action validateValuesSubscription;
-
-	public void SubscribeChanges(System.Action onValidate) {
-		this.validateValuesSubscription += onValidate;
-    }
-
-    public void UnsubscribeChanges(System.Action onValidate) {
-		this.validateValuesSubscription += onValidate;
-    }
-
 	public void ValidateValues() {
-		
+		// Placeholder for custom validation for mesh settings
 	}
 
 	protected override void OnValidate() {
 		ValidateValues();
-
-		if (validateValuesSubscription != null) {
-			validateValuesSubscription();
-		}
 		base.OnValidate();
 	}
 

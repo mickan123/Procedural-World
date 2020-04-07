@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
-[CreateAssetMenu()]
+[CreateAssetMenu(), System.Serializable]
 public class WorldSettings : UpdatableData {
 
 	public NoiseMapSettings humidityMapSettings;
@@ -123,28 +123,6 @@ public class WorldSettings : UpdatableData {
 	}
 
 	#if UNITY_EDITOR
-
-	public void SubscribeChanges(System.Action callback) {
-		this.onValuesUpdate += callback;
-		humidityMapSettings.SubscribeChanges(OnValidate);
-		temperatureMapSettings.SubscribeChanges(OnValidate);
-		erosionSettings.SubscribeChanges(OnValidate);
-		meshSettings.SubscribeChanges(OnValidate);
-		for (int i = 0; i < biomes.Length; i++) {
-			biomes[i].SubscribeChanges(OnValidate);
-		}
-	}
-
-	public void UnsubscribeChanges(System.Action callback) {
-		this.onValuesUpdate -= callback;
-		humidityMapSettings.UnsubscribeChanges(OnValidate);
-		temperatureMapSettings.UnsubscribeChanges(OnValidate);
-		erosionSettings.UnsubscribeChanges(OnValidate);
-		meshSettings.UnsubscribeChanges(OnValidate);
-		for (int i = 0; i < biomes.Length; i++) {
-			biomes[i].UnsubscribeChanges(OnValidate);
-		}
-	}
 
 	protected override void OnValidate() {
 		// TODO ensure no overlapping biome values

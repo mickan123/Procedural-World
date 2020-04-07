@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu()]
+[CreateAssetMenu(), System.Serializable()]
 public class TerrainObjectSettings : UpdatableData {
 	public float minRadius = 5f;
 	public float maxRadius = 50f; 
@@ -22,18 +20,6 @@ public class TerrainObjectSettings : UpdatableData {
 
 	#if UNITY_EDITOR
 
-	private event System.Action validateValuesSubscription;
-
-	public void SubscribeChanges(Action onValidate) {
-		this.validateValuesSubscription += onValidate;
-		noiseMapSettings.SubscribeChanges(onValidate);
-    }
-
-	public void UnsubscribeChanges(Action onValidate) {
-		this.validateValuesSubscription -= onValidate;
-		noiseMapSettings.UnsubscribeChanges(onValidate);
-	}
-
 	public void ValidateValues() {
 		noiseMapSettings.ValidateValues();
 
@@ -49,10 +35,6 @@ public class TerrainObjectSettings : UpdatableData {
 
 	protected override void OnValidate() {
 		ValidateValues();
-
-		if (validateValuesSubscription != null) {
-			validateValuesSubscription();
-		}
 		base.OnValidate();
 	}
 

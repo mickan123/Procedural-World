@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
+[ExecuteInEditMode]
 public class MapPreview : MonoBehaviour {
 
 	public Renderer textureRender;
@@ -26,6 +27,11 @@ public class MapPreview : MonoBehaviour {
 
 	public int seed;
 
+	public void Start() {
+		UpdatableData.mapUpdate -= OnValuesUpdated;
+		UpdatableData.mapUpdate += OnValuesUpdated;
+	}
+
 	public void DrawTexture(Texture2D texture) {
 		textureRender.sharedMaterial.mainTexture = texture;
 		textureRender.transform.localScale = new Vector3(-96, 1, 96);
@@ -36,6 +42,7 @@ public class MapPreview : MonoBehaviour {
 	}
 
 	public void DrawMapInEditor() {
+
 		worldSettings.ApplyToMaterial(terrainMaterial);
 		worldSettings.Init();
 		worldSettings.seed = this.seed;
@@ -195,20 +202,13 @@ public class MapPreview : MonoBehaviour {
         DrawTexture(TextureGenerator.TextureFromHeightMap(new HeightMap(biomeTextureMap)));
     }
 
+	#if UNITY_EDITOR
+
     void OnValuesUpdated() {
 		if (!Application.isPlaying) {
 			DrawMapInEditor();
 		}
 	}
-
-	void OnValidate() {
-		if (heightMapSettings != null) {
-			heightMapSettings.UnsubscribeChanges(OnValuesUpdated);
-			heightMapSettings.SubscribeChanges(OnValuesUpdated);
-		}
-		if (worldSettings != null) {
-			worldSettings.UnsubscribeChanges(OnValuesUpdated);
-			worldSettings.SubscribeChanges(OnValuesUpdated);
-		}
-	}
+ 
+	#endif
 }

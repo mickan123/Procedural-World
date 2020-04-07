@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class UpdatableData : ScriptableObject {
 
+	public static event System.Action mapUpdate;
 	protected event System.Action onValuesUpdate;
 	public bool autoUpdate;
 
@@ -15,11 +16,11 @@ public class UpdatableData : ScriptableObject {
 		}
 	}
 
-	public void SubscribeValuesUpdated(System.Action callback) {
+	public virtual void SubscribeChanges(System.Action callback) {
 		this.onValuesUpdate += callback;
 	}
 
-	public void UnsubscribeValuesUpdated(System.Action callback) {
+	public virtual void UnsubscribeChanges(System.Action callback) {
 		this.onValuesUpdate -= callback;
 	}
 
@@ -27,6 +28,9 @@ public class UpdatableData : ScriptableObject {
 		UnityEditor.EditorApplication.update -= NotifyOfUpdatedValues;
 		if (onValuesUpdate != null) {
 			onValuesUpdate();
+		}
+		if (mapUpdate != null) {
+			mapUpdate();
 		}
 	}
 
