@@ -29,8 +29,8 @@ public class TerrainGenerator : MonoBehaviour {
 	void Start() {
 		worldSettings.ApplyToMaterial(mapMaterial);
 		worldSettings.Init();
-
-		float maxViewDst = detailLevels [detailLevels.Length - 1].visibleDstThreshold;
+		
+		float maxViewDst = detailLevels[detailLevels.Length - 1].visibleDstThreshold;
 		meshWorldSize = meshSettings.meshWorldSize - 1;
 		chunksVisibleInViewDst = Mathf.RoundToInt(maxViewDst / meshWorldSize);
 
@@ -42,7 +42,7 @@ public class TerrainGenerator : MonoBehaviour {
 
 		if (viewerPosition != viewerPositionOld) {
 			foreach (TerrainChunk chunk in visibleTerrainChunks) {
-				chunk.UpdateCollisionMesh ();
+				chunk.UpdateCollisionMesh();
 			}
 		}
 
@@ -55,8 +55,8 @@ public class TerrainGenerator : MonoBehaviour {
 	void UpdateVisibleChunks() {
 		HashSet<Vector2> alreadyUpdatedChunkCoords = new HashSet<Vector2> ();
 		for (int i = visibleTerrainChunks.Count - 1; i >= 0; i--) {
-			alreadyUpdatedChunkCoords.Add (visibleTerrainChunks [i].coord);
-			visibleTerrainChunks [i].UpdateTerrainChunk ();
+			alreadyUpdatedChunkCoords.Add(visibleTerrainChunks[i].coord);
+			visibleTerrainChunks[i].UpdateTerrainChunk();
 		}
 			
 		int currentChunkCoordX = Mathf.RoundToInt(viewerPosition.x / meshWorldSize);
@@ -64,10 +64,10 @@ public class TerrainGenerator : MonoBehaviour {
 
 		for (int yOffset = -chunksVisibleInViewDst; yOffset <= chunksVisibleInViewDst; yOffset++) {
 			for (int xOffset = -chunksVisibleInViewDst; xOffset <= chunksVisibleInViewDst; xOffset++) {
-				Vector2 viewedChunkCoord = new Vector2 (currentChunkCoordX + xOffset, currentChunkCoordY + yOffset);
-				if (!alreadyUpdatedChunkCoords.Contains (viewedChunkCoord)) {
-					if (terrainChunkDictionary.ContainsKey (viewedChunkCoord)) {
-						terrainChunkDictionary [viewedChunkCoord].UpdateTerrainChunk ();
+				Vector2 viewedChunkCoord = new Vector2(currentChunkCoordX + xOffset, currentChunkCoordY + yOffset);
+				if (!alreadyUpdatedChunkCoords.Contains(viewedChunkCoord)) {
+					if (terrainChunkDictionary.ContainsKey(viewedChunkCoord)) {
+						terrainChunkDictionary [viewedChunkCoord].UpdateTerrainChunk();
 					} else {
 						TerrainChunk newChunk = new TerrainChunk(viewedChunkCoord, 
 																 worldSettings,

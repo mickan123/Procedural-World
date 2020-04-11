@@ -13,11 +13,11 @@
 		// Use shader model 3.0 target, to get nicer looking lighting
 		#pragma target 3.0
 
-		const static int maxLayerCount = 8;
-		const static int maxBiomeCount = 8; // Must be multiple of 4 >= actual biome count
+		const static uint maxLayerCount = 8;
+		const static uint maxBiomeCount = 8; // Must be multiple of 4 >= actual biome count
 		const static float epsilon = 1E-4;
 		
-		int chunkWidth;
+		uint chunkWidth;
 		
 		int layerCounts[maxBiomeCount];
 
@@ -30,13 +30,12 @@
 		float minHeight;
 		float maxHeight;
 
+		UNITY_DECLARE_TEX2DARRAY(baseTextures);
+
 		// Per chunk vars
-		float3 centre;
 		UNITY_DECLARE_TEX2D(biomeMapTex);
 		UNITY_DECLARE_TEX2DARRAY(biomeStrengthMap);
 
-		UNITY_DECLARE_TEX2DARRAY(baseTextures);
-		
 		struct Input {
 			float3 worldPos;
 			float3 worldNormal;
@@ -99,13 +98,15 @@
 			int mainBiome = biomeData.x;
 
 			float3 finalTex = o.Albedo;
-			for (int i = 0; i < maxBiomeCount; i+=4) {
+			for (uint i = 0; i < maxBiomeCount; i+=4) {
 				float4 biomeStrengthData = sampleBiomeStrength(IN.worldPos, i / 4);
 				finalTex += biomeStrengthData.x * getBiomeTexture(i, o.Albedo, IN.worldPos, blendAxes);
 				finalTex += biomeStrengthData.y * getBiomeTexture(i + 1, o.Albedo, IN.worldPos, blendAxes);
 				finalTex += biomeStrengthData.z * getBiomeTexture(i + 2, o.Albedo, IN.worldPos, blendAxes);
 				finalTex += biomeStrengthData.w * getBiomeTexture(i + 3, o.Albedo, IN.worldPos, blendAxes);
+				
 			}
+
 			o.Albedo = finalTex;
 		}
 

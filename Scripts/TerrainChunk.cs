@@ -156,9 +156,6 @@ public class TerrainChunk {
 		biomeMapTex.Apply();
 		matBlock.SetTexture("biomeMapTex", biomeMapTex);
 
-		Vector2 position = coord * worldSettings.meshSettings.meshWorldSize; 
-		matBlock.SetVector("centre", new Vector4(position.x, 0, position.y, 0));
-		
 		renderer.SetPropertyBlock(matBlock);
 	}
 
