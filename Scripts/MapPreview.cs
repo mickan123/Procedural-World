@@ -6,6 +6,8 @@ using System.Linq;
 [ExecuteInEditMode]
 public class MapPreview : MonoBehaviour {
 
+	#if UNITY_EDITOR
+
 	public Renderer textureRender;
 	public MeshFilter meshFilter;
 
@@ -203,8 +205,6 @@ public class MapPreview : MonoBehaviour {
 
         DrawTexture(TextureGenerator.TextureFromHeightMap(new HeightMap(biomeTextureMap)));
     }
-
-	#if UNITY_EDITOR
 
     void OnValuesUpdated() {
 		if (!Application.isPlaying) {
