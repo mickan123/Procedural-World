@@ -42,6 +42,8 @@ public class MapPreview : MonoBehaviour {
 	}
 
 	public void DrawMapInEditor() {
+		UpdatableData.mapUpdate -= OnValuesUpdated;
+		UpdatableData.mapUpdate += OnValuesUpdated;
 
 		worldSettings.ApplyToMaterial(terrainMaterial);
 		worldSettings.Init();
