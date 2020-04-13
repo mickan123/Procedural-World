@@ -6,6 +6,10 @@ using UnityEngine;
 public class ErosionSettings : UpdatableData {
 
     public float gravity = 4;
+
+    [Header("Smoothing Settings")]
+    public int smoothFilterWidth = 3; // Size of smoothing filter
+    public int smoothWidth = 25; // Number of units from edge to smooth
 	
     [Header("Hydraulic Erosion Settings")]
 	public int numHydraulicErosionIterations = 50000;
@@ -42,7 +46,8 @@ public class ErosionSettings : UpdatableData {
     #if UNITY_EDITOR
 
 	public void ValidateValues() {
-		// Placeholder for custom value validation
+        smoothFilterWidth = Mathf.Max(0, smoothFilterWidth);
+        smoothWidth = Mathf.Max(0, smoothWidth);
 	}
 
 	protected override void OnValidate() {

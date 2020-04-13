@@ -159,10 +159,13 @@ public static class HydraulicErosion {
             }
         }
 
+
+        // float[,] smoothedValues = SmoothEdges(map, mapSize, settings);
+        
         // Weight erosion by biome strengths and whether erosion is enabled
         int numBiomes = worldSettings.biomes.Length;
-        for (int i = 2; i < mapSize - 3; i++) { // Don't erode border elements as otherwise chunks don't align correctly
-            for (int j = 2; j < mapSize - 3; j++) {
+        for (int i = 0; i < mapSize; i++) { // Don't erode border elements as otherwise chunks don't align correctly
+            for (int j = 0; j < mapSize; j++) {
                 float val = 0;
                 for (int w = 0; w < numBiomes; w++) {
                     if (worldSettings.biomes[w].hydraulicErosion) {
@@ -174,8 +177,14 @@ public static class HydraulicErosion {
                 values[i, j] = val;
             }
         }
-        
+
         return values;
+    }
+
+    struct HeightAndGradient {
+        public float height;
+        public float gradientX;
+        public float gradientY;
     }
 
     private static HeightAndGradient CalculateHeightAndGradient(float[] map, int mapSize, float posX, float posY) {
@@ -203,10 +212,45 @@ public static class HydraulicErosion {
         return new HeightAndGradient () { height = height, gradientX = gradientX, gradientY = gradientY };
     }
 
+    private static float[,] SmoothEdges(float[] map, int mapSize, ErosionSettings settings) {
+        float[,] smoothedValues = new float[mapSize, mapSize];
+        for (int i = 0; i < mapSize; i++) {
+            for (int j = 0; j < mapSize; j++) {
+                if (i < settings.smoothWidth || i > mapSize - settings.smoothWidth
+                    || j < settings.smoothWidth || j > mapSize - settings.smoothWidth) {
 
-    struct HeightAndGradient {
-        public float height;
-        public float gradientX;
-        public float gradientY;
+                    smoothedValues[i, j] = Smooth(map, i, j, settings.smoothFilterWidth, settings.smoothWidth, mapSize);
+                }
+                else  {
+                    smoothedValues[i, j] = map[i * mapSize + j];
+                }
+            }
+        }
+        return smoothedValues;
+    }
+
+    private static float Smooth(float[] values, int x, int y, int smoothFilterWidth, int smoothWidth, int mapSize) {
+        float sum = 0f;
+        float numValues = 0f;
+        for (int i = x - smoothFilterWidth; i <= x + smoothFilterWidth; i++) {
+            for (int j = y - smoothFilterWidth; j <= y + smoothFilterWidth; j++) {
+                
+                if (i > 0 && i < mapSize && j > 0 && j < mapSize) {
+                    sum += values[i * mapSize + j];
+                    numValues++;
+                }
+            }
+        }
+
+        float average = sum / numValues;
+        
+        float xDistFromEdge = Mathf.Min(x, Mathf.Abs(x - mapSize));
+        float yDistFromEdge = Mathf.Min(y, Mathf.Abs(y - mapSize));
+        float distFromEdge = Mathf.Min(xDistFromEdge, yDistFromEdge);
+        float maxDistFromEdge = smoothWidth;
+
+        float weightedAverage = average * (1f - distFromEdge / maxDistFromEdge) + values[x * mapSize + y] * (distFromEdge / maxDistFromEdge);
+
+        return weightedAverage;
     }
 }

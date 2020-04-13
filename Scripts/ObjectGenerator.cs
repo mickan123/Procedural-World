@@ -24,11 +24,11 @@ public static class ObjectGenerator {
 	}
 
 	public static SpawnObject GenerateTerrainObject(TerrainObjectSettings settings, 
-														int biome,
-														HeightMap heightMap, 
-														BiomeInfo info, 
-														WorldSettings worldSettings, 
-														Vector2 sampleCentre) {
+													int biome,
+													HeightMap heightMap, 
+													BiomeInfo info, 
+													WorldSettings worldSettings, 
+													Vector2 sampleCentre) {
 
 		int mapSize = heightMap.values.GetLength(0);
 
@@ -73,7 +73,7 @@ public static class ObjectGenerator {
         	int coordY = (int) points[i].y;
 
 			if (info.biomeMap[coordX, coordY] != biome
-			&& rand > info.biomeStrengths[coordX, coordY, biome]) {
+			&& rand > info.biomeStrengths[coordX, coordY, biome] * info.biomeStrengths[coordX, coordY, biome]) {
 				points.RemoveAt(i);
 				i--;
 			}
