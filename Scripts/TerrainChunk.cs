@@ -24,7 +24,7 @@ public class TerrainChunk {
 	int colliderLODIndex;
 
 	ChunkData chunkData;
-	HeightMap heightMap;
+	float[,] heightMap;
 	bool heightMapReceived;
 	int previousLODIndex = -1;
 	bool hasSetCollider;
@@ -255,9 +255,9 @@ class LODMesh {
 		updateCallback();
 	}
 
-	public void RequestMesh(HeightMap heightMap, MeshSettings meshSettings) {
+	public void RequestMesh(float[,] heightMap, MeshSettings meshSettings) {
 		hasRequestedMesh = true;
-		ThreadedDataRequester.RequestData(() => MeshGenerator.GenerateTerrainMesh(heightMap.values, meshSettings, lod), OnMeshDataReceived);
+		ThreadedDataRequester.RequestData(() => MeshGenerator.GenerateTerrainMesh(heightMap, meshSettings, lod), OnMeshDataReceived);
 	}
 
 }

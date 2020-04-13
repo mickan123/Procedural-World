@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class RoadGenerator
 {
-    public static void GenerateRoads(WorldSettings worldSettings, Vector2 chunkCentre) {
-        
+    public static void GenerateRoads(WorldSettings worldSettings, Vector2 chunkCentre, float[,] heightMap) {
+
     }
 }

@@ -58,14 +58,14 @@ public class MapPreview : MonoBehaviour {
 		int width = worldSettings.meshSettings.numVerticesPerLine;
 		int height = worldSettings.meshSettings.numVerticesPerLine;
 
-		HeightMap humidityMap = HeightMapGenerator.GenerateHeightMap(width,
+		float[,] humidityMap = HeightMapGenerator.GenerateHeightMap(width,
                                                             height,
                                                             worldSettings.humidityMapSettings,
                                                             worldSettings,
                                                             centre,
 															HeightMapGenerator.NormalizeMode.Global,
                                                             worldSettings.humidityMapSettings.seed);
-		HeightMap temperatureMap = HeightMapGenerator.GenerateHeightMap(width,
+		float[,] temperatureMap = HeightMapGenerator.GenerateHeightMap(width,
                                                                height,
                                                                worldSettings.temperatureMapSettings,
                                                                worldSettings,
@@ -75,7 +75,7 @@ public class MapPreview : MonoBehaviour {
 		
 
 		if (drawMode == DrawMode.NoiseMap) {
-			HeightMap heightMap = HeightMapGenerator.GenerateHeightMap(width,
+			float[,] heightMap = HeightMapGenerator.GenerateHeightMap(width,
                                                            height,
                                                            heightMapSettings,
                                                            worldSettings,
@@ -85,17 +85,17 @@ public class MapPreview : MonoBehaviour {
 			DrawTexture(TextureGenerator.TextureFromHeightMap(heightMap));
 		} 
 		else if (drawMode == DrawMode.MeshNoBiome) {
-			HeightMap heightMap = HeightMapGenerator.GenerateHeightMap(width,
+			float[,] heightMap = HeightMapGenerator.GenerateHeightMap(width,
                                                            height,
                                                            heightMapSettings,
                                                            worldSettings,
                                                            centre,
 														   HeightMapGenerator.NormalizeMode.GlobalBiome,
                                                            heightMapSettings.seed);
-			DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap.values, worldSettings.meshSettings, EditorPreviewLOD));
+			DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap, worldSettings.meshSettings, EditorPreviewLOD));
 		}
 		else if (drawMode == DrawMode.FalloffMap) {
-			DrawTexture(TextureGenerator.TextureFromHeightMap(new HeightMap(FalloffGenerator.GenerateFalloffMap(width))));
+			DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(width)));
 		}
 		else if (drawMode == DrawMode.BiomesMesh) {
             DrawBiomeMesh(width, height, humidityMap);
@@ -125,7 +125,7 @@ public class MapPreview : MonoBehaviour {
 		}
 	}
 
-    private void DrawSingleBiome(int width, int height, HeightMap humidityMap)
+    private void DrawSingleBiome(int width, int height, float[,] humidityMap)
     {
 		BiomeSettings[] oldBiomes = new BiomeSettings[worldSettings.biomes.Length];
 		float oldTransitionDistance = worldSettings.transitionDistance;
@@ -165,11 +165,11 @@ public class MapPreview : MonoBehaviour {
 		}
     }
 
-    private void DrawBiomeMesh(int width, int height, HeightMap humidityMap)
+    private void DrawBiomeMesh(int width, int height, float[,] humidityMap)
     {
 		ChunkData chunkData = ChunkDataGenerator.GenerateChunkData(worldSettings, centre);
 
-		MeshData meshData = MeshGenerator.GenerateTerrainMesh(chunkData.biomeData.heightNoiseMap.values, worldSettings.meshSettings, EditorPreviewLOD);
+		MeshData meshData = MeshGenerator.GenerateTerrainMesh(chunkData.biomeData.heightNoiseMap, worldSettings.meshSettings, EditorPreviewLOD);
         DrawMesh(meshData);
 
 		TerrainChunk.UpdateMaterial(chunkData.biomeData.biomeInfo, worldSettings, centre, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
@@ -179,7 +179,7 @@ public class MapPreview : MonoBehaviour {
 		}
     }
 
-    private void DrawBiomes(int width, int height, HeightMap humidityMap, HeightMap temperatureMap)
+    private void DrawBiomes(int width, int height, float[,] humidityMap, float[,] temperatureMap)
     {
         BiomeInfo biomeInfo = BiomeHeightMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, worldSettings);
 
@@ -193,7 +193,7 @@ public class MapPreview : MonoBehaviour {
             }
         }
 
-        DrawTexture(TextureGenerator.TextureFromHeightMap(new HeightMap(biomeTextureMap)));
+        DrawTexture(TextureGenerator.TextureFromHeightMap(biomeTextureMap));
     }
 
     void OnValuesUpdated() {

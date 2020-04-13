@@ -6,14 +6,14 @@ public static class BiomeHeightMapGenerator {
 
 	public static BiomeData GenerateBiomeNoiseMaps(int width, int height, WorldSettings worldSettings, Vector2 sampleCentre) {
 		
-		HeightMap humidityNoiseMap = HeightMapGenerator.GenerateHeightMap(width,
+		float[,] humidityNoiseMap = HeightMapGenerator.GenerateHeightMap(width,
 																	height,
 																	worldSettings.humidityMapSettings,
 																	worldSettings,
 																	sampleCentre,
 																	HeightMapGenerator.NormalizeMode.Global,
 																	worldSettings.humidityMapSettings.seed);
-		HeightMap temperatureNoiseMap = HeightMapGenerator.GenerateHeightMap(width,
+		float[,] temperatureNoiseMap = HeightMapGenerator.GenerateHeightMap(width,
 																		height,
 																		worldSettings.temperatureMapSettings,
 																		worldSettings,
@@ -25,7 +25,7 @@ public static class BiomeHeightMapGenerator {
 												humidityNoiseMap,
 												temperatureNoiseMap,
 												worldSettings);
-		HeightMap heightNoiseMap = GenerateBiomeHeightMap(width,
+		float[,] heightNoiseMap = GenerateBiomeHeightMap(width,
 															height,
 															worldSettings,
 															humidityNoiseMap,
@@ -33,32 +33,32 @@ public static class BiomeHeightMapGenerator {
 															sampleCentre,
 															biomeInfo);
 
-		HydraulicErosion.Erode(heightNoiseMap.values, worldSettings, biomeInfo);
-		ThermalErosion.Erode(heightNoiseMap.values, worldSettings, biomeInfo);
+		HydraulicErosion.Erode(heightNoiseMap, worldSettings, biomeInfo);
+		ThermalErosion.Erode(heightNoiseMap, worldSettings, biomeInfo);
 
 		return new BiomeData(heightNoiseMap, biomeInfo);
 	}
 
-	public static HeightMap GenerateBiomeHeightMap(int width, 
+	public static float[,] GenerateBiomeHeightMap(int width, 
 												 int height, 
 												 WorldSettings worldSettings,
-												 HeightMap humidityNoiseMap, 
-												 HeightMap temperatureNoiseMap, 
+												 float[,] humidityNoiseMap, 
+												 float[,] temperatureNoiseMap, 
 												 Vector2 sampleCentre, 
 												 BiomeInfo biomeInfo) {
 		
 		// Generate noise maps for all nearby and present biomes
 		int numBiomes = worldSettings.biomes.Length;
-		HeightMap[] biomeNoiseMaps = new HeightMap[numBiomes];
+		List<float[,]> biomeNoiseMaps = new List<float[,]>();
 		for (int i = 0; i < numBiomes; i++) {
-			biomeNoiseMaps[i] = HeightMapGenerator.GenerateHeightMap(width, 
-													height, 
-													worldSettings.biomes[i].heightMapSettings, 
-													worldSettings,
-													sampleCentre, 
-													HeightMapGenerator.NormalizeMode.GlobalBiome,
-													worldSettings.biomes[i].heightMapSettings.seed);
-			}
+			biomeNoiseMaps.Add(HeightMapGenerator.GenerateHeightMap(width, 
+								height, 
+								worldSettings.biomes[i].heightMapSettings, 
+								worldSettings,
+								sampleCentre, 
+								HeightMapGenerator.NormalizeMode.GlobalBiome,
+								worldSettings.biomes[i].heightMapSettings.seed));
+		}
 
 		// Calculate final noise map values by blending where near another biome
 		float[,] finalNoiseMapValues = new float[width, height];
@@ -66,15 +66,15 @@ public static class BiomeHeightMapGenerator {
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
 				for (int biome = 0; biome < numBiomes; biome++) {
-					finalNoiseMapValues[x, y] += biomeNoiseMaps[biome].values[x, y] * biomeInfo.biomeStrengths[x, y, biome];
+					finalNoiseMapValues[x, y] += biomeNoiseMaps[biome][x, y] * biomeInfo.biomeStrengths[x, y, biome];
 				}
 			}
 		}
 
-		return new HeightMap(finalNoiseMapValues);
+		return finalNoiseMapValues;
 	}
 
-	public static BiomeInfo GenerateBiomeInfo(int width, int height, HeightMap humidityNoiseMap, HeightMap temperatureNoiseMap, WorldSettings settings) {
+	public static BiomeInfo GenerateBiomeInfo(int width, int height, float[,] humidityNoiseMap, float[,] temperatureNoiseMap, WorldSettings settings) {
 		int numBiomes = settings.biomes.Length;
 		int[,] biomeMap = new int[width, height];
 		float[,,] biomeStrengths = new float[width, height, numBiomes];
@@ -82,8 +82,8 @@ public static class BiomeHeightMapGenerator {
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
 
-				float humidity = humidityNoiseMap.values[i, j];
-				float temperature = temperatureNoiseMap.values[i, j]; 
+				float humidity = humidityNoiseMap[i, j];
+				float temperature = temperatureNoiseMap[i, j]; 
 
 				// Get current biome
 				for (int w = 0; w < numBiomes; w++) {
@@ -160,10 +160,10 @@ public static class BiomeHeightMapGenerator {
 
 [System.Serializable]
 public struct BiomeData {
-	public readonly HeightMap heightNoiseMap;
+	public readonly float[,] heightNoiseMap;
 	public readonly BiomeInfo biomeInfo;
 
-	public BiomeData(HeightMap heightNoiseMap, BiomeInfo biomeInfo) {
+	public BiomeData(float[,] heightNoiseMap, BiomeInfo biomeInfo) {
 		this.heightNoiseMap = heightNoiseMap;
 		this.biomeInfo = biomeInfo;
 	}

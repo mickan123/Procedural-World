@@ -7,7 +7,7 @@ public static class HeightMapGenerator {
 
 	public enum NormalizeMode { GlobalBiome, Global, Percentage };
 	
-	public static HeightMap GenerateHeightMap(int width, 
+	public static float[,] GenerateHeightMap(int width, 
 											int height, 
 											NoiseMapSettings noiseSettings, 
 											WorldSettings worldSettings,
@@ -15,7 +15,7 @@ public static class HeightMapGenerator {
 											NormalizeMode normalizeMode,
 											int seed) {
 												
-		HeightMap heightMap;
+		float[,] heightMap;
 		if (noiseSettings.noiseType == NoiseMapSettings.NoiseType.Simplex ||
 		    noiseSettings.noiseType == NoiseMapSettings.NoiseType.Perlin) {
 			heightMap = GenerateDefaultHeightMap(width, height, noiseSettings, worldSettings, sampleCentre, normalizeMode, seed);
@@ -31,14 +31,14 @@ public static class HeightMapGenerator {
 
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
-				heightMap.values[i, j] *= heightCurve_threadsafe.Evaluate(heightMap.values[i, j]) * noiseSettings.heightMultiplier;
+				heightMap[i, j] *= heightCurve_threadsafe.Evaluate(heightMap[i, j]) * noiseSettings.heightMultiplier;
 			}
 		}
 
 		return heightMap;
 	}
 
-	public static HeightMap GenerateDefaultHeightMap(int width, 
+	public static float[,] GenerateDefaultHeightMap(int width, 
 											int height, 
 											NoiseMapSettings noiseSettings, 
 											WorldSettings worldSettings,
@@ -62,10 +62,10 @@ public static class HeightMapGenerator {
 			}
 		}
 
-		return new HeightMap(values);
+		return values;
 	}
 
-	public static HeightMap GenerateSandDuneHeightMap(int width, 
+	public static float[,] GenerateSandDuneHeightMap(int width, 
 											int height, 
 											NoiseMapSettings noiseSettings, 
 											MeshSettings meshSettings,
@@ -128,7 +128,7 @@ public static class HeightMapGenerator {
 			}
 		}
 
-		return new HeightMap(values);
+		return values;
 	}
 
 	public static float CalculateDunePos(SandDuneSettings settings, float duneWidth,  int height, int chunkIdxY, int j, float noiseVal) {
@@ -155,13 +155,5 @@ public struct BiomeInfo {
 		this.biomeMap = biomeMap;
 		this.biomeStrengths = biomeStrengths;
 		this.mainBiome = mainBiome;
-	}
-}
-
-public struct HeightMap {
-	public readonly float[,] values;
-
-	public HeightMap(float[,] values) {
-		this.values = values;
 	}
 }

@@ -20,8 +20,7 @@ public static class ChunkDataGenerator
                                                                         chunkCentre);
         
         // Generate roads
-        RoadGenerator.GenerateRoads(worldSettings, chunkCentre);
-
+        RoadGenerator.GenerateRoads(worldSettings, chunkCentre, biomeData.heightNoiseMap);        
 
         return new ChunkData(biomeData, objects);
     }

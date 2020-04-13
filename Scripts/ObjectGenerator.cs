@@ -5,7 +5,7 @@ using System.Linq;
 
 public static class ObjectGenerator {
 
-	public static List<SpawnObject> GenerateBiomeObjects(HeightMap heightMap, BiomeInfo info, WorldSettings settings, Vector2 sampleCentre) {
+	public static List<SpawnObject> GenerateBiomeObjects(float[,] heightMap, BiomeInfo info, WorldSettings settings, Vector2 sampleCentre) {
 		List<SpawnObject> biomeObjects = new List<SpawnObject>();
 		
 		for (int biome = 0; biome < settings.biomes.Length; biome++) {
@@ -25,12 +25,12 @@ public static class ObjectGenerator {
 
 	public static SpawnObject GenerateTerrainObject(TerrainObjectSettings settings, 
 													int biome,
-													HeightMap heightMap, 
+													float[,] heightMap, 
 													BiomeInfo info, 
 													WorldSettings worldSettings, 
 													Vector2 sampleCentre) {
 
-		int mapSize = heightMap.values.GetLength(0);
+		int mapSize = heightMap.GetLength(0);
 
 		float[,] spawnNoiseMap = Noise.GenerateNoiseMap(mapSize,
 														mapSize,
@@ -43,8 +43,8 @@ public static class ObjectGenerator {
 
 		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings, worldSettings.meshSettings.meshWorldSize, sampleCentre, spawnNoiseMap);
 		points = FilterPointsByBiome(points, biome, info, prng);
-		points = FilterPointsBySlope(points, settings.minSlope, settings.maxSlope, heightMap.values);
-		points = FilterPointsByHeight(points, settings.minHeight, settings.maxHeight, heightMap.values);
+		points = FilterPointsBySlope(points, settings.minSlope, settings.maxSlope, heightMap);
+		points = FilterPointsByHeight(points, settings.minHeight, settings.maxHeight, heightMap);
 
 		List<ObjectPosition> spawnPositions = new List<ObjectPosition>();
 
@@ -52,7 +52,7 @@ public static class ObjectGenerator {
 			Vector2 spawnPoint = points[point];
 
 			Vector3 position = new Vector3(Mathf.FloorToInt(spawnPoint.x + sampleCentre.x) - (float)mapSize / 2f,
-											heightMap.values[Mathf.FloorToInt(spawnPoint.x), Mathf.FloorToInt(spawnPoint.y)], 
+											heightMap[Mathf.FloorToInt(spawnPoint.x), Mathf.FloorToInt(spawnPoint.y)], 
 											-Mathf.FloorToInt(spawnPoint.y - sampleCentre.y) + (float)mapSize / 2f);
 
 			Quaternion rotation = Quaternion.Euler(0f, Common.NextFloat(prng, 0f, 360f), 0f);
