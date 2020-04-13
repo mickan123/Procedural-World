@@ -167,25 +167,15 @@ public class MapPreview : MonoBehaviour {
 
     private void DrawBiomeMesh(int width, int height, HeightMap humidityMap)
     {
+		ChunkData chunkData = ChunkDataGenerator.GenerateChunkData(worldSettings, centre);
 
-		BiomeData biomeData = BiomeHeightMapGenerator.GenerateBiomeNoiseMaps(width,
-																			height,
-																			worldSettings,
-																			centre);
-
-		MeshData meshData = MeshGenerator.GenerateTerrainMesh(biomeData.heightNoiseMap.values, worldSettings.meshSettings, EditorPreviewLOD);
+		MeshData meshData = MeshGenerator.GenerateTerrainMesh(chunkData.biomeData.heightNoiseMap.values, worldSettings.meshSettings, EditorPreviewLOD);
         DrawMesh(meshData);
 
-		
-		TerrainChunk.UpdateMaterial(biomeData.biomeInfo, worldSettings, centre, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
+		TerrainChunk.UpdateMaterial(chunkData.biomeData.biomeInfo, worldSettings, centre, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
 
-		List<SpawnObject> terrainObjects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 
-																					biomeData.biomeInfo, 
-																					worldSettings, 
-																					centre);
-
-		for (int i = 0; i < terrainObjects.Count; i++) {
-			terrainObjects[i].Spawn(this.transform);
+		for (int i = 0; i < chunkData.objects.Count; i++) {
+			chunkData.objects[i].Spawn(this.transform);
 		}
     }
 

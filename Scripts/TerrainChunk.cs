@@ -23,7 +23,7 @@ public class TerrainChunk {
 	LODMesh[] lodMeshes;
 	int colliderLODIndex;
 
-	BiomeData biomeData;
+	ChunkData chunkData;
 	HeightMap heightMap;
 	bool heightMapReceived;
 	int previousLODIndex = -1;
@@ -80,27 +80,25 @@ public class TerrainChunk {
 	}
 
 	public void Load() {
-		ThreadedDataRequester.RequestData(() => BiomeHeightMapGenerator.GenerateBiomeNoiseMaps(meshSettings.numVerticesPerLine, 
-																							  meshSettings.numVerticesPerLine, 
-																							  worldSettings,
-																							  sampleCentre), 
-											OnBiomeMapReceived);
+		ThreadedDataRequester.RequestData(() => ChunkDataGenerator.GenerateChunkData(worldSettings, sampleCentre), OnChunkDataReceived);											
 	}
 
-	void OnBiomeMapReceived(object biomeDataObject) {
-		this.biomeData = (BiomeData)biomeDataObject;
-		this.heightMap = this.biomeData.heightNoiseMap;
+	void OnChunkDataReceived(object chunkData) {
+		this.chunkData = (ChunkData)chunkData;
+
+		BiomeData biomeData = this.chunkData.biomeData;
+		this.heightMap = biomeData.heightNoiseMap;
 		
 		heightMapReceived = true;
 		
 		UpdateMaterial(biomeData.biomeInfo, worldSettings, coord, matBlock, meshRenderer);
 		UpdateTerrainChunk();
 
-		ThreadedDataRequester.RequestData(() => ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 
-																					biomeData.biomeInfo, 
-																					worldSettings, 
-																					sampleCentre),
-										    OnBiomeObjectsReceived);
+		List<SpawnObject> spawnObjects = this.chunkData.objects;
+
+		for (int i = 0; i < spawnObjects.Count; i++) {
+			spawnObjects[i].Spawn(meshObject.transform);
+		}
 	}
 
 	public static void UpdateMaterial(BiomeInfo info, WorldSettings worldSettings, Vector2 coord, MaterialPropertyBlock matBlock, MeshRenderer renderer) {
@@ -209,15 +207,6 @@ public class TerrainChunk {
 			}
 		}
 	}
-
-	void OnBiomeObjectsReceived(object biomeObjects) {
-		List<SpawnObject> spawnObjects = (List<SpawnObject>)biomeObjects;
-
-		for (int i = 0; i < spawnObjects.Count; i++) {
-			spawnObjects[i].Spawn(meshObject.transform);
-		}
-	}
-
 
 	public void UpdateCollisionMesh() {
 		if (!hasSetCollider) {
