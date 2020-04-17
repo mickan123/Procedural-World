@@ -172,7 +172,7 @@ public class TerrainChunk {
 	
 	public void UpdateTerrainChunk() {
 		if (heightMapReceived) {
-			float viewerDstFromNearestEdge = Mathf.Sqrt (bounds.SqrDistance (viewerPosition));
+			float viewerDstFromNearestEdge = Mathf.Sqrt(bounds.SqrDistance(viewerPosition));
 
 			bool wasVisible = IsVisible ();
 			bool visible = viewerDstFromNearestEdge <= maxViewDst;
@@ -194,7 +194,7 @@ public class TerrainChunk {
 						previousLODIndex = lodIndex;
 						meshFilter.mesh = lodMesh.mesh;
 					} else if (!lodMesh.hasRequestedMesh) {
-						lodMesh.RequestMesh (heightMap, meshSettings);
+						lodMesh.RequestMesh(heightMap, meshSettings);
 					}
 				}
 			}
@@ -210,17 +210,17 @@ public class TerrainChunk {
 
 	public void UpdateCollisionMesh() {
 		if (!hasSetCollider) {
-			float sqrDstFromViewerToEdge = bounds.SqrDistance (viewerPosition);
+			float sqrDstFromViewerToEdge = bounds.SqrDistance(viewerPosition);
 
 			if (sqrDstFromViewerToEdge < detailLevels [colliderLODIndex].sqrVisibleDstThreshold) {
 				if (!lodMeshes [colliderLODIndex].hasRequestedMesh) {
-					lodMeshes [colliderLODIndex].RequestMesh (heightMap, meshSettings);
+					lodMeshes [colliderLODIndex].RequestMesh(heightMap, meshSettings);
 				}
 			}
 
 			if (sqrDstFromViewerToEdge < colliderGenerationDistanceThreshold * colliderGenerationDistanceThreshold) {
 				if (lodMeshes [colliderLODIndex].hasMesh) {
-					meshCollider.sharedMesh = lodMeshes [colliderLODIndex].mesh;
+					meshCollider.sharedMesh = lodMeshes[colliderLODIndex].mesh;
 					hasSetCollider = true;
 				}
 			}
@@ -228,7 +228,7 @@ public class TerrainChunk {
 	}
 
 	public void SetVisible(bool visible) {
-		meshObject.SetActive (visible);
+		meshObject.SetActive(visible);
 	}
 
 	public bool IsVisible() {

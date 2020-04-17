@@ -23,9 +23,6 @@ public class TerrainGenerator : MonoBehaviour {
 	float meshWorldSize;
 	int chunksVisibleInViewDst;
 
-	bool initialLoad = true;
-	int updates = 0;
-
 	Dictionary<Vector2, TerrainChunk> terrainChunkDictionary = new Dictionary<Vector2, TerrainChunk>();
 	List<TerrainChunk> visibleTerrainChunks = new List<TerrainChunk>();
 
@@ -36,6 +33,8 @@ public class TerrainGenerator : MonoBehaviour {
 		float maxViewDst = detailLevels[detailLevels.Length - 1].visibleDstThreshold;
 		meshWorldSize = meshSettings.meshWorldSize - 1;
 		chunksVisibleInViewDst = Mathf.RoundToInt(maxViewDst / meshWorldSize);
+
+		UpdateVisibleChunks();
 	}
 
 	void Update() {
@@ -50,14 +49,6 @@ public class TerrainGenerator : MonoBehaviour {
 		if ((viewerPositionOld - viewerPosition).sqrMagnitude > sqrViewerMoveThresholdForChunkUpdate) {
 			viewerPositionOld = viewerPosition;
 			UpdateVisibleChunks();
-		}
-
-		if (initialLoad) {
-			updates++;
-			if (updates == 500) {
-				initialLoad = false;
-				UpdateVisibleChunks();
-			}
 		}
 	}
 		

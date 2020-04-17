@@ -20,9 +20,9 @@ public static class ChunkDataGenerator
                                                                         chunkCentre);
         
         // Generate roads
-        RoadGenerator.GenerateRoads(worldSettings, chunkCentre, biomeData.heightNoiseMap);        
+        Road road = RoadGenerator.GenerateRoads(worldSettings, chunkCentre, biomeData.heightNoiseMap);        
 
-        return new ChunkData(biomeData, objects);
+        return new ChunkData(biomeData, objects, road);
     }
 
     
@@ -31,9 +31,11 @@ public static class ChunkDataGenerator
 public class ChunkData {
     public BiomeData biomeData;
     public List<SpawnObject> objects;
+    public Road road;
 
-    public ChunkData(BiomeData biomeData, List<SpawnObject> objects) {
+    public ChunkData(BiomeData biomeData, List<SpawnObject> objects, Road road) {
         this.biomeData = biomeData;
         this.objects = objects;
+        this.road = road;
     }
 }

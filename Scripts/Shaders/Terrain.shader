@@ -48,13 +48,13 @@
 		// Biome data texture is stored as follows:
 		// x: Main biome index
 		float4 sampleBiomeData(float3 worldPos) {
-			float3 scaledWorldPos = ((worldPos + float3(chunkWidth / 2, 0, chunkWidth / 2)) / chunkWidth);
-			return UNITY_SAMPLE_TEX2D(biomeMapTex, float2(scaledWorldPos.x, -scaledWorldPos.z));
+			float3 scaledWorldPos = ((worldPos + float3(chunkWidth, 0, chunkWidth)) / chunkWidth);
+			return UNITY_SAMPLE_TEX2D(biomeMapTex, float2(scaledWorldPos.x, scaledWorldPos.z));
 		}
 
 		float4 sampleBiomeStrength(float3 worldPos, int textureIndex) {
-			float3 scaledWorldPos = ((worldPos + float3(chunkWidth / 2, 0, chunkWidth / 2)) / chunkWidth);
-			return UNITY_SAMPLE_TEX2DARRAY(biomeStrengthMap, float3(scaledWorldPos.x, -scaledWorldPos.z, textureIndex));
+			float3 scaledWorldPos = ((worldPos + float3(chunkWidth, 0, chunkWidth)) / chunkWidth);
+			return UNITY_SAMPLE_TEX2DARRAY(biomeStrengthMap, float3(scaledWorldPos.x, scaledWorldPos.z, textureIndex));
 		}
 
 		float3 triplanar(float3 worldPos, float3 blendAxes, int texIndex) {

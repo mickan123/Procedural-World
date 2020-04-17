@@ -51,9 +51,9 @@ public static class ObjectGenerator {
 		for (int point = 0; point < points.Count; point++) {
 			Vector2 spawnPoint = points[point];
 
-			Vector3 position = new Vector3(Mathf.FloorToInt(spawnPoint.x + sampleCentre.x) - (float)mapSize / 2f,
+			Vector3 position = new Vector3(Mathf.FloorToInt(spawnPoint.x + sampleCentre.x),
 											heightMap[Mathf.FloorToInt(spawnPoint.x), Mathf.FloorToInt(spawnPoint.y)], 
-											-Mathf.FloorToInt(spawnPoint.y - sampleCentre.y) + (float)mapSize / 2f);
+											Mathf.FloorToInt(spawnPoint.y + sampleCentre.y));
 
 			Quaternion rotation = Quaternion.Euler(0f, Common.NextFloat(prng, 0f, 360f), 0f);
 
@@ -72,8 +72,7 @@ public static class ObjectGenerator {
 			int coordX = (int) points[i].x;
         	int coordY = (int) points[i].y;
 
-			if (info.biomeMap[coordX, coordY] != biome
-			&& rand > info.biomeStrengths[coordX, coordY, biome] * info.biomeStrengths[coordX, coordY, biome]) {
+			if (rand > info.biomeStrengths[coordX, coordY, biome] * info.biomeStrengths[coordX, coordY, biome] * info.biomeStrengths[coordX, coordY, biome]) {
 				points.RemoveAt(i);
 				i--;
 			}

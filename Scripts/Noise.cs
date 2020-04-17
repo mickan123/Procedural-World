@@ -20,12 +20,9 @@ public static class Noise {
 		
 		for (int i = 0; i < noiseSettings.octaves; i++) {
 			float offsetX = prng.Next(-100000, 100000) + sampleCentre.x;
-			float offsetY = prng.Next(-100000, 100000) - sampleCentre.y;
+			float offsetY = prng.Next(-100000, 100000) + sampleCentre.y;
 			octaveOffsets[i] = new Vector2(offsetX, offsetY);
 		}
-
-		float halfWidth = mapWidth / 2f;
-		float halfHeight = mapHeight / 2f;
 
 		float amplitude = 1;
 		float frequency = 1;
@@ -38,8 +35,8 @@ public static class Noise {
 				float noiseHeight = 0;
 
 				for (int i = 0; i < noiseSettings.octaves; i++) {
-					float sampleX = (x - halfWidth + octaveOffsets[i].x) / noiseSettings.scale * frequency;
-					float sampleY = (y - halfHeight + octaveOffsets[i].y) / noiseSettings.scale * frequency;
+					float sampleX = (x + octaveOffsets[i].x) / noiseSettings.scale * frequency;
+					float sampleY = (y + octaveOffsets[i].y) / noiseSettings.scale * frequency;
 					
 					float noiseValue = 0f;
 					if (noiseType == NoiseMapSettings.NoiseType.Perlin) {

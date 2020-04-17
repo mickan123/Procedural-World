@@ -123,6 +123,12 @@ public class MapPreview : MonoBehaviour {
 				i--;
 			}
 		}
+
+		for (int i = 0; i < this.meshFilter.transform.childCount; i++) {
+			Transform child = this.meshFilter.transform.GetChild(i);
+			DestroyImmediate(child.gameObject);
+			i--;
+		}
 	}
 
     private void DrawSingleBiome(int width, int height, float[,] humidityMap)
@@ -173,6 +179,9 @@ public class MapPreview : MonoBehaviour {
         DrawMesh(meshData);
 
 		TerrainChunk.UpdateMaterial(chunkData.biomeData.biomeInfo, worldSettings, centre, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
+
+		chunkData.road.SetVisible(false);
+		chunkData.road.SetParent(this.meshFilter.transform);
 
 		for (int i = 0; i < chunkData.objects.Count; i++) {
 			chunkData.objects[i].Spawn(this.transform);

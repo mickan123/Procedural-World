@@ -10,6 +10,7 @@ public class WorldSettings : UpdatableData {
 	public NoiseMapSettings temperatureMapSettings;
 	public ErosionSettings erosionSettings;
 	public MeshSettings meshSettings;
+	public RoadSettings roadSettings;
 	
 	const TextureFormat textureFormat = TextureFormat.RGB565;
 

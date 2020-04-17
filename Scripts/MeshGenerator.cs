@@ -9,7 +9,6 @@ public static class MeshGenerator {
 		int skipIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
 		int numVertsPerLine = meshSettings.numVerticesPerLine;
 
-		Vector2 topLeft = new Vector2(-1, 1) * meshSettings.meshWorldSize / 2f;
 
 		MeshData meshData = new MeshData(numVertsPerLine, skipIncrement, meshSettings.useFlatShading);
 
@@ -17,8 +16,8 @@ public static class MeshGenerator {
 		int meshVertexIndex = 0;
 		int outOfMeshVertexIndex = -1;
 
-		for (int y = 0; y < numVertsPerLine; y++) {
-			for (int x = 0; x < numVertsPerLine; x++) {
+		for (int x = 0; x < numVertsPerLine; x++) {
+			for (int y = 0; y < numVertsPerLine; y++) {
 				bool isOutOfMeshVertex = y == 0 || y == numVertsPerLine -1 || x == 0 || x == numVertsPerLine -1;
 				bool isSkippedVertex = x > 2 
 				  					&& x < numVertsPerLine - 3 
@@ -58,8 +57,8 @@ public static class MeshGenerator {
 		 * R R R R R R R R R R R R R
 		 *
 		 */
-		for (int y = 0; y < numVertsPerLine; y ++) {
-			for (int x = 0; x < numVertsPerLine; x ++) {
+		for (int x = 0; x < numVertsPerLine; x++) {
+			for (int y = 0; y < numVertsPerLine; y++) {
 				bool isSkippedVertex = x > 2 
 				  					&& x < numVertsPerLine - 3 
 				  					&& y > 2 
@@ -77,12 +76,12 @@ public static class MeshGenerator {
 
 					int vertexIndex = vertexIndicesMap[x, y];
 					Vector2 percent = new Vector2(x - 1, y - 1) / (numVertsPerLine - 3);
-					Vector2 vertexPosition2D = topLeft + new Vector2(percent.x, -percent.y) * meshSettings.meshWorldSize;
+					Vector2 vertexPosition2D = new Vector2(percent.x, percent.y) * meshSettings.meshWorldSize;
 					float height = heightMap[x, y];
 
 					if (isEdgeConnectionVertex) {
 						bool isVertical = x == 2 || x == numVertsPerLine - 3;
-						int dstToMainVertexA = (isVertical ? y -2 : x - 2) % skipIncrement;
+						int dstToMainVertexA = (isVertical ? y - 2 : x - 2) % skipIncrement;
 						int dstToMainVertexB = skipIncrement - dstToMainVertexA;
 						float dstPercentFromAToB = dstToMainVertexA / (float)skipIncrement;
 
@@ -103,8 +102,8 @@ public static class MeshGenerator {
 						int b = vertexIndicesMap[x + currentIncrement, y];
 						int c = vertexIndicesMap[x, y + currentIncrement];
 						int d = vertexIndicesMap[x + currentIncrement, y + currentIncrement];
-						meshData.AddTriangle(a, d, c);
-						meshData.AddTriangle(d, a, b);
+						meshData.AddTriangle(a, c, d);
+						meshData.AddTriangle(d, b, a);
 					}
 				}
 			}
