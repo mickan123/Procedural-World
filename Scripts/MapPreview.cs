@@ -180,7 +180,7 @@ public class MapPreview : MonoBehaviour {
 
 		TerrainChunk.UpdateMaterial(chunkData.biomeData.biomeInfo, worldSettings, centre, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
 
-		chunkData.road.SetVisible(false);
+		chunkData.road.SetVisible(true);
 		chunkData.road.SetParent(this.meshFilter.transform);
 
 		for (int i = 0; i < chunkData.objects.Count; i++) {

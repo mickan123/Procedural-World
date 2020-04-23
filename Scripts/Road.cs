@@ -5,6 +5,13 @@ using System;
 
 public class Road 
 {
+
+    private static readonly int[,] offsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1},
+                                               { 1 , 1}, { 1 ,-1}, { -1, 1}, {-1 , -1},
+                                               { 1 , 1}, { 1 ,-1}, { -1, 1}, {-1 , -1},
+                                               { 2 , 1}, { 2 ,-1}, { -2, 1}, {-2 , -1},
+                                               { 1 , 2}, { 1 ,-2}, { -1, 2}, {-1 , -2}};
+
     GameObject meshObject;
 
     MeshRenderer meshRenderer;
@@ -15,15 +22,28 @@ public class Road
 
     Vector3 roadStart;
     Vector3 roadEnd;
-    Vector3 prevPoint;
+
+    List<Vector3> path;
 
     List<Vector3> vertices;
     List<int> triangles;
+    List<int> quads;
 	List<Vector2> uvs;
 	List<Vector3> normals;
 
+    LineRenderer lineRenderer;
+
     public Road(WorldSettings worldSettings, float[,] heightMap, Vector2 roadStart, Vector2 roadEnd, Vector2 chunkCentre) {
+        this.roadSettings = worldSettings.roadSettings;
+        this.worldSettings = worldSettings;
+
         meshObject = new GameObject("Road");
+        this.lineRenderer = meshObject.AddComponent<LineRenderer>();
+        this.lineRenderer.material = roadSettings.roadMaterial;
+        this.lineRenderer.startWidth = roadSettings.width;
+        this.lineRenderer.endWidth = roadSettings.width;
+        this.lineRenderer.alignment = LineAlignment.TransformZ;
+
 		meshRenderer = meshObject.AddComponent<MeshRenderer>();
 		meshFilter = meshObject.AddComponent<MeshFilter>();
 
@@ -32,17 +52,22 @@ public class Road
 
         this.roadStart = new Vector3(roadStart.x, HeightFromFloatCoord(roadStart, heightMap), roadStart.y);
         this.roadEnd = new Vector3(roadEnd.x, HeightFromFloatCoord(roadEnd, heightMap), roadEnd.y);
-        this.prevPoint = this.roadStart;
 
-        this.roadSettings = worldSettings.roadSettings;
-        this.worldSettings = worldSettings;
+        path = new List<Vector3>();
 
         vertices = new List<Vector3>();
         triangles = new List<int>();
+        quads = new List<int>();
         uvs = new List<Vector2>();
         normals = new List<Vector3>();
 
-        CreateRoad(heightMap, roadStart, roadEnd);
+        float startTime = Time.realtimeSinceStartup;
+
+        CreateRoad(heightMap);
+
+        float endTime = Time.realtimeSinceStartup;
+
+        Debug.Log("Time taken: " + (endTime - startTime));
     }
 
     private float HeightFromFloatCoord(Vector2 coord, float[,] heightMap) {
@@ -66,122 +91,241 @@ public class Road
         return height;
     }
 
-    private void CreateRoad(float[,] heightMap, Vector3 roadStart, Vector3 roadEnd) {
-        List<Vector3> path = GeneratePath(heightMap, roadStart, roadEnd);
+    private void CreateRoad(float[,] heightMap) {
+        FindPath(heightMap);
 
         float[,] workingHeightMap = Common.CopyArray(heightMap);
 
-        for (int i = 0; i < path.Count; i++) {
-            AddPoint(workingHeightMap, heightMap, path[i]);
-        }
-        
+        CarvePath(workingHeightMap, workingHeightMap);
+
         Common.CopyArrayValues(workingHeightMap, heightMap);
 
+        // lineRenderer.positionCount = path.Count;
+        // lineRenderer.SetPositions(path.ToArray());
+
+        AddMeshValues(heightMap);
         CreateMesh();
     }
 
-    private List<Vector3> GeneratePath(float[,] heightMap, Vector3 roadStart, Vector3 roadEnd) {
-        List<Vector3> path = new List<Vector3>();
+    private void FindPath(float[,] heightMap) {
         
-        int mapSize = worldSettings.meshSettings.meshWorldSize;
+        int mapSize = heightMap.GetLength(0);
 
-        for (int i = 1; i < mapSize; i+=3) {
-            float x = roadStart.x + i;
-            float z = roadStart.z + i;
-            float y = HeightFromFloatCoord(new Vector2(x, z), heightMap);
-            Vector3 newPoint = new Vector3(x, y, z);
-            path.Add(newPoint);
-        }
-
-        return path;
-    }
-
-    private void AddPoint(float[,] workingHeightMap, float[,] referenceHeightMap, Vector3 nextPoint) {
-        
-        int mapSize = referenceHeightMap.GetLength(0);
-
-        Vector2 prevPoint2d = new Vector2(prevPoint.x, prevPoint.z);
-        Vector2 nextPoint2d = new Vector2(nextPoint.x, nextPoint.z);
-
-        float heightStart = HeightFromFloatCoord(prevPoint2d, referenceHeightMap);
-        float heightEnd =  HeightFromFloatCoord(nextPoint2d, referenceHeightMap);
-
-        float length = Vector2.Distance(prevPoint2d, nextPoint2d);
-
-        Vector3 direction = (nextPoint - prevPoint);
-        direction.Normalize();
-
-        Vector2 direction2d = (nextPoint2d - prevPoint2d);
-        direction2d.Normalize();
-        
-        float maxWidthOffset = (roadSettings.width / 2f);
-        int minX = (int)Mathf.Min(nextPoint.x - maxWidthOffset, prevPoint.x - maxWidthOffset);
-        int maxX = (int)Mathf.Max(nextPoint.x + maxWidthOffset, prevPoint.x + maxWidthOffset);
-        int minZ = (int)Mathf.Min(nextPoint.z - maxWidthOffset, prevPoint.z - maxWidthOffset);
-        int maxZ = (int)Mathf.Max(nextPoint.z + maxWidthOffset, prevPoint.z + maxWidthOffset);
-
-        Vector3 normal = Vector3.Cross(direction, Vector3.up).normalized;
-        Vector2 normal2d = new Vector2(normal.x, normal.z);
-        Rectangle boundingRect = new Rectangle(prevPoint2d + normal2d * roadSettings.width, 
-                                                prevPoint2d - normal2d * roadSettings.width, 
-                                                nextPoint2d - normal2d * roadSettings.width,
-                                                nextPoint2d + normal2d * roadSettings.width);
-
-                    
-
-        for (int i = minX; i <= maxX; i++) {
-            for (int j = minZ; j <= maxZ; j++) {
-                
-                if (i >= 0 && i < mapSize && j > 0 && j < mapSize && boundingRect.Contains(new Vector2(i, j))) {
-
-                    // Calculate distance of point from line
-                    Ray ray = new Ray(prevPoint, direction);
-                    Vector3 point = new Vector3(i, referenceHeightMap[i, j], j);
-                    float distance = Vector3.Cross(ray.direction, point - ray.origin).magnitude;
-
-                    if (distance < (roadSettings.width / 2f)) {
-
-                        // Calculate closest point on centre of line
-                        Vector2 lhs = new Vector2(point.x, point.z) - prevPoint2d;
-                        float distAlongLine = Vector2.Dot(lhs, direction2d);
-                        float percent = (distAlongLine / length);
-                        float newHeight =  percent * heightEnd + (1f - percent) * heightStart;
-                        workingHeightMap[i, j] = newHeight;
-                    }
-                }                
+        Node[,] nodeGrid = new Node[mapSize, mapSize];
+        for (int i = 0; i < mapSize; i++) {
+            for (int j = 0; j < mapSize; j++) {
+                nodeGrid[i, j] = new Node(i, j, heightMap[i, j]);
             }
         }
 
-        AddMeshValues(nextPoint);
+        Node startNode = nodeGrid[(int)this.roadStart.x, (int)this.roadStart.z];
+        Node endNode = nodeGrid[(int)this.roadEnd.x, (int)this.roadEnd.z];
 
+        Heap<Node> openSet = new Heap<Node>(mapSize * mapSize);
+        HashSet<Node> closedSet = new HashSet<Node>();
+        openSet.Add(startNode);
+
+        while (openSet.Count > 0) {
+            Node currentNode = openSet.RemoveFirst();
+            closedSet.Add(currentNode);
+
+            if (currentNode == endNode) {
+                RetracePath(currentNode, heightMap);
+                return;
+            }
+            
+            List<Node> neighbours = GetNeighbours(nodeGrid, currentNode);
+            for (int i = 0; i < neighbours.Count; i++) {
+                Node neighbour = neighbours[i];
+
+                if (closedSet.Contains(neighbour)) {
+                    continue;
+                }
+
+                float costToNeighbour = currentNode.gCost + GetCost(currentNode, neighbour, mapSize);
+                if (costToNeighbour < neighbour.gCost || !openSet.Contains(neighbour)) {
+                    neighbour.gCost = costToNeighbour;
+                    neighbour.hCost = GetCost(neighbour, endNode, mapSize);
+                    neighbour.parent = currentNode;
+
+                    if (!openSet.Contains(neighbour)) {
+                        openSet.Add(neighbour);
+                    } else {
+                        openSet.UpdateItem(neighbour);
+                    }
+                }
+            }
+        }
     }
 
-    private void AddMeshValues(Vector3 nextPoint) {
-        float length = Vector3.Distance(prevPoint, nextPoint);
-		
-        this.vertices.Add(new Vector3(prevPoint.x, prevPoint.y, prevPoint.z - roadSettings.width / 2));
-        this.vertices.Add(new Vector3(nextPoint.x, nextPoint.y, nextPoint.z - roadSettings.width / 2));
-        this.vertices.Add(new Vector3(nextPoint.x, nextPoint.y, nextPoint.z + roadSettings.width / 2));
-        this.vertices.Add(new Vector3(prevPoint.x, prevPoint.y, prevPoint.z + roadSettings.width / 2));
+    private List<Node> GetNeighbours(Node[,] nodeGrid, Node node) {
+        List<Node> neighbours = new List<Node>();
+        int mapSize = nodeGrid.GetLength(0);
+
+        for (int i = 0; i < offsets.GetLength(0); i++) {
+            int neighbourX = node.x + offsets[i, 0] * roadSettings.stepSize;
+            int neighbourY = node.y + offsets[i, 1] * roadSettings.stepSize;
+
+            neighbourX = Mathf.Clamp(neighbourX, 0, mapSize - 1);
+            neighbourY = Mathf.Clamp(neighbourY, 0, mapSize - 1);
+
+            neighbours.Add(nodeGrid[neighbourX, neighbourY]);
+        }
+
+        return neighbours;
+    }
+
+    private float GetCost(Node a, Node b, int mapSize) {
+
+        float deltaX = a.x - b.x;
+        float deltaY = a.y - b.y;
+        float flatDist =  Mathf.Sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        float heightDiff = Mathf.Abs(a.height - b.height);
+
+        float angle;
+        if (a.parent == null) {
+            angle = 0f;
+        }
+        else {
+            Vector2 prevDir = new Vector2(a.x - a.parent.x, a.y - a.parent.y);
+            Vector2 curDir = new Vector2(b.x - a.x, b.y - a.y);
+            angle = Vector2.Angle(prevDir, curDir);
+        }
+        
+        float slope = heightDiff / flatDist;
+        float slopeCost = 100 * slope * slope; 
+        
+        // Penalize being close to edge of chunk
+        float edgeCost = 0f;
+        if (b.x < roadSettings.width || b.x > mapSize - 1 -  roadSettings.width 
+            || b.y < roadSettings.width || b.y > mapSize - 1 - roadSettings.width
+            || angle >= 90f) {
+            edgeCost = 1000000000f;
+        }
+
+        return flatDist * (1 + slopeCost) + edgeCost;
+    }
+
+    private void RetracePath(Node node, float[,] heightMap) {
+        Node currentNode = node;
+        while (currentNode.parent != null) {
+            path.Add(new Vector3(currentNode.x, heightMap[currentNode.x, currentNode.y], currentNode.y));
+            currentNode = currentNode.parent;
+        }
+
+        path.Reverse();
+    }
+
+    private int FindClosestPointIndex(Vector3 curPoint) {
+        float minDist = float.MaxValue;
+        int closestPointIndex = 0;
+
+        for (int i = 0; i < path.Count; i++) {
+            float dist = Vector3.Distance(path[i], curPoint);
+            if (dist < minDist) {
+                minDist = dist;
+                closestPointIndex = i;
+            }
+        }
+
+        return closestPointIndex;
+    }
+
+    private float DistanceFromLine(Vector3 point, Vector3 origin, Vector3 direction) {
+        Ray ray = new Ray(origin, direction);
+        float distance = Vector3.Cross(ray.direction, point - ray.origin).magnitude;
+        return distance;
+    }
+
+    private Vector3 ClosestPointOnLine(Vector3 point, Vector3 origin, Vector3 direction) {
+        direction.Normalize();
+        Vector2 lhs = point - origin;
+        float dotP = Vector3.Dot(lhs, direction);
+        return origin + direction * dotP;
+    }
+
+    private void CarvePath(float[,] workingHeightMap, float[,] referenceHeightMap) {
+        
+        int mapSize = referenceHeightMap.GetLength(0);
+        for (int i = 0; i < mapSize; i++) {
+            for (int j = 0; j < mapSize; j++) {
+                Vector3 curPoint = new Vector3(i, referenceHeightMap[i, j], j);
+
+                int closestPointIndex = FindClosestPointIndex(curPoint);
+                Vector3 closestPoint = path[closestPointIndex]; 
+
+                // Get distance of 2nd closest point so we can form a line
+                Vector3 secondClosestPoint;
+                if (i == path.Count) {
+                    secondClosestPoint = path[i - 1];
+                }
+                else if (i == 0) {
+                    secondClosestPoint = path[i + 1];
+                }
+                else {
+                    float distPre = Vector3.Distance(path[i - 1], curPoint);
+                    float distPost = Vector3.Distance(path[i + 1], curPoint);
+                    secondClosestPoint = distPre < distPost ? path[i - 1] : path[i + 1];
+                }
+                
+                Vector3 closestPointOnLine = ClosestPointOnLine(curPoint, closestPoint, secondClosestPoint - closestPoint);
+                float distance = Vector3.Distance(closestPoint, curPoint);
+
+                if (distance < (roadSettings.width / 2)) {
+                    float percent = distance / roadSettings.width;
+                    float newValue = 0.25f * curPoint.y + 0.75f * closestPoint.y;
+
+                    workingHeightMap[(int)curPoint.x, (int)curPoint.z] = newValue;
+                }
+            }
+        }
+    }
+
+    private void AddMeshValues(float[,] heightMap) {
+
+        int mapSize = heightMap.GetLength(0);
+
+        for (int i = 0; i < mapSize - 1; i++) {
+            for (int j = 0; j < mapSize - 1; j++) {
+                Vector3 curPoint = new Vector3(i, heightMap[i, j] + 0.01f, j);
+
+                int closestPointIndex = FindClosestPointIndex(curPoint);
+                Vector3 closestPoint = path[closestPointIndex]; 
+
+                float distance = Vector3.Distance(closestPoint, curPoint);
+
+                if (distance < (roadSettings.width / 2)) {
+                    AddMeshSquare(heightMap, i, j);
+                }
+            }
+        }
+    }
+
+    private void AddMeshSquare(float[,] heightMap, int x, int y) {
+
+        this.vertices.Add(new Vector3(x, heightMap[x, y + 1] + 0.05f, y + 1));
+        this.vertices.Add(new Vector3(x + 1, heightMap[x + 1, y + 1] + 0.01f, y + 1));
+        this.vertices.Add(new Vector3(x, heightMap[x, y] + 0.01f, y));
+        this.vertices.Add(new Vector3(x + 1, heightMap[x + 1, y] + 0.01f, y));
+        
+        this.uvs.Add(new Vector2(0, 1));
+        this.uvs.Add(new Vector2(1, 1));
+        this.uvs.Add(new Vector2(0, 0));
+        this.uvs.Add(new Vector2(1, 0));
+        
+        this.normals.Add(Vector3.up);
+        this.normals.Add(Vector3.up);
+        this.normals.Add(Vector3.up);
+        this.normals.Add(Vector3.up);
 
         int triangleOffset = this.vertices.Count - 4;
-		int[] triangles = {
-            1 + triangleOffset, triangleOffset, 2 + triangleOffset,	// triangle 1
-            2 + triangleOffset, triangleOffset, 3 + triangleOffset	// triangle 2
+        int[] triangles = {
+            triangleOffset, triangleOffset + 1, triangleOffset + 2,	// triangle 1
+            triangleOffset + 2, triangleOffset + 1, triangleOffset + 3,	// triangle 2
         };
+
         this.triangles.AddRange(triangles);
-		
-        this.uvs.Add(new Vector2(0, 0));
-        this.uvs.Add(new Vector2(length, 0));
-        this.uvs.Add(new Vector2(length, 1));
-        this.uvs.Add(new Vector2(0, 1));
-
-        this.normals.Add(Vector3.up);
-        this.normals.Add(Vector3.up);
-        this.normals.Add(Vector3.up);
-        this.normals.Add(Vector3.up);
-
-        this.prevPoint = nextPoint;
     }
 
     private void CreateMesh() {
@@ -202,40 +346,83 @@ public class Road
     public void SetParent(Transform parent) {
         this.meshFilter.transform.parent = parent;
     }
-}
 
-public class Rectangle {
+    private class Node : IHeapItem<Node> {
+        public int x;
+        public int y;
+        public float height;
+        public float gCost;
+        public float hCost;
 
-    public Vector2[] points;
+        int heapIndex;
 
+        public Node parent;
+        
+        public Node(int x, int y, float height) {
+            this.x = x;
+            this.y = y;
+            this.height = height;
+            gCost = 0;
+            hCost = 0;
+        }
 
-    public Rectangle(Vector2 a, Vector2 b, Vector2 c, Vector2 d) {
-        points = new Vector2[4];
-        points[0] = a;
-        points[1] = b;
-        points[2] = c;
-        points[3] = d;
-    }
-
-    public bool Contains(Vector2 p) {
-
-        for (int i = 0; i < points.Length; i++) {
-            if (p == points[i]) {
-                return true;
+        public float fCost {
+            get {
+                return gCost + hCost;
             }
         }
 
-        bool inside = false;
-        int j = points.Length - 1;
-        for (int i = 0; i < points.Length; j = i++) {
-            Vector2 pi = points[i];
-            Vector2 pj = points[j];
-            if (((pi.y <= p.y && p.y < pj.y) || (pj.y <= p.y && p.y < pi.y)) &&
-                (p.x < (pj.x - pi.x) * (p.y - pi.y) / (pj.y - pi.y) + pi.x)) {
-                inside = !inside;
-            }    
+        public int HeapIndex {
+            get {
+                return heapIndex;
+            }
+            set {
+                heapIndex = value;
+            }
         }
 
-        return inside;
+        public int CompareTo(Node nodeToCompare) {
+            int compare = fCost.CompareTo(nodeToCompare.fCost);
+            if (compare == 0) {
+                compare = hCost.CompareTo(nodeToCompare.hCost);
+            }
+            return -compare;
+        }
+    }
+
+    private class Rectangle {
+
+        public Vector2[] points;
+
+        public Rectangle(Vector2 a, Vector2 b, Vector2 c, Vector2 d) {
+            points = new Vector2[4];
+            points[0] = a;
+            points[1] = b;
+            points[2] = c;
+            points[3] = d;
+        }
+
+        public bool Contains(Vector2 p) {
+
+            for (int i = 0; i < points.Length; i++) {
+                if (p == points[i]) {
+                    return true;
+                }
+            }
+
+            bool inside = false;
+            int j = points.Length - 1;
+            for (int i = 0; i < points.Length; j = i++) {
+                Vector2 pi = points[i];
+                Vector2 pj = points[j];
+                if (((pi.y <= p.y && p.y < pj.y) || (pj.y <= p.y && p.y < pi.y)) &&
+                    (p.x < (pj.x - pi.x) * (p.y - pi.y) / (pj.y - pi.y) + pi.x)) {
+                    inside = !inside;
+                }    
+            }
+
+            return inside;
+        }
     }
 }
+

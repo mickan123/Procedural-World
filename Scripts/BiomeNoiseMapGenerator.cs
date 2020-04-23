@@ -168,3 +168,15 @@ public struct BiomeData {
 		this.biomeInfo = biomeInfo;
 	}
 }
+
+public struct BiomeInfo {
+	public readonly int[,] biomeMap; // Holds index of biome at each point
+	public readonly float[,,] biomeStrengths; // E.g. 0.75 means 75-25 main biome nearest biome blend, has values in range [0, 1]
+	public readonly int mainBiome;
+	
+	public BiomeInfo(int[,] biomeMap, float[,,] biomeStrengths, int mainBiome) {
+		this.biomeMap = biomeMap;
+		this.biomeStrengths = biomeStrengths;
+		this.mainBiome = mainBiome;
+	}
+}

@@ -9,6 +9,10 @@ public class RoadSettings : UpdatableData
 
 	public float width = 1f;
 
+	public Material roadMaterial;
+
+	public int stepSize = 3;
+
     #if UNITY_EDITOR
 
 	public virtual void ValidateValues() {
