@@ -5,7 +5,7 @@ using System.Linq;
 
 public static class ObjectGenerator {
 
-	public static List<SpawnObject> GenerateBiomeObjects(float[,] heightMap, BiomeInfo info, WorldSettings settings, Vector2 sampleCentre) {
+	public static List<SpawnObject> GenerateBiomeObjects(float[,] heightMap, BiomeInfo info, Road road, WorldSettings settings, Vector2 sampleCentre) {
 		List<SpawnObject> biomeObjects = new List<SpawnObject>();
 		
 		for (int biome = 0; biome < settings.biomes.Length; biome++) {
@@ -13,7 +13,8 @@ public static class ObjectGenerator {
 			for (int objectSettings = 0; objectSettings < settings.biomes[biome].terrainObjectSettings.Length; objectSettings++) {
 				biomeObjects.Add(GenerateTerrainObject(settings.biomes[biome].terrainObjectSettings[objectSettings], 
 														biome,
-														heightMap, 
+														heightMap,
+														road.roadStrengthMap, 
 														info, 
 														settings, 
 														sampleCentre));
@@ -25,7 +26,8 @@ public static class ObjectGenerator {
 
 	public static SpawnObject GenerateTerrainObject(TerrainObjectSettings settings, 
 													int biome,
-													float[,] heightMap, 
+													float[,] heightMap,
+													float[,] roadStrengthMap, 
 													BiomeInfo info, 
 													WorldSettings worldSettings, 
 													Vector2 sampleCentre) {
@@ -45,6 +47,7 @@ public static class ObjectGenerator {
 		points = FilterPointsByBiome(points, biome, info, prng);
 		points = FilterPointsBySlope(points, settings.minSlope, settings.maxSlope, heightMap);
 		points = FilterPointsByHeight(points, settings.minHeight, settings.maxHeight, heightMap);
+		points = FilterPointsOnRoad(points, roadStrengthMap);
 
 		List<ObjectPosition> spawnPositions = new List<ObjectPosition>();
 
@@ -115,6 +118,18 @@ public static class ObjectGenerator {
 		for (int i = 0; i < points.Count; i++) {
 			float height = heightMap[(int)points[i].x, (int)points[i].y];
 			if (height > maxHeight || height < minHeight) {
+				points.RemoveAt(i);
+				i--;
+			}
+		}
+
+		return points;
+	}
+
+	public static List<Vector2> FilterPointsOnRoad(List<Vector2> points, float[,] roadStrengthMap) {
+		for (int i = 0; i < points.Count; i++) {
+			if (roadStrengthMap[(int)points[i].x, (int)points[i].y] != 0f ||
+				roadStrengthMap[(int)points[i].x + 1, (int)points[i].y + 1] != 0f) {
 				points.RemoveAt(i);
 				i--;
 			}

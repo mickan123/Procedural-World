@@ -121,7 +121,7 @@ public class TerrainChunk {
 																false,
 																false);
 
-		biomeMapTex.filterMode = FilterMode.Bilinear; 
+		biomeMapTex.filterMode = FilterMode.Trilinear; 
 		biomeStrengthTexArray.filterMode = FilterMode.Point; // TODO: Should this be bilinear
 
 		for (int x = 0; x < width; x ++) {

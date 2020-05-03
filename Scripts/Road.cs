@@ -11,11 +11,7 @@ public class Road
                                                { 1 , 1}, { 1 ,-1}, { -1, 1}, {-1 , -1},
                                                { 2 , 1}, { 2 ,-1}, { -2, 1}, {-2 , -1},
                                                { 1 , 2}, { 1 ,-2}, { -1, 2}, {-1 , -2}};
-
-    GameObject meshObject;
-    MeshRenderer meshRenderer;
-	MeshFilter meshFilter;
-
+                                               
     RoadSettings roadSettings;
     WorldSettings worldSettings;
 
@@ -36,14 +32,6 @@ public class Road
         this.roadSettings = worldSettings.roadSettings;
         this.worldSettings = worldSettings;
 
-        meshObject = new GameObject("Road");
-
-		meshRenderer = meshObject.AddComponent<MeshRenderer>();
-		meshFilter = meshObject.AddComponent<MeshFilter>();
-
-        float mapSize = (float)heightMap.GetLength(0);
-        meshObject.transform.position = new Vector3(chunkCentre.x, 0.01f, chunkCentre.y);
-
         this.roadStart = new Vector3(roadStart.x, HeightFromFloatCoord(roadStart, heightMap), roadStart.y);
         this.roadEnd = new Vector3(roadEnd.x, HeightFromFloatCoord(roadEnd, heightMap), roadEnd.y);
 
@@ -63,7 +51,7 @@ public class Road
 
         float endTime = Time.realtimeSinceStartup;
 
-        Debug.Log("Time taken: " + (endTime - startTime));
+        Debug.Log("Road Generation time taken: " + (endTime - startTime));
     }
 
     private float HeightFromFloatCoord(Vector2 coord, float[,] heightMap) {
@@ -71,7 +59,6 @@ public class Road
         int indexX = Mathf.Clamp((int)coord.x, 0, maxIndex);
         int indexY = Mathf.Clamp((int)coord.y, 0, maxIndex);
         
-
         float x = coord.x - indexX;
         float y = coord.y - indexY;
 
@@ -97,9 +84,6 @@ public class Road
         CarvePath(workingHeightMap, workingHeightMap);
 
         Common.CopyArrayValues(workingHeightMap, heightMap);
-
-        AddMeshValues(heightMap);
-        CreateMesh();
     }
 
     private void FindPath(float[,] heightMap) {
@@ -120,6 +104,7 @@ public class Road
         HashSet<Node> closedSet = new HashSet<Node>();
         openSet.Add(startNode);
 
+
         while (openSet.Count > 0) {
             Node currentNode = openSet.RemoveFirst();
             closedSet.Add(currentNode);
@@ -129,7 +114,7 @@ public class Road
                 return;
             }
             
-            List<Node> neighbours = GetNeighbours(nodeGrid, currentNode);
+            List<Node> neighbours = GetNeighbours(nodeGrid, currentNode, endNode);
             for (int i = 0; i < neighbours.Count; i++) {
                 Node neighbour = neighbours[i];
 
@@ -153,9 +138,17 @@ public class Road
         }
     }
 
-    private List<Node> GetNeighbours(Node[,] nodeGrid, Node node) {
+    private List<Node> GetNeighbours(Node[,] nodeGrid, Node node, Node endNode) {
         List<Node> neighbours = new List<Node>();
         int mapSize = nodeGrid.GetLength(0);
+        
+        float deltaXend = Mathf.Abs(endNode.x - node.x);
+        float deltaYend = Mathf.Abs(endNode.y - node.y);
+        float distanceToEndnode = deltaXend * deltaXend + deltaYend * deltaYend;
+
+        if (distanceToEndnode < roadSettings.stepSize * 2f) {
+            neighbours.Add(endNode);
+        }
 
         for (int i = 0; i < offsets.GetLength(0); i++) {
             int neighbourX = node.x + offsets[i, 0] * roadSettings.stepSize;
@@ -163,7 +156,7 @@ public class Road
 
             neighbourX = Mathf.Clamp(neighbourX, 0, mapSize - 1);
             neighbourY = Mathf.Clamp(neighbourY, 0, mapSize - 1);
-
+            
             neighbours.Add(nodeGrid[neighbourX, neighbourY]);
         }
 
@@ -277,6 +270,7 @@ public class Road
                     float newValue = (1f - roadSettings.blendFactor * percent) * closestPointOnLine.y + (roadSettings.blendFactor * percent) * curPoint.y;
 
                     workingHeightMap[i, j] = newValue;
+                    roadStrengthMap[i, j] = 1f;
                 }
                 else if (distance < roadSettings.width) {
                     float halfWidth = roadSettings.width / 2f;
@@ -285,6 +279,10 @@ public class Road
                     float newValue = multiplier * curPoint.y + (1f - multiplier) * closestPointOnLine.y;
 
                     workingHeightMap[i, j] = newValue;
+                    roadStrengthMap[i, j] = 1f - (distance - halfWidth) / halfWidth;
+                }
+                else {
+                    roadStrengthMap[i, j] = 0;
                 }
             }
         }
@@ -316,36 +314,6 @@ public class Road
         Vector3 lhs = point - origin;
         float dotP = Vector3.Dot(lhs, direction);
         return origin + direction * dotP;
-    }
-
-    private void AddMeshValues(float[,] heightMap) {
-
-        int mapSize = heightMap.GetLength(0);
-        float halfWidth = roadSettings.width / 2f;
-
-        for (int i = 0; i < mapSize - 1; i++) {
-            for (int j = 0; j < mapSize - 1; j++) {
-                Vector3 curPoint = new Vector3(i, heightMap[i, j] + 0.01f, j);
-                Vector2 curPoint2d = new Vector2(i, j);
-
-                int closestPointIndex = FindClosestPointIndex(curPoint);
-                Vector3 closestPoint = path[closestPointIndex]; 
-                Vector2 closestPoint2d = new Vector2(closestPoint.x, closestPoint.z);
-
-                float distance = Vector3.Distance(closestPoint, curPoint);
-
-                if (distance < halfWidth) {
-                    float roadStrength = 1f - (distance / halfWidth);
-                    roadStrengthMap[i, j] = 1f;
-                }
-                else if (distance < roadSettings.width) {
-                    roadStrengthMap[i, j] = 1f - (distance - halfWidth) / halfWidth;
-                }
-                else  {
-                    roadStrengthMap[i, j] = 0;
-                }
-            }
-        }
     }
 
     private void AddMeshSquare(float[,] heightMap, int x, int y) {
@@ -382,17 +350,9 @@ public class Road
 		mesh.uv = uvs.ToArray();
 		mesh.normals = normals.ToArray();
 
-        this.meshFilter.mesh = mesh;
+        // this.meshFilter.mesh = mesh;
     }
     
-    public void SetVisible(bool visible) {
-		meshObject.SetActive(visible);
-	}
-
-    public void SetParent(Transform parent) {
-        this.meshFilter.transform.parent = parent;
-    }
-
     private class Node : IHeapItem<Node> {
         public int x;
         public int y;

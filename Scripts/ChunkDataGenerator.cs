@@ -13,14 +13,17 @@ public static class ChunkDataGenerator
                                                                             worldSettings,
                                                                             chunkCentre);
         
+        
+        
+        // Generate roads
+        Road road = RoadGenerator.GenerateRoads(worldSettings, chunkCentre, biomeData.heightNoiseMap); 
+
         // Generate objects for chunk
         List<SpawnObject> objects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 
                                                                         biomeData.biomeInfo, 
+                                                                        road,
                                                                         worldSettings, 
-                                                                        chunkCentre);
-        
-        // Generate roads
-        Road road = RoadGenerator.GenerateRoads(worldSettings, chunkCentre, biomeData.heightNoiseMap);        
+                                                                        chunkCentre);       
 
         return new ChunkData(biomeData, objects, road);
     }
