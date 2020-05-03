@@ -267,16 +267,17 @@ public class Road
                 if (distance < (roadSettings.width / 2)) {
                     float height = HeightFromFloatCoord(closestPointOnLine2d, referenceHeightMap);
                     float percent = distance / (roadSettings.width / 2f);
-                    float newValue = (1f - roadSettings.blendFactor * percent) * closestPointOnLine.y + (roadSettings.blendFactor * percent) * curPoint.y;
+                    float newValue = (1f - roadSettings.blendFactor * percent) * height + (roadSettings.blendFactor * percent) * curPoint.y;
 
                     workingHeightMap[i, j] = newValue;
                     roadStrengthMap[i, j] = 1f;
                 }
                 else if (distance < roadSettings.width) {
+                    float height = HeightFromFloatCoord(closestPointOnLine2d, referenceHeightMap);
                     float halfWidth = roadSettings.width / 2f;
                     float multiplier = (distance - halfWidth) / halfWidth;
                     multiplier = multiplier * (1f - roadSettings.blendFactor) + roadSettings.blendFactor;
-                    float newValue = multiplier * curPoint.y + (1f - multiplier) * closestPointOnLine.y;
+                    float newValue = multiplier * curPoint.y + (1f - multiplier) * height;
 
                     workingHeightMap[i, j] = newValue;
                     roadStrengthMap[i, j] = 1f - (distance - halfWidth) / halfWidth;
