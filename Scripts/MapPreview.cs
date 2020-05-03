@@ -178,10 +178,7 @@ public class MapPreview : MonoBehaviour {
 		MeshData meshData = MeshGenerator.GenerateTerrainMesh(chunkData.biomeData.heightNoiseMap, worldSettings.meshSettings, EditorPreviewLOD);
         DrawMesh(meshData);
 
-		TerrainChunk.UpdateMaterial(chunkData.biomeData.biomeInfo, worldSettings, centre, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
-
-		chunkData.road.SetVisible(true);
-		chunkData.road.SetParent(this.meshFilter.transform);
+		TerrainChunk.UpdateMaterial(chunkData, worldSettings, centre, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
 
 		for (int i = 0; i < chunkData.objects.Count; i++) {
 			chunkData.objects[i].Spawn(this.transform);

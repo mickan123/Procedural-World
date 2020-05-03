@@ -32,6 +32,9 @@
 
 		UNITY_DECLARE_TEX2DARRAY(baseTextures);
 
+		UNITY_DECLARE_TEX2D(roadTexture);
+		float roadTextureScale;
+
 		// Per chunk vars
 		UNITY_DECLARE_TEX2D(biomeMapTex);
 		UNITY_DECLARE_TEX2DARRAY(biomeStrengthMap);
@@ -57,6 +60,16 @@
 			return UNITY_SAMPLE_TEX2DARRAY(biomeStrengthMap, float3(scaledWorldPos.x, scaledWorldPos.z, textureIndex));
 		}
 
+		float3 triplanarRoadTex(float3 worldPos, float3 blendAxes) {		
+			float3 texturePos = worldPos / roadTextureScale;
+
+			float3 xProjection = UNITY_SAMPLE_TEX2D(roadTexture, float2(texturePos.y, texturePos.z)) * blendAxes.x;
+			float3 yProjection = UNITY_SAMPLE_TEX2D(roadTexture, float2(texturePos.x, texturePos.z)) * blendAxes.y;
+			float3 zProjection = UNITY_SAMPLE_TEX2D(roadTexture, float2(texturePos.x, texturePos.y)) * blendAxes.z;
+
+			return xProjection + yProjection + zProjection;
+		}
+
 		float3 triplanar(float3 worldPos, float3 blendAxes, int texIndex) {
 			float3 texturePos = worldPos / baseTextureScales[texIndex];
 			
@@ -68,12 +81,14 @@
 		}
 
 
-		float3 getBiomeTexture(int biomeIndex, float3 albedo, float3 worldPos, float3 blendAxes) {
+		float3 getBiomeTexture(int biomeIndex, float3 albedo, float3 worldPos, float3 blendAxes, float roadStrength) {
+			float3 roadTexture = triplanarRoadTex(worldPos, blendAxes);
 			
 			int layerCount = layerCounts[biomeIndex];
 
 			float heightPercent = inverseLerp(minHeight, maxHeight, worldPos.y);
 
+			float3 biomeTexture = float3(0, 0, 0);
 			for (int i = 0; i < layerCount; i++) {
 
 				int idx = maxLayerCount * biomeIndex + i;
@@ -83,9 +98,11 @@
 				float3 baseColour = baseColours[idx] * baseColourStrengths[idx];
 				float3 textureColour = triplanar(worldPos, blendAxes, idx) * (1 - baseColourStrengths[idx]);
 
-				albedo = albedo * (1 - drawStrength) + (baseColour + textureColour) * drawStrength;
+				biomeTexture = biomeTexture * (1 - drawStrength) + (baseColour + textureColour) * drawStrength;
 			}
 
+			albedo = roadStrength * roadTexture + (1 - roadStrength) * biomeTexture;
+			
 			return albedo;
 		}
 
@@ -95,18 +112,17 @@
 			blendAxes /= (blendAxes.x + blendAxes.y + blendAxes.z);
 
 			float4 biomeData = sampleBiomeData(IN.worldPos);
-			int mainBiome = biomeData.x;
+			float roadStrength = biomeData.x;
 
 			float3 finalTex = o.Albedo;
 			for (uint i = 0; i < maxBiomeCount; i+=4) {
 				float4 biomeStrengthData = sampleBiomeStrength(IN.worldPos, i / 4);
-				finalTex += biomeStrengthData.x * getBiomeTexture(i, o.Albedo, IN.worldPos, blendAxes);
-				finalTex += biomeStrengthData.y * getBiomeTexture(i + 1, o.Albedo, IN.worldPos, blendAxes);
-				finalTex += biomeStrengthData.z * getBiomeTexture(i + 2, o.Albedo, IN.worldPos, blendAxes);
-				finalTex += biomeStrengthData.w * getBiomeTexture(i + 3, o.Albedo, IN.worldPos, blendAxes);
+				finalTex += biomeStrengthData.x * getBiomeTexture(i, o.Albedo, IN.worldPos, blendAxes, roadStrength);
+				finalTex += biomeStrengthData.y * getBiomeTexture(i + 1, o.Albedo, IN.worldPos, blendAxes, roadStrength);
+				finalTex += biomeStrengthData.z * getBiomeTexture(i + 2, o.Albedo, IN.worldPos, blendAxes, roadStrength);
+				finalTex += biomeStrengthData.w * getBiomeTexture(i + 3, o.Albedo, IN.worldPos, blendAxes, roadStrength);
 				
 			}
-
 			o.Albedo = finalTex;
 		}
 

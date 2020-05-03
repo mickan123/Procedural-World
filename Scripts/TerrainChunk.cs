@@ -86,12 +86,11 @@ public class TerrainChunk {
 	void OnChunkDataReceived(object chunkData) {
 		this.chunkData = (ChunkData)chunkData;
 
-		BiomeData biomeData = this.chunkData.biomeData;
-		this.heightMap = biomeData.heightNoiseMap;
+		this.heightMap = this.chunkData.biomeData.heightNoiseMap;
 		
 		heightMapReceived = true;
 		
-		UpdateMaterial(biomeData.biomeInfo, worldSettings, coord, matBlock, meshRenderer);
+		UpdateMaterial(this.chunkData, worldSettings, coord, matBlock, meshRenderer);
 		UpdateTerrainChunk();
 
 		List<SpawnObject> spawnObjects = this.chunkData.objects;
@@ -101,7 +100,8 @@ public class TerrainChunk {
 		}
 	}
 
-	public static void UpdateMaterial(BiomeInfo info, WorldSettings worldSettings, Vector2 coord, MaterialPropertyBlock matBlock, MeshRenderer renderer) {
+	public static void UpdateMaterial(ChunkData chunkData, WorldSettings worldSettings, Vector2 coord, MaterialPropertyBlock matBlock, MeshRenderer renderer) {
+		BiomeInfo info = chunkData.biomeData.biomeInfo;
 		int width = info.biomeMap.GetLength(0);
 
 		// Create texture to pass in biome maps and biome strengths
@@ -121,17 +121,15 @@ public class TerrainChunk {
 																false,
 																false);
 
-		// Need these or values get sampled incorrectly
-		biomeMapTex.filterMode = FilterMode.Point; 
-		biomeStrengthTexArray.filterMode = FilterMode.Point;
+		biomeMapTex.filterMode = FilterMode.Bilinear; 
+		biomeStrengthTexArray.filterMode = FilterMode.Point; // TODO: Should this be bilinear
 
 		for (int x = 0; x < width; x ++) {
 			for (int y = 0; y < width; y ++) {				 
-				float biome = (float)info.biomeMap[x, y] / (worldSettings.biomes.Length - 1);
-				biomeMapTex.SetPixel(x, y, new Color(biome, 0f, 0f, 0f));
+				biomeMapTex.SetPixel(x, y, new Color(chunkData.road.roadStrengthMap[x, y], 0f, 0f, 0f));
 
 				for (int w = 0; w < worldSettings.maxBiomeCount; w += biomesPerTexture) {
-					int texIndex = w / biomesPerTexture; // Each texture has 4 channels
+					int texIndex = w / biomesPerTexture; 
 
 					Color biomeStrengths = new Color((w < numBiomes) ? info.biomeStrengths[x, y, w] : 0f,
 													(w + 1 < numBiomes) ? info.biomeStrengths[x, y, w + 1] : 0f,

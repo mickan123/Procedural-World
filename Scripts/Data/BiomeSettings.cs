@@ -5,7 +5,7 @@ using UnityEngine;
 [System.Serializable, CreateAssetMenu()]
 public class BiomeSettings : UpdatableData {
 	
-	public BiomeTextureData textureData;
+	public TextureData textureData;
 	public NoiseMapSettings heightMapSettings;
 
 	public TerrainObjectSettings[] terrainObjectSettings;

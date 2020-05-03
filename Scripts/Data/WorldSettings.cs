@@ -96,8 +96,10 @@ public class WorldSettings : UpdatableData {
 		material.SetFloat("minHeight", minHeight);
 		material.SetFloat("maxHeight", maxHeight);
 		material.SetInt("chunkWidth", meshSettings.meshWorldSize);
-	}
 
+		material.SetTexture("roadTexture", roadSettings.roadTexture.layers[0].texture);
+		material.SetFloat("roadTextureScale", roadSettings.roadTexture.layers[0].textureScale);
+	}
 
 	public float minHeight {
 		get {

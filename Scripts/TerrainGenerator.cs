@@ -12,7 +12,7 @@ public class TerrainGenerator : MonoBehaviour {
 
 	public MeshSettings meshSettings;
 	public WorldSettings worldSettings;
-	public BiomeTextureData textureSettings;
+	public TextureData textureSettings;
 
 	public Transform viewer;
 	public Material mapMaterial;

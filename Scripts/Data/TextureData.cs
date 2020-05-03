@@ -4,7 +4,7 @@ using UnityEngine;
 using System.Linq;
 
 [System.Serializable, CreateAssetMenu()]
-public class BiomeTextureData : UpdatableData {
+public class TextureData : UpdatableData {
 
 	public TextureLayer[] layers;
 
