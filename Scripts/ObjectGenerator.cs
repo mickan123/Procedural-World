@@ -43,20 +43,21 @@ public static class ObjectGenerator {
 		
 		System.Random prng = new System.Random((int)(sampleCentre.x + sampleCentre.y));
 
-		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings, worldSettings.meshSettings.meshWorldSize, sampleCentre, spawnNoiseMap);
+		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings, mapSize - 1, sampleCentre, spawnNoiseMap);
 		points = FilterPointsByBiome(points, biome, info, prng);
 		points = FilterPointsBySlope(points, settings.minSlope, settings.maxSlope, heightMap);
 		points = FilterPointsByHeight(points, settings.minHeight, settings.maxHeight, heightMap);
 		points = FilterPointsOnRoad(points, roadStrengthMap);
 
 		List<ObjectPosition> spawnPositions = new List<ObjectPosition>();
+		
 
 		for (int point = 0; point < points.Count; point++) {
 			Vector2 spawnPoint = points[point];
 
-			Vector3 position = new Vector3(Mathf.FloorToInt(spawnPoint.x + sampleCentre.x),
+			Vector3 position = new Vector3(Mathf.FloorToInt(spawnPoint.x + sampleCentre.x) * worldSettings.meshSettings.meshScale,
 											heightMap[Mathf.FloorToInt(spawnPoint.x), Mathf.FloorToInt(spawnPoint.y)], 
-											Mathf.FloorToInt(spawnPoint.y + sampleCentre.y));
+											Mathf.FloorToInt(spawnPoint.y + sampleCentre.y) * worldSettings.meshSettings.meshScale);
 
 			Quaternion rotation = Quaternion.Euler(0f, Common.NextFloat(prng, 0f, 360f), 0f);
 

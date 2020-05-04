@@ -7,7 +7,7 @@ public static class RoadGenerator
     public static Road GenerateRoads(WorldSettings worldSettings, Vector2 chunkCentre, float[,] heightMap) {
         RoadSettings roadSettings = worldSettings.roadSettings;
 
-        float mapSize = worldSettings.meshSettings.meshWorldSize;
+        float mapSize = heightMap.GetLength(0);
         
         return new Road(worldSettings, 
                         heightMap,

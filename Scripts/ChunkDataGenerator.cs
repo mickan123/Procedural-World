@@ -12,9 +12,6 @@ public static class ChunkDataGenerator
                                                                             worldSettings.meshSettings.numVerticesPerLine,
                                                                             worldSettings,
                                                                             chunkCentre);
-        
-        
-        
         // Generate roads
         Road road = RoadGenerator.GenerateRoads(worldSettings, chunkCentre, biomeData.heightNoiseMap); 
 

@@ -45,13 +45,7 @@ public class Road
 
         roadStrengthMap = new float[heightMap.GetLength(0), heightMap.GetLength(1)];
 
-        float startTime = Time.realtimeSinceStartup;
-
         CreateRoad(heightMap);
-
-        float endTime = Time.realtimeSinceStartup;
-
-        Debug.Log("Road Generation time taken: " + (endTime - startTime));
     }
 
     private float HeightFromFloatCoord(Vector2 coord, float[,] heightMap) {
@@ -76,6 +70,7 @@ public class Road
     }
 
     private void CreateRoad(float[,] heightMap) {
+
         FindPath(heightMap);
         SmoothPath();
 
@@ -170,30 +165,19 @@ public class Road
         float flatDist =  Mathf.Sqrt(deltaX * deltaX + deltaY * deltaY);
 
         float heightDiff = Mathf.Abs(a.height - b.height);
-
-        float angle;
-        if (a.parent == null) {
-            angle = 0f;
-        }
-        else {
-            Vector2 prevDir = new Vector2(a.x - a.parent.x, a.y - a.parent.y);
-            Vector2 curDir = new Vector2(b.x - a.x, b.y - a.y);
-            angle = Vector2.Angle(prevDir, curDir);
-        }
         
         float slope = heightDiff / flatDist;
-        float slopeCost = 1000 * slope * slope; 
+        float slopeCost = slope; 
         
         // Penalize being close to edge of chunk
         float edgeCost = 0f;
         float halfWidth = roadSettings.width / 2f;
         if (b.x < halfWidth || b.x > mapSize - 1 -  halfWidth  
-            || b.y < halfWidth || b.y > mapSize - 1 - halfWidth
-            || angle >= 90f) {
-            edgeCost = 1000000000f;
+            || b.y < halfWidth || b.y > mapSize - 1 - halfWidth) {
+            edgeCost = 100000f;
         }
 
-        return flatDist + slopeCost + edgeCost;
+        return slopeCost + edgeCost;
     }
 
     private void RetracePath(Node node, float[,] heightMap) {
@@ -267,7 +251,7 @@ public class Road
                 if (distance < (roadSettings.width / 2)) {
                     float height = HeightFromFloatCoord(closestPointOnLine2d, referenceHeightMap);
                     float percent = distance / (roadSettings.width / 2f);
-                    float newValue = (1f - roadSettings.blendFactor * percent) * height + (roadSettings.blendFactor * percent) * curPoint.y;
+                    float newValue = (1f - roadSettings.blendFactor * percent) * closestPointOnLine.y + (roadSettings.blendFactor * percent) * curPoint.y;
 
                     workingHeightMap[i, j] = newValue;
                     roadStrengthMap[i, j] = 1f;
@@ -277,7 +261,7 @@ public class Road
                     float halfWidth = roadSettings.width / 2f;
                     float multiplier = (distance - halfWidth) / halfWidth;
                     multiplier = multiplier * (1f - roadSettings.blendFactor) + roadSettings.blendFactor;
-                    float newValue = multiplier * curPoint.y + (1f - multiplier) * height;
+                    float newValue = multiplier * curPoint.y + (1f - multiplier) * closestPointOnLine.y;
 
                     workingHeightMap[i, j] = newValue;
                     roadStrengthMap[i, j] = 1f - (distance - halfWidth) / halfWidth;
