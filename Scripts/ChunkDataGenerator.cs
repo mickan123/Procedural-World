@@ -13,7 +13,7 @@ public static class ChunkDataGenerator
                                                                             worldSettings,
                                                                             chunkCentre);
         // Generate roads
-        Road road = RoadGenerator.GenerateRoads(worldSettings, chunkCentre, biomeData.heightNoiseMap); 
+        Road road = RoadGenerator.GenerateRoads(worldSettings, chunkCentre, biomeData.heightNoiseMap, biomeData.biomeInfo); 
 
         // Generate objects for chunk
         List<SpawnObject> objects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 

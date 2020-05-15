@@ -28,7 +28,10 @@ public class Road
 
     public float[,] roadStrengthMap;
 
-    public Road(WorldSettings worldSettings, float[,] heightMap, Vector2 roadStart, Vector2 roadEnd, Vector2 chunkCentre) {
+    private float[,] heightMap;
+    private BiomeInfo biomeInfo;
+
+    public Road(WorldSettings worldSettings, float[,] heightMap, BiomeInfo info, Vector2 roadStart, Vector2 roadEnd, Vector2 chunkCentre) {
         this.roadSettings = worldSettings.roadSettings;
         this.worldSettings = worldSettings;
 
@@ -43,9 +46,12 @@ public class Road
         uvs = new List<Vector2>();
         normals = new List<Vector3>();
 
+        this.heightMap = heightMap;
+        this.biomeInfo = info;
+
         roadStrengthMap = new float[heightMap.GetLength(0), heightMap.GetLength(1)];
 
-        CreateRoad(heightMap);
+        CreateRoad();
     }
 
     private float HeightFromFloatCoord(Vector2 coord, float[,] heightMap) {
@@ -69,26 +75,25 @@ public class Road
         return height;
     }
 
-    private void CreateRoad(float[,] heightMap) {
-
-        FindPath(heightMap);
+    private void CreateRoad() {
+        FindPath();
         SmoothPath();
 
-        float[,] workingHeightMap = Common.CopyArray(heightMap);
+        float[,] workingHeightMap = Common.CopyArray(this.heightMap);
 
         CarvePath(workingHeightMap, workingHeightMap);
 
-        Common.CopyArrayValues(workingHeightMap, heightMap);
+        Common.CopyArrayValues(workingHeightMap, this.heightMap);
     }
 
-    private void FindPath(float[,] heightMap) {
+    private void FindPath() {
         
         int mapSize = heightMap.GetLength(0);
 
         Node[,] nodeGrid = new Node[mapSize, mapSize];
         for (int i = 0; i < mapSize; i++) {
             for (int j = 0; j < mapSize; j++) {
-                nodeGrid[i, j] = new Node(i, j, heightMap[i, j]);
+                nodeGrid[i, j] = new Node(i, j, this.heightMap[i, j]);
             }
         }
 
@@ -105,7 +110,7 @@ public class Road
             closedSet.Add(currentNode);
 
             if (currentNode == endNode) {
-                RetracePath(currentNode, heightMap);
+                RetracePath(currentNode);
                 return;
             }
             
@@ -180,10 +185,10 @@ public class Road
         return slopeCost + edgeCost;
     }
 
-    private void RetracePath(Node node, float[,] heightMap) {
+    private void RetracePath(Node node) {
         Node currentNode = node;
         while (currentNode.parent != null) {
-            path.Add(new Vector3(currentNode.x, heightMap[currentNode.x, currentNode.y], currentNode.y));
+            path.Add(new Vector3(currentNode.x, this.heightMap[currentNode.x, currentNode.y], currentNode.y));
             currentNode = currentNode.parent;
         }
 
@@ -248,13 +253,20 @@ public class Road
 
                 float distance = Vector2.Distance(closestPointOnLine2d, curPoint2d);
 
+                float roadMultiplier = 0f;
+                for (int w = 0; w < worldSettings.biomes.Length; w++) {
+                    if (worldSettings.biomes[w].allowRoads) {
+                        roadMultiplier += biomeInfo.biomeStrengths[i, j, w];
+                    }
+                }
+
                 if (distance < (roadSettings.width / 2)) {
                     float height = HeightFromFloatCoord(closestPointOnLine2d, referenceHeightMap);
                     float percent = distance / (roadSettings.width / 2f);
                     float newValue = (1f - roadSettings.blendFactor * percent) * closestPointOnLine.y + (roadSettings.blendFactor * percent) * curPoint.y;
 
-                    workingHeightMap[i, j] = newValue;
-                    roadStrengthMap[i, j] = 1f;
+                    workingHeightMap[i, j] = roadMultiplier * newValue + (1 - roadMultiplier) * workingHeightMap[i, j];
+                    roadStrengthMap[i, j] = 1f * roadMultiplier;
                 }
                 else if (distance < roadSettings.width) {
                     float height = HeightFromFloatCoord(closestPointOnLine2d, referenceHeightMap);
@@ -263,8 +275,8 @@ public class Road
                     multiplier = multiplier * (1f - roadSettings.blendFactor) + roadSettings.blendFactor;
                     float newValue = multiplier * curPoint.y + (1f - multiplier) * closestPointOnLine.y;
 
-                    workingHeightMap[i, j] = newValue;
-                    roadStrengthMap[i, j] = 1f - (distance - halfWidth) / halfWidth;
+                    workingHeightMap[i, j] = roadMultiplier * newValue + (1 - roadMultiplier) * workingHeightMap[i, j];
+                    roadStrengthMap[i, j] = (1f - (distance - halfWidth) / halfWidth) * roadMultiplier;
                 }
                 else {
                     roadStrengthMap[i, j] = 0;
@@ -301,12 +313,12 @@ public class Road
         return origin + direction * dotP;
     }
 
-    private void AddMeshSquare(float[,] heightMap, int x, int y) {
+    private void AddMeshSquare(int x, int y) {
 
-        this.vertices.Add(new Vector3(x, heightMap[x, y + 1] + 0.05f, y + 1));
-        this.vertices.Add(new Vector3(x + 1, heightMap[x + 1, y + 1] + 0.05f, y + 1));
-        this.vertices.Add(new Vector3(x, heightMap[x, y] + 0.05f, y));
-        this.vertices.Add(new Vector3(x + 1, heightMap[x + 1, y] + 0.05f, y));
+        this.vertices.Add(new Vector3(x, this.heightMap[x, y + 1] + 0.05f, y + 1));
+        this.vertices.Add(new Vector3(x + 1, this.heightMap[x + 1, y + 1] + 0.05f, y + 1));
+        this.vertices.Add(new Vector3(x, this.heightMap[x, y] + 0.05f, y));
+        this.vertices.Add(new Vector3(x + 1, this.heightMap[x + 1, y] + 0.05f, y));
         
         this.uvs.Add(new Vector2(0, 1));
         this.uvs.Add(new Vector2(1, 1));
