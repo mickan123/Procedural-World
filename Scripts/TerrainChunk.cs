@@ -75,10 +75,6 @@ public class TerrainChunk {
 		maxViewDst = detailLevels[detailLevels.Length - 1].visibleDstThreshold;
 	}
 
-	public void PrepareComputeBuffers() {
-		
-	}
-
 	public void Load() {
 		ThreadedDataRequester.RequestData(() => ChunkDataGenerator.GenerateChunkData(worldSettings, sampleCentre), OnChunkDataReceived);											
 	}
