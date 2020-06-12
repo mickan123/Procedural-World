@@ -8,7 +8,7 @@ public class TerrainChunk {
 	const float colliderGenerationDistanceThreshold = 5;
 
 	public event System.Action<TerrainChunk, bool> onVisibilityChanged;
-	public Vector2 coord;
+	public ChunkCoord coord;
 
 	GameObject meshObject;
 	Vector2 sampleCentre;
@@ -34,7 +34,7 @@ public class TerrainChunk {
 	WorldSettings worldSettings;
 	Transform viewer;
 
-	public TerrainChunk(Vector2 coord, 
+	public TerrainChunk(ChunkCoord coord, 
 						WorldSettings worldSettings,
 						LODInfo[] detailLevels, 
 						int colliderLODIndex, 
@@ -48,8 +48,9 @@ public class TerrainChunk {
 		this.meshSettings = worldSettings.meshSettings;
 		this.viewer = viewer;
 
-		sampleCentre = coord * meshSettings.meshWorldSize / meshSettings.meshScale;
-		Vector2 position = coord * meshSettings.meshWorldSize; 
+		sampleCentre = new Vector2(coord.x * meshSettings.meshWorldSize / meshSettings.meshScale, 
+								   coord.y * meshSettings.meshWorldSize / meshSettings.meshScale);
+		Vector2 position = new Vector2(coord.x * meshSettings.meshWorldSize, coord.y * meshSettings.meshWorldSize); 
 		bounds = new Bounds(position, Vector2.one * meshSettings.meshWorldSize);
 		
 		meshObject = new GameObject("Terrain Chunk");
@@ -75,8 +76,8 @@ public class TerrainChunk {
 		maxViewDst = detailLevels[detailLevels.Length - 1].visibleDstThreshold;
 	}
 
-	public void Load() {
-		ThreadedDataRequester.RequestData(() => ChunkDataGenerator.GenerateChunkData(worldSettings, sampleCentre), OnChunkDataReceived);											
+	public void Load(WorldGenerator worldGenerator) {
+		ThreadedDataRequester.RequestData(() => ChunkDataGenerator.GenerateChunkData(worldSettings, sampleCentre, worldGenerator), OnChunkDataReceived);											
 	}
 
 	void OnChunkDataReceived(object chunkData) {
@@ -86,7 +87,7 @@ public class TerrainChunk {
 		
 		heightMapReceived = true;
 		
-		UpdateMaterial(this.chunkData, worldSettings, coord, matBlock, meshRenderer);
+		UpdateMaterial(this.chunkData, worldSettings, matBlock, meshRenderer);
 		UpdateTerrainChunk();
 
 		List<SpawnObject> spawnObjects = this.chunkData.objects;
@@ -96,7 +97,7 @@ public class TerrainChunk {
 		}
 	}
 
-	public static void UpdateMaterial(ChunkData chunkData, WorldSettings worldSettings, Vector2 coord, MaterialPropertyBlock matBlock, MeshRenderer renderer) {
+	public static void UpdateMaterial(ChunkData chunkData, WorldSettings worldSettings, MaterialPropertyBlock matBlock, MeshRenderer renderer) {
 		BiomeInfo info = chunkData.biomeData.biomeInfo;
 		int width = info.biomeMap.GetLength(0);
 

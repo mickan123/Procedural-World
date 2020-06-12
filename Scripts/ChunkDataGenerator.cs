@@ -5,13 +5,14 @@ using UnityEngine;
 public static class ChunkDataGenerator
 {
 
-    public static ChunkData GenerateChunkData(WorldSettings worldSettings, Vector2 chunkCentre) {
+    public static ChunkData GenerateChunkData(WorldSettings worldSettings, Vector2 chunkCentre, WorldGenerator worldGenerator) {
 
         // Generate heightmap and biomestrength data
         BiomeData biomeData = BiomeHeightMapGenerator.GenerateBiomeNoiseMaps(worldSettings.meshSettings.numVerticesPerLine,
                                                                             worldSettings.meshSettings.numVerticesPerLine,
                                                                             worldSettings,
-                                                                            chunkCentre);
+                                                                            chunkCentre,
+                                                                            worldGenerator);
         // Generate roads
         Road road = RoadGenerator.GenerateRoads(worldSettings, chunkCentre, biomeData.heightNoiseMap, biomeData.biomeInfo); 
 
@@ -24,8 +25,6 @@ public static class ChunkDataGenerator
 
         return new ChunkData(biomeData, objects, road);
     }
-
-    
 }
 
 public class ChunkData {

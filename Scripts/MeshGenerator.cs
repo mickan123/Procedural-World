@@ -48,7 +48,7 @@ public static class MeshGenerator {
 		 * R O G Z Z Z Z Z Z Z G O R
 		 * R O G Z Z Z Z Z Z Z G O R
 		 * R O G Z Z Z Z Z Z Z G O R
-		 * R O P G G G P G G G P O R
+		 * R O P Z Z Z P Z Z Z P O R
 		 * R O G Z Z Z Z Z Z Z G O R
 		 * R O G Z Z Z Z Z Z Z G O R
 		 * R O G Z Z Z Z Z Z Z G O R

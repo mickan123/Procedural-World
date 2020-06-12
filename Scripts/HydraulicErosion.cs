@@ -4,12 +4,17 @@ using UnityEngine;
 using System;
 
 public static class HydraulicErosion {
+    public static BrushValues brushValues;
 
-    private class BrushValues {
+    public class BrushValues {
         public int[][] erosionBrushIndices;
         public float[][] erosionBrushWeights;
 
+        ErosionSettings  settings;
+
         public BrushValues(ErosionSettings settings, int mapSize) {
+            this.settings = settings;
+            mapSize += 2 * settings.maxLifetime;
             erosionBrushIndices = new int[mapSize * mapSize][];
             erosionBrushWeights = new float[mapSize * mapSize][];
 
@@ -58,127 +63,137 @@ public static class HydraulicErosion {
                     erosionBrushWeights[i][j] = weights[j] / weightSum;
                 }
             }
-
         }   
+    }    
+
+    public static void Init(WorldSettings settings) {
+        brushValues = new BrushValues(settings.erosionSettings, settings.meshSettings.numVerticesPerLine);
     }
 
-    public static float[,] Erode(float[,] values, WorldSettings worldSettings, BiomeInfo info) {
-        
+    public static float[,] Erode(float[,] values, float[,] mask, WorldSettings worldSettings, BiomeInfo info, WorldGenerator worldGenerator) {
+
         int mapSize = values.GetLength(0);
 
-        float[] map = new float[mapSize * mapSize];
+        float[,] map = new float[mapSize, mapSize];
         for (int i = 0; i < mapSize; i++) {
             for (int j = 0; j < mapSize; j++) {
-                map[i * mapSize + j] = values[i, j];
+                map[i, j] = values[i, j];
             }
         }
 
         ErosionSettings settings = worldSettings.erosionSettings;
-        BrushValues brushValues = new BrushValues(settings, mapSize);
         System.Random prng = new System.Random(settings.seed);
         
         for (int iteration = 0; iteration < settings.numHydraulicErosionIterations; iteration++) {
-            float posX = prng.Next(0, mapSize - 1);
-            float posY = prng.Next(0, mapSize - 1);
 
-            float dirX = 0;
-            float dirY = 0;
+            float initPosX = prng.Next(0, mapSize - 1);
+            float initPosY = prng.Next(0, mapSize - 1);
 
-            float speed = settings.startSpeed;
-            float water = settings.startWater;
-            float sediment = 0;
+            Drop drop = new Drop(settings, 0, initPosX, initPosY);
 
-            for (int lifetime = 0; lifetime < settings.maxLifetime; lifetime ++) {
-                int nodeX = (int) posX;
-                int nodeY = (int) posY;
-                int dropletIndex = nodeY * mapSize + nodeX;
-
-                // Calculate droplet's offset inside the cell (0,0) = at NW node, (1,1) = at SE node
-                float cellOffsetX = posX - nodeX;
-                float cellOffsetY = posY - nodeY;
-
-                // Calculate droplet's height and direction of flow with bilinear interpolation of surrounding heights
-                HeightAndGradient heightAndGradient = CalculateHeightAndGradient(map, mapSize, posX, posY);
-
-                // Update the droplet's direction and position (move position 1 unit regardless of speed)
-                dirX = (dirX * settings.inertia - heightAndGradient.gradientX * (1 - settings.inertia));
-                dirY = (dirY * settings.inertia - heightAndGradient.gradientY * (1 - settings.inertia));
-
-                // Normalize direction
-                float len = Mathf.Sqrt(dirX * dirX + dirY * dirY);
-                if (len != 0) {
-                    dirX /= len;
-                    dirY /= len;
-                }
-                posX += dirX;
-                posY += dirY;
-
-                // Stop simulating droplet if it's not moving or has flowed over edge of map
-                if ((dirX == 0 && dirY == 0) || posX < 0 || posX >= mapSize - 1 || posY < 0 || posY >= mapSize - 1) {
-                    break;
-                }
-
-                // Find the droplet's new height and calculate the deltaHeight
-                float newHeight = CalculateHeightAndGradient(map, mapSize, posX, posY).height;
-                float deltaHeight = newHeight - heightAndGradient.height;
-
-                // Calculate the droplet's sediment capacity (higher when moving fast down a slope and contains lots of water)
-                float sedimentCapacity = Mathf.Max(-deltaHeight * speed * water * settings.sedimentCapacityFactor, settings.minSedimentCapacity);
-                
-                // If carrying more sediment than capacity, or if flowing uphill:
-                if (sediment > sedimentCapacity || deltaHeight > 0) {
-                    // If moving uphill (deltaHeight > 0) try fill up to the current height, otherwise deposit a fraction of the excess sediment
-                    float amountToDeposit = (deltaHeight > 0) ? Mathf.Min(deltaHeight, sediment) : (sediment - sedimentCapacity) * settings.depositSpeed;
-                    sediment -= amountToDeposit;
-
-                    // Add the sediment to the four nodes of the current cell using bilinear interpolation
-                    // Deposition is not distributed over a radius (like erosion) so that it can fill small pits
-                    map[dropletIndex] += amountToDeposit * (1 - cellOffsetX) * (1 - cellOffsetY);
-                    map[dropletIndex + 1] += amountToDeposit * cellOffsetX * (1 - cellOffsetY);
-                    map[dropletIndex + mapSize] += amountToDeposit * (1 - cellOffsetX) * cellOffsetY;
-                    map[dropletIndex + 1 + mapSize] += amountToDeposit * cellOffsetX * cellOffsetY;
-                }
-                else {
-                    // Erode a fraction of the droplet's current carry capacity.
-                    // Clamp the erosion to the change in height so that it doesn't dig a hole in the terrain behind the droplet
-                    float amountToErode = Mathf.Min((sedimentCapacity - sediment) * settings.erodeSpeed, -deltaHeight);
-                    
-                    for (int brushIndex = 0; brushIndex < brushValues.erosionBrushIndices[dropletIndex].Length; brushIndex++) {
-                        int nodeIndex = brushValues.erosionBrushIndices[dropletIndex][brushIndex];
-
-                        float weightedErodeAmount = amountToErode * brushValues.erosionBrushWeights[dropletIndex][brushIndex];
-                        float deltaSediment = (map[nodeIndex] < weightedErodeAmount) ? map[nodeIndex] : weightedErodeAmount;
-                        map[nodeIndex] -= deltaSediment;
-                        sediment += deltaSediment;
-                    }
-                }
-
-                // Update droplet's speed and water content
-                speed = Mathf.Sqrt(speed * speed + deltaHeight * settings.gravity);
-                water *= (1 - settings.evaporateSpeed);
-            }
+            ErodeDrop(drop, worldSettings, map, mapSize, worldGenerator);
         }
-
-
-        // float[,] smoothedValues = SmoothEdges(map, mapSize, settings);
         
         // Weight erosion by biome strengths and whether erosion is enabled
         int numBiomes = worldSettings.biomes.Length;
-        for (int i = 0; i < mapSize; i++) { // Don't erode border elements as otherwise chunks don't align correctly
+        for (int i = 0; i < mapSize; i++) {
             for (int j = 0; j < mapSize; j++) {
                 float val = 0;
                 for (int w = 0; w < numBiomes; w++) {
                     if (worldSettings.biomes[w].hydraulicErosion) {
-                        val += info.biomeStrengths[i, j, w] * map[i * mapSize + j];
+                        val += info.biomeStrengths[i, j, w] * map[i, j];
                     } else {
                         val += info.biomeStrengths[i, j, w] * values[i, j];
                     }
                 }
-                values[i, j] = val;
+
+                // Blend values according to mask
+                values[i, j] = val * mask[i, j] + (1f - mask[i, j]) * values[i, j];
             }
         }
 
         return values;
+    }
+
+    public static void ErodeDrop(Drop drop, WorldSettings worldSettings, float[,] map, int mapSize, WorldGenerator worldGenerator) {
+        ErosionSettings settings = worldSettings.erosionSettings;
+
+        for (int lifetime = drop.lifetime; lifetime < settings.maxLifetime; lifetime ++) {
+            int nodeX = (int) drop.posX;
+            int nodeY = (int) drop.posY;
+            int dropletIndex = nodeY * mapSize + nodeX;
+
+            // Calculate droplet's offset inside the cell (0,0) = at NW node, (1,1) = at SE node
+            float cellOffsetX = drop.posX - nodeX;
+            float cellOffsetY = drop.posY - nodeY;
+
+            // Calculate droplet's height and direction of flow with bilinear interpolation of surrounding heights
+            HeightAndGradient heightAndGradient = CalculateHeightAndGradient(map, mapSize, drop.posX, drop.posY);
+
+            // Update the droplet's direction and position (move position 1 unit regardless of speed)
+            drop.dirX = (drop.dirX * settings.inertia - heightAndGradient.gradientX * (1 - settings.inertia));
+            drop.dirY = (drop.dirY * settings.inertia - heightAndGradient.gradientY * (1 - settings.inertia));
+
+            // Normalize direction
+            float len = Mathf.Sqrt(drop.dirX * drop.dirX + drop.dirY * drop.dirY);
+            if (len != 0) {
+                drop.dirX /= len;
+                drop.dirY /= len;
+            }
+            drop.posX += drop.dirX;
+            drop.posY += drop.dirY;
+            
+            // Out of map check
+            if (drop.posX < 0 || drop.posX >= mapSize - 1 || drop.posY < 0 || drop.posY >= mapSize - 1) {
+                break;
+            }
+
+            // Stopped moving check
+            if (drop.dirX == 0 && drop.dirY == 0) {
+                break;
+            }
+
+            // Find the droplet's new height and calculate the deltaHeight
+            float newHeight = CalculateHeightAndGradient(map, mapSize, drop.posX, drop.posY).height;
+            float deltaHeight = newHeight - heightAndGradient.height;
+
+            // Calculate the droplet's sediment capacity (higher when moving fast down a slope and contains lots of water)
+            float sedimentCapacity = Mathf.Max(-deltaHeight * drop.speed * drop.water * settings.sedimentCapacityFactor, settings.minSedimentCapacity);
+            
+            // If carrying more sediment than capacity, or if flowing uphill:
+            if (drop.sediment > sedimentCapacity || deltaHeight > 0) {
+                // If moving uphill (deltaHeight > 0) try fill up to the current height, otherwise deposit a fraction of the excess sediment
+                float amountToDeposit = (deltaHeight > 0) ? Mathf.Min(deltaHeight, drop.sediment) : (drop.sediment - sedimentCapacity) * settings.depositSpeed;
+                drop.sediment -= amountToDeposit;
+
+                // Add the sediment to the four nodes of the current cell using bilinear interpolation
+                // Deposition is not distributed over a radius (like erosion) so that it can fill small pits
+                map[nodeY, nodeX] += amountToDeposit * (1 - cellOffsetX) * (1 - cellOffsetY);
+                map[nodeY, nodeX + 1] += amountToDeposit * cellOffsetX * (1 - cellOffsetY);
+                map[nodeY + 1, nodeX] += amountToDeposit * (1 - cellOffsetX) * cellOffsetY;
+                map[nodeY + 1, nodeX + 1] += amountToDeposit * cellOffsetX * cellOffsetY;
+            }
+            else {
+                // Erode a fraction of the droplet's current carry capacity.
+                // Clamp the erosion to the change in height so that it doesn't dig a hole in the terrain behind the droplet
+                float amountToErode = Mathf.Min((sedimentCapacity - drop.sediment) * settings.erodeSpeed, -deltaHeight);
+                
+                for (int brushIndex = 0; brushIndex < brushValues.erosionBrushIndices[dropletIndex].Length; brushIndex++) {
+                    int nodeIndex = brushValues.erosionBrushIndices[dropletIndex][brushIndex];
+                    int brushX = nodeIndex % mapSize;
+                    int brushY = nodeIndex / mapSize;
+
+                    float weightedErodeAmount = amountToErode * brushValues.erosionBrushWeights[dropletIndex][brushIndex];
+                    float deltaSediment = (map[brushY, brushX] < weightedErodeAmount) ? map[brushY, brushX] : weightedErodeAmount;
+                    map[brushY, brushX] -= deltaSediment;
+                    drop.sediment += deltaSediment;
+                }
+            }
+
+            // Update droplet's speed and water content
+            drop.speed = Mathf.Sqrt(drop.speed * drop.speed + deltaHeight * settings.gravity);
+            drop.water *= (1 - settings.evaporateSpeed);
+        }
     }
 
     struct HeightAndGradient {
@@ -187,7 +202,7 @@ public static class HydraulicErosion {
         public float gradientY;
     }
 
-    private static HeightAndGradient CalculateHeightAndGradient(float[] map, int mapSize, float posX, float posY) {
+    private static HeightAndGradient CalculateHeightAndGradient(float[,] map, int mapSize, float posX, float posY) {
         int coordX = (int) posX;
         int coordY = (int) posY;
 
@@ -197,10 +212,10 @@ public static class HydraulicErosion {
 
         // Calculate heights of the four nodes of the droplet's cell'
         int nodeIndexNW = coordY * mapSize + coordX;
-        float heightNW = map[nodeIndexNW];
-        float heightNE = map[nodeIndexNW + 1];
-        float heightSW = map[nodeIndexNW + mapSize];
-        float heightSE = map[nodeIndexNW + mapSize + 1];
+        float heightNW = map[coordY, coordX];
+        float heightNE = map[coordY, coordX + 1];
+        float heightSW = map[coordY + 1, coordX];
+        float heightSE = map[coordY + 1, coordX + 1];
 
         // Calculate droplet's direction of flow with bilinear interpolation of height difference along the edges
         float gradientX = (heightNE - heightNW) * (1 - y) + (heightSE - heightSW) * y;
@@ -211,46 +226,41 @@ public static class HydraulicErosion {
 
         return new HeightAndGradient () { height = height, gradientX = gradientX, gradientY = gradientY };
     }
+}
 
-    private static float[,] SmoothEdges(float[] map, int mapSize, ErosionSettings settings) {
-        float[,] smoothedValues = new float[mapSize, mapSize];
-        for (int i = 0; i < mapSize; i++) {
-            for (int j = 0; j < mapSize; j++) {
-                if (i < settings.smoothWidth || i > mapSize - settings.smoothWidth
-                    || j < settings.smoothWidth || j > mapSize - settings.smoothWidth) {
+public struct Drop {
+    public float dirX;
+    public float dirY;
+    public float posX;
+    public float posY;
+    public float speed;
+    public float water;
+    public float sediment;
+    public int lifetime;
 
-                    smoothedValues[i, j] = Smooth(map, i, j, settings.smoothFilterWidth, settings.smoothWidth, mapSize);
-                }
-                else  {
-                    smoothedValues[i, j] = map[i * mapSize + j];
-                }
-            }
-        }
-        return smoothedValues;
+    public Drop(ErosionSettings settings, int lifetime, float posX, float posY) {
+        dirX = 0;
+        dirY = 0;
+
+        speed = settings.startSpeed;
+        water = settings.startWater;
+        sediment = 0;
+
+        this.lifetime = lifetime;
+        this.posX = posX;
+        this.posY = posY;
     }
 
-    private static float Smooth(float[] values, int x, int y, int smoothFilterWidth, int smoothWidth, int mapSize) {
-        float sum = 0f;
-        float numValues = 0f;
-        for (int i = x - smoothFilterWidth; i <= x + smoothFilterWidth; i++) {
-            for (int j = y - smoothFilterWidth; j <= y + smoothFilterWidth; j++) {
-                
-                if (i > 0 && i < mapSize && j > 0 && j < mapSize) {
-                    sum += values[i * mapSize + j];
-                    numValues++;
-                }
-            }
-        }
+    public Drop(Drop otherDrop) {
+        this.dirX = otherDrop.dirX;
+        this.dirY = otherDrop.dirY;
 
-        float average = sum / numValues;
-        
-        float xDistFromEdge = Mathf.Min(x, Mathf.Abs(x - mapSize));
-        float yDistFromEdge = Mathf.Min(y, Mathf.Abs(y - mapSize));
-        float distFromEdge = Mathf.Min(xDistFromEdge, yDistFromEdge);
-        float maxDistFromEdge = smoothWidth;
+        this.speed = otherDrop.speed;
+        this.water = otherDrop.water;
+        this.sediment = otherDrop.sediment;
 
-        float weightedAverage = average * (1f - distFromEdge / maxDistFromEdge) + values[x * mapSize + y] * (distFromEdge / maxDistFromEdge);
-
-        return weightedAverage;
+        this.lifetime = otherDrop.lifetime;
+        this.posX = otherDrop.posX;
+        this.posY = otherDrop.posY;
     }
 }

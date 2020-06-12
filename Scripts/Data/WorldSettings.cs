@@ -34,6 +34,7 @@ public class WorldSettings : UpdatableData {
 
 	public void Init() {
 		InitSeeds();
+		HydraulicErosion.Init(this);
 	}
 
 	public void InitSeeds() {

@@ -14,12 +14,12 @@ public class MapPreview : MonoBehaviour {
 	public enum DrawMode { NoiseMap, MeshNoBiome, BiomesMesh, FalloffMap, Biomes, HumidityMap, TemperatureMap, SingleBiome };
 	public DrawMode drawMode;
 	public Vector2 centre;
-	
+
 	public int singleBiome;  // If DrawMode is SingleBiome it will render this biome number
 
 	public WorldSettings worldSettings;
 	private NoiseMapSettings heightMapSettings;
-	
+
 	public Material terrainMaterial;
 
 	[Range(0, MeshSettings.numSupportedLODs - 1)]
@@ -173,12 +173,12 @@ public class MapPreview : MonoBehaviour {
 
     private void DrawBiomeMesh(int width, int height, float[,] humidityMap)
     {
-		ChunkData chunkData = ChunkDataGenerator.GenerateChunkData(worldSettings, centre);
+		ChunkData chunkData = ChunkDataGenerator.GenerateChunkData(worldSettings, centre, null);
 
 		MeshData meshData = MeshGenerator.GenerateTerrainMesh(chunkData.biomeData.heightNoiseMap, worldSettings.meshSettings, EditorPreviewLOD);
         DrawMesh(meshData);
 
-		TerrainChunk.UpdateMaterial(chunkData, worldSettings, centre, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
+		TerrainChunk.UpdateMaterial(chunkData, worldSettings, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
 
 		for (int i = 0; i < chunkData.objects.Count; i++) {
 			chunkData.objects[i].Spawn(this.transform);

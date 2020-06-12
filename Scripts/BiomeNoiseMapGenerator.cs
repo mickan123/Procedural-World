@@ -1,43 +1,130 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public static class BiomeHeightMapGenerator {
 
-	public static BiomeData GenerateBiomeNoiseMaps(int width, int height, WorldSettings worldSettings, Vector2 sampleCentre) {
+	private static readonly int[,] neighBouroffsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1} };
+	public static BiomeData GenerateBiomeNoiseMaps(int width, int height, WorldSettings worldSettings, Vector2 chunkCentre, WorldGenerator worldGenerator) {
 		
-		float[,] humidityNoiseMap = HeightMapGenerator.GenerateHeightMap(width,
-																	height,
+		int padding = worldSettings.erosionSettings.maxLifetime;
+		int paddedWidth = width + 2 * padding;
+		int paddedHeight = height + 2 * padding;
+		Vector2 paddedChunkCentre = new Vector2(chunkCentre.x - padding, chunkCentre.y - padding);
+
+		float[,] humidityNoiseMap = HeightMapGenerator.GenerateHeightMap(paddedWidth,
+																	paddedHeight,
 																	worldSettings.humidityMapSettings,
 																	worldSettings,
-																	sampleCentre,
+																	paddedChunkCentre,
 																	HeightMapGenerator.NormalizeMode.Global,
 																	worldSettings.humidityMapSettings.seed);
-		float[,] temperatureNoiseMap = HeightMapGenerator.GenerateHeightMap(width,
-																		height,
+		float[,] temperatureNoiseMap = HeightMapGenerator.GenerateHeightMap(paddedWidth,
+																		paddedHeight,
 																		worldSettings.temperatureMapSettings,
 																		worldSettings,
-																		sampleCentre,
+																		paddedChunkCentre,
 																		HeightMapGenerator.NormalizeMode.Global,
 																		worldSettings.temperatureMapSettings.seed);
-		BiomeInfo biomeInfo = GenerateBiomeInfo(width,
-												height,
+		BiomeInfo biomeInfo = GenerateBiomeInfo(paddedWidth,
+												paddedHeight,
 												humidityNoiseMap,
 												temperatureNoiseMap,
 												worldSettings);
-		float[,] heightNoiseMap = GenerateBiomeHeightMap(width,
-															height,
-															worldSettings,
-															humidityNoiseMap,
-															temperatureNoiseMap,
-															sampleCentre,
-															biomeInfo);
+		float[,] heightNoiseMap = GenerateBiomeHeightMap(paddedWidth,
+														paddedHeight,
+														worldSettings,
+														humidityNoiseMap,
+														temperatureNoiseMap,
+														paddedChunkCentre,
+														biomeInfo);
 
-		HydraulicErosion.Erode(heightNoiseMap, worldSettings, biomeInfo);
-		ThermalErosion.Erode(heightNoiseMap, worldSettings, biomeInfo);
+		
+		ApplyErosion(heightNoiseMap, biomeInfo, worldSettings, chunkCentre, worldGenerator);
 
-		return new BiomeData(heightNoiseMap, biomeInfo);
+		// Get rid of padding 
+		float[,] actualHeightNoiseMap = new float[width, height];
+		int[,] actualBiomeMap = new int[width, height];
+		float[,,] actualBiomeStrengths = new float[width, height, worldSettings.biomes.Length];
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				actualHeightNoiseMap[i, j] = heightNoiseMap[i + padding, j + padding];
+				actualBiomeMap[i, j] = biomeInfo.biomeMap[i + padding, j + padding];
+				for (int w = 0; w < worldSettings.biomes.Length; w++) {
+					actualBiomeStrengths[i, j, w] = biomeInfo.biomeStrengths[i + padding, j + padding, w];
+				}
+			}
+		}
+
+		BiomeInfo actualBiomeInfo = new BiomeInfo(actualBiomeMap, actualBiomeStrengths, biomeInfo.mainBiome);
+
+		return new BiomeData(actualHeightNoiseMap, actualBiomeInfo);
 	}
+
+	public static void ApplyErosion(float[,] heightNoiseMap, BiomeInfo biomeInfo, WorldSettings worldSettings, Vector2 chunkCentre, WorldGenerator worldGenerator) {
+
+		int width = heightNoiseMap.GetLength(0);
+		int height = heightNoiseMap.GetLength(1);
+		int padding = worldSettings.erosionSettings.maxLifetime;
+
+		float chunkWidth = worldSettings.meshSettings.numVerticesPerLine;
+		ChunkCoord curChunkCoord = new ChunkCoord(Mathf.RoundToInt(chunkCentre.x / chunkWidth), Mathf.RoundToInt(chunkCentre.y / chunkWidth));
+
+		if (worldGenerator != null) {
+
+			// Generate list of chunk coords for current chunk and neighbouring chunks
+			List<ChunkCoord> adjacentChunkCoords = new List<ChunkCoord>();
+			adjacentChunkCoords.Add(curChunkCoord);
+			for (int i = 0; i < neighBouroffsets.GetLength(0); i++) {
+				ChunkCoord adjacentVector = new ChunkCoord(Mathf.RoundToInt(curChunkCoord.x + neighBouroffsets[i, 0]),
+													 	   Mathf.RoundToInt(curChunkCoord.y + neighBouroffsets[i, 1]));
+
+				adjacentChunkCoords.Add(adjacentVector);							
+			}
+
+			adjacentChunkCoords = adjacentChunkCoords.OrderBy(v => Mathf.Abs(v.x) + Mathf.Abs(v.y)).ToList();
+			float[,] erosionMask = new float[width, height];
+
+			for (int i = 0; i < adjacentChunkCoords.Count; i++) {
+				if (adjacentChunkCoords[i] == curChunkCoord) {
+					erosionMask = CalculateBiomeBlendingMask(erosionMask, padding);
+					HydraulicErosion.Erode(heightNoiseMap, erosionMask, worldSettings, biomeInfo, worldGenerator);
+					worldGenerator.DoneErosion(curChunkCoord, heightNoiseMap);
+					break;
+				}
+				else {
+					worldGenerator.UpdateChunkBorder(curChunkCoord, adjacentChunkCoords[i], heightNoiseMap, erosionMask);
+				}	
+			}
+		}
+		else {
+			float[,] erosionMask = new float[width, height];
+			CalculateBiomeBlendingMask(erosionMask, padding);
+			HydraulicErosion.Erode(heightNoiseMap, new float[width, height], worldSettings, biomeInfo, worldGenerator);
+		}
+	}
+
+	// This creates a mask of weights that blend the edges of biomes as they have some overlap due to padding
+	public static float[,] CalculateBiomeBlendingMask(float[,] mask, int padding) {		
+		int mapSize = mask.GetLength(0);
+		for (int i = 0; i < mask.GetLength(0); i++) {
+			for (int j = 0; j < mask.GetLength(1); j++) {
+				if (mask[i, j] == 0) {
+					mask[i, j] = 1f;
+				}
+				else {
+					int xDistFromEdge = Mathf.Min(i, Mathf.Abs(i - mapSize));
+					int yDistFromEdge = Mathf.Min(j, Mathf.Abs(j - mapSize));
+					int distFromEdge = Mathf.Min(xDistFromEdge, yDistFromEdge);
+					mask[i, j] = Mathf.Max(distFromEdge - padding - 3, 0)  / (float)(padding);
+				}
+			}
+		}
+
+		return mask;
+	}
+	
 
 	public static float[,] GenerateBiomeHeightMap(int width, 
 												 int height, 
