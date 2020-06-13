@@ -73,10 +73,9 @@ public static class HeightMapGenerator {
 											int seed) {
 		
 		float[,] values = new float[width, height];
+		int padding = (height - meshSettings.meshWorldSize - 3) / 2;
+		int chunkIdxY = (int)(sampleCentre.y + padding) / meshSettings.meshWorldSize;
 
-		
-		int chunkIdxY = (int)sampleCentre.y / meshSettings.meshWorldSize;
-		
 		for (int w = 0; w < noiseSettings.sandDuneSettings.Length; w++) {
 
 			SandDuneSettings settings = noiseSettings.sandDuneSettings[w];
@@ -92,7 +91,7 @@ public static class HeightMapGenerator {
 				for (int j = 0; j < height; j++) {
 					float duneLength = settings.duneWidth + settings.duneGap;
 					float duneOffset = noiseValues[i, j] * settings.maxDuneVariation + settings.duneOffset;
-					float x = (j + duneOffset + chunkIdxY * (height - 3)) % duneLength;
+					float x = (j + duneOffset + chunkIdxY * (height - (2 * padding) - 3)) % duneLength;
 					
 					x = (x < 0) ? x + duneLength : x;
 					x = Mathf.Clamp(x / settings.duneWidth, 0, 1);

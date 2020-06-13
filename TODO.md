@@ -1,6 +1,6 @@
 [] Better biome selection (e.g. ensure values don't overlap)
 [] Look at biome blending again (should be ok with proper erosion)
-[] Erosion chunk border blending
+[x] Erosion chunk border blending
 [] Abstract mesh generation edge stuff out of height maps and into mesh generation
 [] Terrain objects
     [x] Simple poisson disc sampling

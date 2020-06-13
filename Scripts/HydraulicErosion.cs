@@ -73,42 +73,56 @@ public static class HydraulicErosion {
     public static float[,] Erode(float[,] values, float[,] mask, WorldSettings worldSettings, BiomeInfo info, WorldGenerator worldGenerator) {
 
         int mapSize = values.GetLength(0);
+        int numBiomes = worldSettings.biomes.Length;
 
-        float[,] map = new float[mapSize, mapSize];
+        // Check if we actually perform any erosion
+        bool performErosion = false;    
         for (int i = 0; i < mapSize; i++) {
             for (int j = 0; j < mapSize; j++) {
-                map[i, j] = values[i, j];
+                for (int w = 0; w < numBiomes; w++) {
+                    if (info.biomeStrengths[i, j, w] != 0f && worldSettings.biomes[w].hydraulicErosion) {
+                        performErosion = true;
+                    }
+                } 
             }
         }
 
-        ErosionSettings settings = worldSettings.erosionSettings;
-        System.Random prng = new System.Random(settings.seed);
-        
-        for (int iteration = 0; iteration < settings.numHydraulicErosionIterations; iteration++) {
-
-            float initPosX = prng.Next(0, mapSize - 1);
-            float initPosY = prng.Next(0, mapSize - 1);
-
-            Drop drop = new Drop(settings, 0, initPosX, initPosY);
-
-            ErodeDrop(drop, worldSettings, map, mapSize, worldGenerator);
-        }
-        
-        // Weight erosion by biome strengths and whether erosion is enabled
-        int numBiomes = worldSettings.biomes.Length;
-        for (int i = 0; i < mapSize; i++) {
-            for (int j = 0; j < mapSize; j++) {
-                float val = 0;
-                for (int w = 0; w < numBiomes; w++) {
-                    if (worldSettings.biomes[w].hydraulicErosion) {
-                        val += info.biomeStrengths[i, j, w] * map[i, j];
-                    } else {
-                        val += info.biomeStrengths[i, j, w] * values[i, j];
-                    }
+        if (performErosion) {
+            float[,] map = new float[mapSize, mapSize];
+            for (int i = 0; i < mapSize; i++) {
+                for (int j = 0; j < mapSize; j++) {
+                    map[i, j] = values[i, j];
                 }
+            }
 
-                // Blend values according to mask
-                values[i, j] = val * mask[i, j] + (1f - mask[i, j]) * values[i, j];
+            ErosionSettings settings = worldSettings.erosionSettings;
+            System.Random prng = new System.Random(settings.seed);
+
+            for (int iteration = 0; iteration < settings.numHydraulicErosionIterations; iteration++) {
+
+                float initPosX = prng.Next(0, mapSize - 1);
+                float initPosY = prng.Next(0, mapSize - 1);
+
+                Drop drop = new Drop(settings, 0, initPosX, initPosY);
+
+                ErodeDrop(drop, worldSettings, map, mapSize, worldGenerator);
+            }
+            
+            // Weight erosion by biome strengths and whether erosion is enabled
+            for (int i = 0; i < mapSize; i++) {
+                for (int j = 0; j < mapSize; j++) {
+                    float val = 0;
+                    for (int w = 0; w < numBiomes; w++) {
+                        if (worldSettings.biomes[w].hydraulicErosion) {
+                            val += info.biomeStrengths[i, j, w] * map[i, j];
+                        } else {
+                            val += info.biomeStrengths[i, j, w] * values[i, j];
+                        }
+                    }
+
+                    // Blend values according to mask
+                    values[i, j] = val * mask[i, j] + (1f - mask[i, j]) * values[i, j];
+                }
             }
         }
 
