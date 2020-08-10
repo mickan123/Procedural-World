@@ -14,43 +14,31 @@ public class Road
     RoadSettings roadSettings;
     WorldSettings worldSettings;
 
-    Vector3 roadStart;
-    Vector3 roadEnd;
-
     List<Vector3> path;
-
-    List<Vector3> vertices;
-    List<int> triangles;
-    List<int> quads;
-	List<Vector2> uvs;
-	List<Vector3> normals;
 
     public float[,] roadStrengthMap;
 
     private float[,] heightMap;
     private BiomeInfo biomeInfo;
 
-    public Road(WorldSettings worldSettings, float[,] heightMap, BiomeInfo info, Vector2 roadStart, Vector2 roadEnd, Vector2 chunkCentre) {
+    public Road(WorldSettings worldSettings, float[,] heightMap, BiomeInfo info, List<RoadRoute> roadRoutes, Vector2 chunkCentre) {
         this.roadSettings = worldSettings.roadSettings;
         this.worldSettings = worldSettings;
-
-        this.roadStart = new Vector3(roadStart.x, HeightFromFloatCoord(roadStart, heightMap), roadStart.y);
-        this.roadEnd = new Vector3(roadEnd.x, HeightFromFloatCoord(roadEnd, heightMap), roadEnd.y);
-
-        path = new List<Vector3>();
-
-        vertices = new List<Vector3>();
-        triangles = new List<int>();
-        quads = new List<int>();
-        uvs = new List<Vector2>();
-        normals = new List<Vector3>();
 
         this.heightMap = heightMap;
         this.biomeInfo = info;
 
         roadStrengthMap = new float[heightMap.GetLength(0), heightMap.GetLength(1)];
 
-        CreateRoad();
+        for (int i = 0; i < roadRoutes.Count; i++) {
+            path = new List<Vector3>();
+
+            Vector3 roadStart3d = new Vector3(roadRoutes[i].roadStart.x, HeightFromFloatCoord(roadRoutes[i].roadStart, heightMap), roadRoutes[i].roadStart.y);
+            Vector3 roadEnd3d = new Vector3(roadRoutes[i].roadEnd.x, HeightFromFloatCoord(roadRoutes[i].roadEnd, heightMap), roadRoutes[i].roadEnd.y);
+
+            CreateRoad(roadStart3d, roadEnd3d);
+        }
+        
     }
 
     private float HeightFromFloatCoord(Vector2 coord, float[,] heightMap) {
@@ -74,8 +62,8 @@ public class Road
         return height;
     }
 
-    private void CreateRoad() {
-        FindPath();
+    private void CreateRoad(Vector3 roadStart, Vector3 roadEnd) {
+        FindPath(roadStart, roadEnd);
         SmoothPath();
 
         float[,] workingHeightMap = Common.CopyArray(this.heightMap);
@@ -85,7 +73,7 @@ public class Road
         Common.CopyArrayValues(workingHeightMap, this.heightMap);
     }
 
-    private void FindPath() {
+    private void FindPath(Vector3 roadStart, Vector3 roadEnd) {
         
         int mapSize = heightMap.GetLength(0);
 
@@ -96,8 +84,8 @@ public class Road
             }
         }
 
-        Node startNode = nodeGrid[(int)this.roadStart.x, (int)this.roadStart.z];
-        Node endNode = nodeGrid[(int)this.roadEnd.x, (int)this.roadEnd.z];
+        Node startNode = nodeGrid[(int)roadStart.x, (int)roadStart.z];
+        Node endNode = nodeGrid[(int)roadEnd.x, (int)roadEnd.z];
 
         Heap<Node> openSet = new Heap<Node>(mapSize * mapSize);
         HashSet<Node> closedSet = new HashSet<Node>();
@@ -220,10 +208,11 @@ public class Road
             smoothedPoints.Add(points[0]);
         }
         this.path = smoothedPoints;
+
     }
 
     private void CarvePath(float[,] workingHeightMap, float[,] referenceHeightMap) {
-        
+
         int mapSize = referenceHeightMap.GetLength(0);
         for (int i = 0; i < mapSize; i++) {
             for (int j = 0; j < mapSize; j++) {
@@ -251,7 +240,6 @@ public class Road
                 Vector2 closestPointOnLine2d = new Vector2(closestPointOnLine.x, closestPointOnLine.z);
 
                 float distance = Vector2.Distance(closestPointOnLine2d, curPoint2d);
-
                 float roadMultiplier = 0f;
                 for (int w = 0; w < worldSettings.biomes.Length; w++) {
                     if (worldSettings.biomes[w].allowRoads) {
@@ -276,9 +264,6 @@ public class Road
 
                     workingHeightMap[i, j] = roadMultiplier * newValue + (1 - roadMultiplier) * workingHeightMap[i, j];
                     roadStrengthMap[i, j] = (1f - (distance - halfWidth) / halfWidth) * roadMultiplier;
-                }
-                else {
-                    roadStrengthMap[i, j] = 0;
                 }
             }
         }
@@ -309,46 +294,17 @@ public class Road
         direction.Normalize();
         Vector3 lhs = point - origin;
         float dotP = Vector3.Dot(lhs, direction);
-        return origin + direction * dotP;
+
+        Vector3 closestPoint = origin + direction * dotP;
+
+        // Need to clamp closestpoint within roadwidth of the start and endpoints of the line
+        Vector3 clampedClosestPoint = new Vector3(Mathf.Clamp(closestPoint.x, origin.x - 2*roadSettings.width, origin.x + direction.x + 2*roadSettings.width),
+                                                  Mathf.Clamp(closestPoint.y, origin.y - 2*roadSettings.width, origin.y + direction.y + 2*roadSettings.width),
+                                                  Mathf.Clamp(closestPoint.z, origin.z - 2*roadSettings.width, origin.z + direction.z + 2*roadSettings.width));
+
+        return clampedClosestPoint;
     }
 
-    private void AddMeshSquare(int x, int y) {
-
-        this.vertices.Add(new Vector3(x, this.heightMap[x, y + 1] + 0.05f, y + 1));
-        this.vertices.Add(new Vector3(x + 1, this.heightMap[x + 1, y + 1] + 0.05f, y + 1));
-        this.vertices.Add(new Vector3(x, this.heightMap[x, y] + 0.05f, y));
-        this.vertices.Add(new Vector3(x + 1, this.heightMap[x + 1, y] + 0.05f, y));
-        
-        this.uvs.Add(new Vector2(0, 1));
-        this.uvs.Add(new Vector2(1, 1));
-        this.uvs.Add(new Vector2(0, 0));
-        this.uvs.Add(new Vector2(1, 0));
-        
-        this.normals.Add(Vector3.up);
-        this.normals.Add(Vector3.up);
-        this.normals.Add(Vector3.up);
-        this.normals.Add(Vector3.up);
-
-        int triangleOffset = this.vertices.Count - 4;
-        int[] triangles = {
-            triangleOffset, triangleOffset + 1, triangleOffset + 2,	// triangle 1
-            triangleOffset + 2, triangleOffset + 1, triangleOffset + 3,	// triangle 2
-        };
-
-        this.triangles.AddRange(triangles);
-    }
-
-    private void CreateMesh() {
-        Mesh mesh = new Mesh(); 
-        
-		mesh.vertices = vertices.ToArray();
-		mesh.triangles = triangles.ToArray();
-		mesh.uv = uvs.ToArray();
-		mesh.normals = normals.ToArray();
-
-        // this.meshFilter.mesh = mesh;
-    }
-    
     private class Node : IHeapItem<Node> {
         public int x;
         public int y;

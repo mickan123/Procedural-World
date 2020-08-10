@@ -9,11 +9,34 @@ public static class RoadGenerator
 
         float mapSize = heightMap.GetLength(0);
         
+        List<RoadRoute> destinations = GetRoadDestinations(mapSize);
+
         return new Road(worldSettings, 
                         heightMap,
                         info,
-                        new Vector2(0, 0), 
-                        new Vector2(mapSize - 1, mapSize - 1),
+                        destinations,
                         chunkCentre);
+    }
+
+    public static List<RoadRoute> GetRoadDestinations(float mapSize) {
+        List<RoadRoute> destinations = new List<RoadRoute>(); 
+        
+        destinations.Add(new RoadRoute(new Vector2(25, 0), 
+                                       new Vector2(25, mapSize - 1)));
+        // destinations.Add(new RoadRoute(new Vector2(150, 0), 
+        //                                new Vector2(150, mapSize - 1)));
+
+        return destinations;
+    }
+
+}
+
+public class RoadRoute {
+    public Vector2 roadStart;
+    public Vector2 roadEnd;
+
+    public RoadRoute(Vector2 roadStart, Vector2 roadEnd) {
+        this.roadStart = roadStart;
+        this.roadEnd = roadEnd;
     }
 }
