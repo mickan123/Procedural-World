@@ -174,7 +174,7 @@ public class Road
 
     private void RetracePath(Node node) {
         Node currentNode = node;
-        while (currentNode.parent != null) {
+        while (currentNode != null) {
             path.Add(new Vector3(currentNode.x, this.heightMap[currentNode.x, currentNode.y], currentNode.y));
             currentNode = currentNode.parent;
         }
