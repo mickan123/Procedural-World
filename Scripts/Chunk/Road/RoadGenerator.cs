@@ -20,11 +20,9 @@ public static class RoadGenerator
 
     public static List<RoadRoute> GetRoadDestinations(float mapSize) {
         List<RoadRoute> destinations = new List<RoadRoute>(); 
-        
-        destinations.Add(new RoadRoute(new Vector2(25, 0), 
-                                       new Vector2(25, mapSize - 1)));
-        // destinations.Add(new RoadRoute(new Vector2(150, 0), 
-        //                                new Vector2(150, mapSize - 1)));
+
+        destinations.Add(new RoadRoute(new Vector2(10, 0), 
+                                       new Vector2(10, mapSize - 1)));
 
         return destinations;
     }

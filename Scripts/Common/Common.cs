@@ -35,4 +35,11 @@ public static class Common {
 			}
 		}	
 	}
+
+	// Evenly smooths value from 0 to 1 in range [min, max]
+	public static float SmoothRange(float value, float min, float max) {
+		value = Mathf.Clamp(value, min, max);
+		value = (value - min) / (max - min);
+		return value;
+	}
 }

@@ -37,9 +37,6 @@ public class ErosionSettings : UpdatableData {
     public float thermalErosionRate = 1;
     public float hardness = 1;
 
-    [Header("Max Erosion Settings")]
-    public int numMaxErosions = 0;
-
 	[HideInInspector]
     public int seed;  // Set by global seed
 
