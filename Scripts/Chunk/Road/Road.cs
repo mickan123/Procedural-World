@@ -28,15 +28,25 @@ public class Road
         this.heightMap = heightMap;
         this.biomeInfo = info;
 
+        float mapSize = this.heightMap.GetLength(0);
+
         roadStrengthMap = new float[heightMap.GetLength(0), heightMap.GetLength(1)];
 
         for (int i = 0; i < roadRoutes.Count; i++) {
             path = new List<Vector3>();
 
-            Vector3 roadStart3d = new Vector3(roadRoutes[i].roadStart.x, HeightFromFloatCoord(roadRoutes[i].roadStart, heightMap), roadRoutes[i].roadStart.y);
-            Vector3 roadEnd3d = new Vector3(roadRoutes[i].roadEnd.x, HeightFromFloatCoord(roadRoutes[i].roadEnd, heightMap), roadRoutes[i].roadEnd.y);
+            Vector3 roadStart = new Vector3(roadRoutes[i].roadStart.x, HeightFromFloatCoord(roadRoutes[i].roadStart, heightMap), roadRoutes[i].roadStart.y);
+            Vector3 roadEnd = new Vector3(roadRoutes[i].roadEnd.x, HeightFromFloatCoord(roadRoutes[i].roadEnd, heightMap), roadRoutes[i].roadEnd.y);
 
-            CreateRoad(roadStart3d, roadEnd3d);
+            // Create second from start and end points to make sure last part of path is perpendsicular to edge of chunk
+            Vector3 roadStart2nd = roadStart + new Vector3((roadStart.x == 0) ? 5 : (roadStart.x == mapSize - 1) ? -5 : 0,
+                                                            0,
+                                                           (roadStart.z == 0) ? 5 : (roadStart.z == mapSize - 1) ? -5 : 0);
+            Vector3 roadEnd2nd = roadEnd + new Vector3((roadEnd.x == 0) ? 5 : (roadEnd.x == mapSize - 1) ? -5 : 0,
+                                                        0,
+                                                       (roadEnd.z == 0) ? 5 : (roadEnd.z == mapSize - 1) ? -5 : 0);
+
+            CreateRoad(roadStart, roadEnd, roadStart2nd, roadEnd2nd);
         }
         
     }
@@ -62,8 +72,14 @@ public class Road
         return height;
     }
 
-    private void CreateRoad(Vector3 roadStart, Vector3 roadEnd) {
-        FindPath(roadStart, roadEnd);
+    private void CreateRoad(Vector3 roadStart, Vector3 roadEnd, Vector3 roadStart2nd, Vector3 roadEnd2nd) {
+        FindPath(roadStart2nd, roadEnd2nd);
+
+        // More times we add start and end points smoother end and start of path will be
+        for (int i = 0; i < 5; i++) {
+            this.path.Insert(0, roadStart);
+            this.path.Add(roadEnd);
+        }
         SmoothPath();
 
         float[,] workingHeightMap = Common.CopyArray(this.heightMap);
