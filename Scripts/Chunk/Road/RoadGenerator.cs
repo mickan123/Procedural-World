@@ -10,7 +10,7 @@ public static class RoadGenerator
         float mapSize = heightMap.GetLength(0);
         
         List<RoadRoute> destinations = GetRoadDestinations(mapSize, chunkCentre);
-
+        
         return new Road(worldSettings, 
                         heightMap,
                         info,

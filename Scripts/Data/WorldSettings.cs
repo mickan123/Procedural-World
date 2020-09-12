@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System.Threading;
 
 [CreateAssetMenu(), System.Serializable]
 public class WorldSettings : UpdatableData {
@@ -25,16 +26,19 @@ public class WorldSettings : UpdatableData {
 	public readonly int maxLayerCount = 8;
 	public readonly int maxBiomeCount = 8;
 	
-	
+	public ComputeShader erosionShader;
+	public Thread mainThread;
 	public float sqrTransitionDistance {
 		get {
 			return (float)transitionDistance * (float)transitionDistance;
 		}
 	}
 
-	public void Init() {
+	public void Init(ComputeShader erosionShader) {
 		InitSeeds();
 		HydraulicErosion.Init(this);
+		this.erosionShader = erosionShader;
+		this.mainThread = System.Threading.Thread.CurrentThread;
 	}
 
 	public void InitSeeds() {
@@ -124,6 +128,10 @@ public class WorldSettings : UpdatableData {
 			}
 			return maxHeight;
 		}
+	}
+
+	public bool IsMainThread() {
+		return this.mainThread.Equals(System.Threading.Thread.CurrentThread);
 	}
 
 	#if UNITY_EDITOR

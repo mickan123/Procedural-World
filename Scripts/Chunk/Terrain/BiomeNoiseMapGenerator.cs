@@ -27,11 +27,34 @@ public static class BiomeHeightMapGenerator {
 																		paddedChunkCentre,
 																		HeightMapGenerator.NormalizeMode.Global,
 																		worldSettings.temperatureMapSettings.seed);
+
+		#if (PROFILE && UNITY_EDITOR)
+		float biomeInfoStartTime = 0f;
+		if (worldSettings.IsMainThread()) {
+        	biomeInfoStartTime = Time.realtimeSinceStartup;
+		}
+        #endif
+
 		BiomeInfo biomeInfo = GenerateBiomeInfo(paddedWidth,
 												paddedHeight,
 												humidityNoiseMap,
 												temperatureNoiseMap,
 												worldSettings);
+		#if (PROFILE && UNITY_EDITOR)
+		if (worldSettings.IsMainThread()) {
+			float biomeInfoEndTime = Time.realtimeSinceStartup;
+			float biomeInfoTimeTaken = biomeInfoEndTime - biomeInfoStartTime;
+			Debug.Log("BiomeInfo time taken: " + biomeInfoTimeTaken + "s");
+		}
+        #endif
+
+		#if (PROFILE && UNITY_EDITOR)
+		float biomeNoiseMapStartTime = 0f;
+		if (worldSettings.IsMainThread()) {
+        	biomeNoiseMapStartTime = Time.realtimeSinceStartup;
+		}
+        #endif
+				
 		float[,] heightNoiseMap = GenerateBiomeHeightMap(paddedWidth,
 														paddedHeight,
 														worldSettings,
@@ -39,9 +62,31 @@ public static class BiomeHeightMapGenerator {
 														temperatureNoiseMap,
 														paddedChunkCentre,
 														biomeInfo);
-
 		
+		#if (PROFILE && UNITY_EDITOR)
+		if (worldSettings.IsMainThread()) {
+			float biomeNoiseMapEndTime = Time.realtimeSinceStartup;
+			float biomeNoiseMapTimeTaken = biomeNoiseMapEndTime - biomeNoiseMapStartTime;
+			Debug.Log("Biome Noise Map time taken: " + biomeNoiseMapTimeTaken + "s");
+		}
+        #endif
+
+		#if (PROFILE && UNITY_EDITOR)
+		float erosionStartTime = 0f;
+		if (worldSettings.IsMainThread()) {
+        	erosionStartTime = Time.realtimeSinceStartup;
+		}
+        #endif
+
 		ApplyErosion(heightNoiseMap, biomeInfo, worldSettings, chunkCentre, worldGenerator);
+
+		#if (PROFILE && UNITY_EDITOR)
+		if (worldSettings.IsMainThread()) {
+			float erosionEndTime = Time.realtimeSinceStartup;
+			float erosionTimeTaken = erosionEndTime - erosionStartTime;
+			Debug.Log("Erosion time taken: " + erosionTimeTaken + "s");
+		}
+        #endif
 
 		// Get rid of padding 
 		float[,] actualHeightNoiseMap = new float[width, height];
@@ -88,8 +133,10 @@ public static class BiomeHeightMapGenerator {
 
 			for (int i = 0; i < adjacentChunkCoords.Count; i++) {
 				if (adjacentChunkCoords[i] == curChunkCoord) {
+					
 					erosionMask = CalculateBiomeBlendingMask(erosionMask, padding);
-					HydraulicErosion.Erode(heightNoiseMap, erosionMask, worldSettings, biomeInfo, worldGenerator);
+					HydraulicErosion.Erode(heightNoiseMap, erosionMask, worldSettings, biomeInfo, worldGenerator, chunkCentre);
+					
 					worldGenerator.DoneErosion(curChunkCoord, heightNoiseMap);
 					break;
 				}
@@ -101,7 +148,7 @@ public static class BiomeHeightMapGenerator {
 		else {
 			float[,] erosionMask = new float[width, height];
 			CalculateBiomeBlendingMask(erosionMask, padding);
-			HydraulicErosion.Erode(heightNoiseMap, new float[width, height], worldSettings, biomeInfo, worldGenerator);
+			HydraulicErosion.Erode(heightNoiseMap, erosionMask, worldSettings, biomeInfo, worldGenerator, chunkCentre);
 		}
 	}
 

@@ -83,7 +83,6 @@ public class WorldGenerator {
 						newChunk.Load(this);
 					}
 				}
-
 			}
 		}
 	}

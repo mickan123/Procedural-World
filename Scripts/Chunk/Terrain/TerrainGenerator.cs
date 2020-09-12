@@ -10,13 +10,14 @@ public class TerrainGenerator : MonoBehaviour {
 	public WorldSettings worldSettings;
 	public Transform viewer;
 	public Material mapMaterial;
+	
+	public ComputeShader computeShader;
 
 	WorldGenerator generator;
 
-
 	void Start() {
 		worldSettings.ApplyToMaterial(mapMaterial);
-		worldSettings.Init();
+		worldSettings.Init(computeShader);
 
 		generator = new WorldGenerator(detailLevels, colliderLODIndex, worldSettings, viewer, this.transform, mapMaterial);
 		generator.UpdateVisibleChunks();

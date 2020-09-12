@@ -8,8 +8,8 @@ public static class PoissonDiskSampling {
 												int mapSize, 
 												Vector2 sampleCentre, 
 												float[,] spawnNoiseMap, 
-												int numSamplesBeforeRejection = 200) {
-
+												int numSamplesBeforeRejection = 20) {
+		
 		float cellSize = settings.maxRadius / Mathf.Sqrt(2);
 
 		List<int>[,] grid = new List<int>[Mathf.CeilToInt((float)mapSize / cellSize), Mathf.CeilToInt((float)mapSize / cellSize)];
@@ -22,9 +22,10 @@ public static class PoissonDiskSampling {
 		List<Vector2> spawnPoints = new List<Vector2>();
 
 		System.Random prng = new System.Random((int)(sampleCentre.x + sampleCentre.y));
-
+		int numPoints = 0;
 		spawnPoints.Add(new Vector2((float)mapSize / 2, (float)mapSize / 2));
 		while (spawnPoints.Count > 0) {
+			numPoints++;
 			int spawnIndex = prng.Next(0, spawnPoints.Count);
 			Vector2 spawnCentre = spawnPoints[spawnIndex];
 			bool candidateAccepted = false;
@@ -65,10 +66,10 @@ public static class PoissonDiskSampling {
 
 			int cellX = (int)(candidate.x / cellSize);
 			int cellY = (int)(candidate.y / cellSize);
-			int searchStartX = Mathf.Max(0, cellX - 2);
-			int searchEndX = Mathf.Min(cellX + 2, grid.GetLength(0) - 1);
-			int searchStartY = Mathf.Max(0, cellY -2);
-			int searchEndY = Mathf.Min(cellY + 2, grid.GetLength(1) - 1);
+			int searchStartX = Mathf.Max(0, cellX - 1);
+			int searchEndX = Mathf.Min(cellX + 1, grid.GetLength(0) - 1);
+			int searchStartY = Mathf.Max(0, cellY - 1);
+			int searchEndY = Mathf.Min(cellY + 1, grid.GetLength(1) - 1);
 
 			for (int x = searchStartX; x <= searchEndX; x++) {
 				for (int y = searchStartY; y <= searchEndY; y++) {

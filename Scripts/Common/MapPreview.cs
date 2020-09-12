@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
+
 [ExecuteInEditMode]
 public class MapPreview : MonoBehaviour {
 
 	#if UNITY_EDITOR
-
+	
+	public ComputeShader erosionShader;
 	public Renderer textureRender;
 	public MeshFilter meshFilter;
 
@@ -48,7 +50,7 @@ public class MapPreview : MonoBehaviour {
 		UpdatableData.mapUpdate += OnValuesUpdated;
 
 		worldSettings.ApplyToMaterial(terrainMaterial);
-		worldSettings.Init();
+		worldSettings.Init(erosionShader);
 		worldSettings.seed = this.seed;
 
 		this.heightMapSettings = worldSettings.biomes[0].heightMapSettings;
@@ -173,6 +175,12 @@ public class MapPreview : MonoBehaviour {
 
     private void DrawBiomeMesh(int width, int height, float[,] humidityMap)
     {
+		#if (PROFILE && UNITY_EDITOR)
+		float startTime = 0f;
+		if (worldSettings.IsMainThread()) {
+        	startTime = Time.realtimeSinceStartup;
+		}
+        #endif
 		ChunkData chunkData = ChunkDataGenerator.GenerateChunkData(worldSettings, centre, null);
 
 		MeshData meshData = MeshGenerator.GenerateTerrainMesh(chunkData.biomeData.heightNoiseMap, worldSettings.meshSettings, EditorPreviewLOD);
@@ -183,6 +191,14 @@ public class MapPreview : MonoBehaviour {
 		for (int i = 0; i < chunkData.objects.Count; i++) {
 			chunkData.objects[i].Spawn(this.transform);
 		}
+
+		#if (PROFILE && UNITY_EDITOR)
+		if (worldSettings.IsMainThread()) {
+			float endTime = Time.realtimeSinceStartup;
+			float totalTimeTaken = endTime - startTime;
+			Debug.Log("Total time taken: " + totalTimeTaken + "s");
+		}
+        #endif
     }
 
     private void DrawBiomes(int width, int height, float[,] humidityMap, float[,] temperatureMap)

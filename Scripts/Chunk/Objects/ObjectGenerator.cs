@@ -10,18 +10,31 @@ public static class ObjectGenerator {
 		
 		for (int biome = 0; biome < settings.biomes.Length; biome++) {
 			
-			for (int objectSettings = 0; objectSettings < settings.biomes[biome].terrainObjectSettings.Length; objectSettings++) {
-				biomeObjects.Add(GenerateTerrainObject(settings.biomes[biome].terrainObjectSettings[objectSettings], 
-														biome,
-														heightMap,
-														road.roadStrengthMap, 
-														info, 
-														settings, 
-														sampleCentre));
+			if (HeightMapContainesBiome(info, biome)) {
+				for (int objectSetting = 0; objectSetting < settings.biomes[biome].terrainObjectSettings.Length; objectSetting++) {
+					biomeObjects.Add(GenerateTerrainObject(settings.biomes[biome].terrainObjectSettings[objectSetting], 
+															biome,
+															heightMap,
+															road.roadStrengthMap, 
+															info, 
+															settings, 
+															sampleCentre));    
+				}
 			}
 		}
 
 		return biomeObjects;
+	}
+
+	private static bool HeightMapContainesBiome(BiomeInfo info, int biome) {
+		for (int i = 0; i < info.biomeStrengths.GetLength(0); i++) {
+			for (int j = 0; j < info.biomeStrengths.GetLength(1); j++) {
+				if (info.biomeStrengths[i, j, biome] > 0f) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public static SpawnObject GenerateTerrainObject(TerrainObjectSettings settings, 
@@ -32,6 +45,7 @@ public static class ObjectGenerator {
 													WorldSettings worldSettings, 
 													Vector2 sampleCentre) {
 
+															
 		int mapSize = heightMap.GetLength(0);
 
 		float[,] spawnNoiseMap = Noise.GenerateNoiseMap(mapSize,
@@ -42,8 +56,9 @@ public static class ObjectGenerator {
 														settings.noiseMapSettings.seed);
 		
 		System.Random prng = new System.Random((int)(sampleCentre.x + sampleCentre.y));
-
+		
 		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings, mapSize - 1, sampleCentre, spawnNoiseMap);
+
 		points = FilterPointsByBiome(points, biome, info, prng);
 		points = FilterPointsBySlope(points, settings.minSlope, settings.maxSlope, heightMap);
 		points = FilterPointsByHeight(points, settings.minHeight, settings.maxHeight, heightMap);

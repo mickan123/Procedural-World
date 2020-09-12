@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Threading;
 using System;
 
 public static class HydraulicErosion {
@@ -9,6 +10,9 @@ public static class HydraulicErosion {
     public class BrushValues {
         public int[][] erosionBrushIndices;
         public float[][] erosionBrushWeights;
+
+        public List<int> brushIndexOffsets;
+        public List<float> brushWeights;
 
         ErosionSettings  settings;
 
@@ -20,57 +24,40 @@ public static class HydraulicErosion {
 
             int radius = settings.erosionBrushRadius;
 
-            int[] xOffsets = new int[radius * radius * 4];
-            int[] yOffsets = new int[radius * radius * 4];
-            float[] weights = new float[radius * radius * 4];
+            brushIndexOffsets = new List<int> ();
+            brushWeights = new List<float> ();
+
             float weightSum = 0;
-            int addIndex = 0;
-
-            for (int i = 0; i < erosionBrushIndices.GetLength (0); i++) {
-                int centreX = i % mapSize;
-                int centreY = i / mapSize;
-
-                if (centreY <= radius || centreY >= mapSize - radius || centreX <= radius + 1 || centreX >= mapSize - radius) {
-                    weightSum = 0;
-                    addIndex = 0;
-                    for (int y = -radius; y <= radius; y++) {
-                        for (int x = -radius; x <= radius; x++) {
-                            float sqrDst = x * x + y * y;
-                            if (sqrDst < radius * radius) {
-                                int coordX = centreX + x;
-                                int coordY = centreY + y;
-
-                                if (coordX >= 0 && coordX < mapSize && coordY >= 0 && coordY < mapSize) {
-                                    float weight = 1 - Mathf.Sqrt (sqrDst) / radius;
-                                    weightSum += weight;
-                                    weights[addIndex] = weight;
-                                    xOffsets[addIndex] = x;
-                                    yOffsets[addIndex] = y;
-                                    addIndex++;
-                                }
-                                
-                            }
-                        }
+            for (int brushY = -radius; brushY <= radius; brushY++) {
+                for (int brushX = -radius; brushX <= radius; brushX++) {
+                    float sqrDst = brushX * brushX + brushY * brushY;
+                    if (sqrDst < radius * radius) {
+                        brushIndexOffsets.Add (brushY * mapSize + brushX);
+                        float brushWeight = 1 - Mathf.Sqrt (sqrDst) / radius;
+                        weightSum += brushWeight;
+                        brushWeights.Add (brushWeight);
                     }
                 }
-
-                int numEntries = addIndex;
-                erosionBrushIndices[i] = new int[numEntries];
-                erosionBrushWeights[i] = new float[numEntries];
-
-                for (int j = 0; j < numEntries; j++) {
-                    erosionBrushIndices[i][j] = (yOffsets[j] + centreY) * mapSize + xOffsets[j] + centreX;
-                    erosionBrushWeights[i][j] = weights[j] / weightSum;
-                }
+            }
+            for (int i = 0; i < brushWeights.Count; i++) {
+                brushWeights[i] /= weightSum;
             }
         }   
-    }    
-
-    public static void Init(WorldSettings settings) {
-        brushValues = new BrushValues(settings.erosionSettings, settings.meshSettings.numVerticesPerLine);
     }
 
-    public static float[,] Erode(float[,] values, float[,] mask, WorldSettings worldSettings, BiomeInfo info, WorldGenerator worldGenerator) {
+    public static void Init(WorldSettings settings) {
+        ErosionSettings erosionSettings = settings.erosionSettings;
+        brushValues = new BrushValues(erosionSettings, settings.meshSettings.numVerticesPerLine);
+    }
+
+    public static float[,] Erode(float[,] values, float[,] mask, WorldSettings worldSettings, BiomeInfo info, WorldGenerator worldGenerator, Vector2 chunkCentre) {
+        
+        #if (PROFILE && UNITY_EDITOR)
+        float erosionStartTime = 0f;
+        if (worldSettings.IsMainThread()) {
+            erosionStartTime = Time.realtimeSinceStartup;
+        }
+        #endif
 
         int mapSize = values.GetLength(0);
         int numBiomes = worldSettings.biomes.Length;
@@ -88,33 +75,43 @@ public static class HydraulicErosion {
         }
 
         if (performErosion) {
-            float[,] map = new float[mapSize, mapSize];
+            
+            float[] map = new float[mapSize * mapSize];
             for (int i = 0; i < mapSize; i++) {
                 for (int j = 0; j < mapSize; j++) {
-                    map[i, j] = values[i, j];
+                    map[i * mapSize + j] = values[i, j];
                 }
             }
 
+            // Generate random indices to use
             ErosionSettings settings = worldSettings.erosionSettings;
+            int[] randomIndices = new int[settings.numHydraulicErosionIterations];
             System.Random prng = new System.Random(settings.seed);
-
-            for (int iteration = 0; iteration < settings.numHydraulicErosionIterations; iteration++) {
-
-                float initPosX = prng.Next(0, mapSize - 1);
-                float initPosY = prng.Next(0, mapSize - 1);
-
-                Drop drop = new Drop(settings, 0, initPosX, initPosY);
-
-                ErodeDrop(drop, worldSettings, map, mapSize, worldGenerator);
+            for (int i = 0; i < settings.numHydraulicErosionIterations; i++) {
+                int randomX = prng.Next(settings.erosionBrushRadius, mapSize + settings.erosionBrushRadius);
+                int randomY = prng.Next(settings.erosionBrushRadius, mapSize + settings.erosionBrushRadius);
+                randomIndices[i] = randomY * mapSize + randomX;
             }
             
+            bool gpuDone = false; 
+            if (worldSettings.IsMainThread())
+            {   
+                GPUErosion(worldSettings, mapSize, map, randomIndices, ref gpuDone);
+            }
+            else {
+                Dispatcher.RunOnMainThread(() => GPUErosion(worldSettings, mapSize, map, randomIndices, ref gpuDone)); 
+            }
+            while (!gpuDone) {
+                Thread.Sleep(1);
+            }
+
             // Weight erosion by biome strengths and whether erosion is enabled
             for (int i = 0; i < mapSize; i++) {
                 for (int j = 0; j < mapSize; j++) {
                     float val = 0;
                     for (int w = 0; w < numBiomes; w++) {
                         if (worldSettings.biomes[w].hydraulicErosion) {
-                            val += info.biomeStrengths[i, j, w] * map[i, j];
+                            val += info.biomeStrengths[i, j, w] * map[i * mapSize + j];
                         } else {
                             val += info.biomeStrengths[i, j, w] * values[i, j];
                         }
@@ -125,10 +122,65 @@ public static class HydraulicErosion {
                 }
             }
         }
-
+        
+        #if (PROFILE && UNITY_EDITOR)
+        if (worldSettings.IsMainThread()) {
+            float erosionEndTime = Time.realtimeSinceStartup;
+            float erosionTimeTaken = erosionEndTime - erosionStartTime;
+            Debug.Log("Erosion time taken: " + erosionTimeTaken + "s");
+        }
+        #endif
+        
         return values;
     }
 
+    public static void GPUErosion(WorldSettings worldSettings, int mapSize, float[] map, int[] randomIndices, ref bool gpuDone) {
+
+        // Send brush data to compute shader
+        ComputeBuffer brushIndexBuffer = new ComputeBuffer(brushValues.brushIndexOffsets.Count, sizeof(int));
+        ComputeBuffer brushWeightBuffer = new ComputeBuffer (brushValues.brushWeights.Count, sizeof(int));
+        brushIndexBuffer.SetData(brushValues.brushIndexOffsets);
+        brushWeightBuffer.SetData(brushValues.brushWeights);
+        worldSettings.erosionShader.SetBuffer (0, "brushIndices", brushIndexBuffer);
+        worldSettings.erosionShader.SetBuffer (0, "brushWeights", brushWeightBuffer);
+        
+        // Heightmap buffer
+        ComputeBuffer mapBuffer = new ComputeBuffer(mapSize * mapSize, sizeof(float));
+        mapBuffer.SetData(map);
+        worldSettings.erosionShader.SetBuffer(0, "map", mapBuffer);
+
+        // Send random indices to compute shader
+        ComputeBuffer randomIndexBuffer = new ComputeBuffer(randomIndices.Length, sizeof(int));
+        randomIndexBuffer.SetData (randomIndices);
+        worldSettings.erosionShader.SetBuffer(0, "randomIndices", randomIndexBuffer);
+
+        // Set erosion settings
+        ErosionSettings settings = worldSettings.erosionSettings;
+        worldSettings.erosionShader.SetInt("borderSize", settings.erosionBrushRadius);
+        worldSettings.erosionShader.SetInt("mapSize", mapSize);
+        worldSettings.erosionShader.SetInt("brushLength", brushValues.brushIndexOffsets.Count);
+        worldSettings.erosionShader.SetInt("maxLifetime", settings.maxLifetime);
+        worldSettings.erosionShader.SetFloat("inertia", settings.inertia);
+        worldSettings.erosionShader.SetFloat("sedimentCapacityFactor", settings.sedimentCapacityFactor);
+        worldSettings.erosionShader.SetFloat("minSedimentCapacity",settings.minSedimentCapacity);
+        worldSettings.erosionShader.SetFloat("depositSpeed", settings.depositSpeed);
+        worldSettings.erosionShader.SetFloat("erodeSpeed", settings.erodeSpeed);
+        worldSettings.erosionShader.SetFloat("evaporateSpeed", settings.evaporateSpeed);
+        worldSettings.erosionShader.SetFloat("gravity", settings.gravity);
+        worldSettings.erosionShader.SetFloat("startSpeed", settings.startSpeed);
+        worldSettings.erosionShader.SetFloat("startWater", settings.startWater);
+        worldSettings.erosionShader.Dispatch(0, mapSize, 1, 1); 
+        mapBuffer.GetData(map);
+
+        gpuDone = true;
+
+        brushIndexBuffer.Release();
+        brushWeightBuffer.Release();
+        mapBuffer.Release();
+        randomIndexBuffer.Release();
+    }
+
+    
     public static void ErodeDrop(Drop drop, WorldSettings worldSettings, float[,] map, int mapSize, WorldGenerator worldGenerator) {
         ErosionSettings settings = worldSettings.erosionSettings;
 
