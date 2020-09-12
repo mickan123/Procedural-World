@@ -291,7 +291,7 @@ public class Road
             float newValue = (1f - roadMultiplier) * closestPointOnLine.y + roadMultiplier * curPoint.y;
             
             workingHeightMap[x, y] = finalValueMultiplier * newValue + (1 - finalValueMultiplier) * workingHeightMap[x, y];
-            roadStrengthMap[x, y] = 1f * biomeRoadMultiplier;
+            roadStrengthMap[x, y] = Mathf.Max(roadStrengthMap[x, y], 1f * biomeRoadMultiplier);
         }
         else if (distance < roadSettings.width) {
             float percentage = (distance - halfRoadWidth) / halfRoadWidth;
@@ -299,7 +299,7 @@ public class Road
             float newValue = roadMultiplier * curPoint.y + (1f - roadMultiplier) * closestPointOnLine.y;
 
             workingHeightMap[x, y] = finalValueMultiplier * newValue + (1 - finalValueMultiplier) * workingHeightMap[x, y];
-            roadStrengthMap[x, y] = (1f - percentage) * biomeRoadMultiplier;
+            roadStrengthMap[x, y] = Mathf.Max(roadStrengthMap[x, y], (1f - percentage) * biomeRoadMultiplier);
         }
     }
 

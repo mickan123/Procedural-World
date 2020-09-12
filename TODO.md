@@ -9,11 +9,11 @@
     [] Aligning bottom of terrain object with ground
 [x] Sand Dunes
     [x] Simple sand dune algorithm
-[] Road Generation
+[x] Road Generation
     [x] A* road path finding
     [x] Road generation for single chunk
     [x] Road generation based on biome
-    [] Cross chunk roads
+    [x] Cross chunk roads
 [] River Generation
     [] River path finding single chunk
     [] River carve into ground
