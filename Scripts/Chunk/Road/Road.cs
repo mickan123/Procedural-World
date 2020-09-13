@@ -17,8 +17,8 @@ public class Road
     List<Vector3> path;
 
     public float[,] roadStrengthMap;
-
     private float[,] heightMap;
+    private float[,] originalHeightMap;
     private BiomeInfo biomeInfo;
 
     public Road(WorldSettings worldSettings, float[,] heightMap, BiomeInfo info, List<RoadRoute> roadRoutes, Vector2 chunkCentre) {
@@ -27,6 +27,9 @@ public class Road
 
         this.heightMap = heightMap;
         this.biomeInfo = info;
+
+        originalHeightMap = new float[heightMap.GetLength(0), heightMap.GetLength(1)];
+        Common.CopyArrayValues(this.heightMap, this.originalHeightMap);
 
         float mapSize = this.heightMap.GetLength(0);
 
@@ -48,16 +51,19 @@ public class Road
 
             CreateRoad(roadStart, roadEnd, roadStart2nd, roadEnd2nd);
         }
-        
     }
 
     private float HeightFromFloatCoord(Vector2 coord, float[,] heightMap) {
+        return HeightFromFloatCoord(coord.x, coord.y, heightMap);
+    }
+
+    private float HeightFromFloatCoord(float x, float y, float[,] heightMap) {
         int maxIndex = heightMap.GetLength(0) - 1;
-        int indexX = Mathf.Clamp((int)coord.x, 0, maxIndex);
-        int indexY = Mathf.Clamp((int)coord.y, 0, maxIndex);
+        int indexX = Mathf.Clamp((int)x, 0, maxIndex);
+        int indexY = Mathf.Clamp((int)y, 0, maxIndex);
         
-        float x = coord.x - indexX;
-        float y = coord.y - indexY;
+        x = x - indexX;
+        y = y - indexY;
 
         float heightNW = heightMap[indexX, indexY];
         float heightNE = heightMap[indexX, Mathf.Min(indexY + 1, maxIndex)];
@@ -250,11 +256,29 @@ public class Road
                     points[i] = (1 - t) * points[i] + t * points[i + 1];
                 }
             }
+
+            // Check to see if previous paths have edited the height map nearby
+            bool averageWithCurrent = false;
+            int range = 10;
+            for (int i = -range; i <= range; i++) {
+                for (int j = -range; j <= range; j++) {
+                    float originalY = HeightFromFloatCoord(points[0].x + i, points[0].z + j, this.originalHeightMap);
+                    float currentY = HeightFromFloatCoord(points[0].x + i, points[0].z + j, this.heightMap);
+                    if (originalY != currentY) {
+                        averageWithCurrent = true;
+                    }
+                }
+            }
             
-            smoothedPoints.Add(points[0]);
+            if (averageWithCurrent) {
+                float newY = (HeightFromFloatCoord(points[0].x, points[0].z, this.heightMap) + points[0].y) /2f;
+                smoothedPoints.Add(new Vector3(points[0].x, newY, points[0].z));
+            }
+            else {
+                smoothedPoints.Add(points[0]);
+            }   
         }
         this.path = smoothedPoints;
-
     }
 
     private void CarvePath(float[,] workingHeightMap, float[,] referenceHeightMap) {
@@ -431,4 +455,3 @@ public class Road
         }
     }
 }
-

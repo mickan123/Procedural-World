@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class TerrainChunk {
 
-	const float colliderGenerationDistanceThreshold = 5;
+	const float colliderGenerationDistanceThreshold = 200;
 
 	public event System.Action<TerrainChunk, bool> onVisibilityChanged;
 	public ChunkCoord coord;
@@ -212,9 +212,9 @@ public class TerrainChunk {
 					lodMeshes [colliderLODIndex].RequestMesh(heightMap, meshSettings);
 				}
 			}
-
+			Debug.Log(sqrDstFromViewerToEdge);
 			if (sqrDstFromViewerToEdge < colliderGenerationDistanceThreshold * colliderGenerationDistanceThreshold) {
-				if (lodMeshes [colliderLODIndex].hasMesh) {
+				if (lodMeshes[colliderLODIndex].hasMesh) {
 					meshCollider.sharedMesh = lodMeshes[colliderLODIndex].mesh;
 					hasSetCollider = true;
 				}
