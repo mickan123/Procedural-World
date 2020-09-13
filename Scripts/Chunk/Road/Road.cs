@@ -38,7 +38,7 @@ public class Road
             Vector3 roadStart = new Vector3(roadRoutes[i].roadStart.x, HeightFromFloatCoord(roadRoutes[i].roadStart, heightMap), roadRoutes[i].roadStart.y);
             Vector3 roadEnd = new Vector3(roadRoutes[i].roadEnd.x, HeightFromFloatCoord(roadRoutes[i].roadEnd, heightMap), roadRoutes[i].roadEnd.y);
 
-            // Create second from start and end points to make sure last part of path is perpendsicular to edge of chunk
+            // Create second point perpendicular to edge from start and end points to make sure last part of path is perpendsicular to edge of chunk
             Vector3 roadStart2nd = roadStart + new Vector3((roadStart.x == 0) ? 5 : (roadStart.x == mapSize - 1) ? -5 : 0,
                                                             0,
                                                            (roadStart.z == 0) ? 5 : (roadStart.z == mapSize - 1) ? -5 : 0);
@@ -73,9 +73,24 @@ public class Road
     }
 
     private void CreateRoad(Vector3 roadStart, Vector3 roadEnd, Vector3 roadStart2nd, Vector3 roadEnd2nd) {
+        #if (UNITY_EDITOR && PROFILE)
+        float pathFindStartTime = 0f;
+        if (worldSettings.IsMainThread()) {
+            pathFindStartTime = Time.realtimeSinceStartup;
+        }
+        #endif
+
         FindPath(roadStart2nd, roadEnd2nd);
 
-        // More times we add start and end points smoother end and start of path will be
+        #if (UNITY_EDITOR && PROFILE)
+        if (worldSettings.IsMainThread()) {
+            float pathFindEndTime = Time.realtimeSinceStartup;
+            float pathFindTimeTaken = pathFindEndTime - pathFindStartTime;
+            Debug.Log("Path finding time taken: " + pathFindTimeTaken + "s");
+        }
+        #endif
+
+        // The more times we add start and end points smoother end and start of path will be
         for (int i = 0; i < 5; i++) {
             this.path.Insert(0, roadStart);
             this.path.Add(roadEnd);
@@ -84,7 +99,22 @@ public class Road
 
         float[,] workingHeightMap = Common.CopyArray(this.heightMap);
 
+        #if (UNITY_EDITOR && PROFILE)
+        float pathCarveStartTime = 0f;
+        if (worldSettings.IsMainThread()) {
+            pathCarveStartTime = Time.realtimeSinceStartup;
+        }
+        #endif
+
         CarvePath(workingHeightMap, workingHeightMap);
+
+        #if (UNITY_EDITOR && PROFILE)
+        if (worldSettings.IsMainThread()) {
+            float pathCarveEndTime = Time.realtimeSinceStartup;
+            float pathCarveTimeTaken = pathCarveEndTime - pathCarveStartTime;
+            Debug.Log("Path carving time taken: " + pathCarveTimeTaken + "s");
+        }
+        #endif
 
         Common.CopyArrayValues(workingHeightMap, this.heightMap);
     }
@@ -230,14 +260,19 @@ public class Road
     private void CarvePath(float[,] workingHeightMap, float[,] referenceHeightMap) {
 
         int mapSize = referenceHeightMap.GetLength(0);
+
+        int[,] closestPathIndexes = new int[mapSize, mapSize];
+        FindClosestPathIndexes(closestPathIndexes, referenceHeightMap);
+
         for (int i = 0; i < mapSize; i++) {
             for (int j = 0; j < mapSize; j++) {
+                
                 Vector3 curPoint = new Vector3(i, referenceHeightMap[i, j], j);
                 Vector2 curPoint2d = new Vector2(curPoint.x, curPoint.z);
 
-                int closestPointIndex = FindClosestPointIndex(curPoint);
+                int closestPointIndex = closestPathIndexes[i, j];
                 Vector3 closestPoint = path[closestPointIndex]; 
-
+                
                 // Get distance of 2nd closest point so we can form a line
                 Vector3 secondClosestPoint;
                 if (closestPointIndex == path.Count - 1) {
@@ -251,13 +286,56 @@ public class Road
                     float distPost = Vector2.Distance(new Vector2(path[closestPointIndex + 1].x, path[closestPointIndex + 1].z), curPoint2d);
                     secondClosestPoint = distPre < distPost ? path[closestPointIndex - 1] : path[closestPointIndex + 1];
                 }
-                
+
                 // Get distance from point to line
                 Vector3 closestPointOnLine = ClosestPointOnLine(curPoint, closestPoint, secondClosestPoint - closestPoint);
-
                 CarvePoint(curPoint, closestPointOnLine, workingHeightMap, i, j);
             }
         }
+    }
+
+    // Finds closest point on path at every point
+    private void FindClosestPathIndexes(int[,] closestPathIndexes, float[,] referenceHeightMap) {
+        int mapSize = referenceHeightMap.GetLength(0);
+        for (int i = 0; i < mapSize; i++) {
+            for (int j = 0; j < mapSize; j++) {
+                Vector3 curPoint = new Vector3(i, referenceHeightMap[i, j], j);
+                closestPathIndexes[i, j] = FindClosestPathIndex(curPoint);
+            }
+        }
+    }
+
+     // Finds index of closest point on the path
+    private int FindClosestPathIndex(Vector3 curPoint) {
+        
+        float minDist = float.MaxValue;
+        int closestPointIndex = 0;
+
+        for (int i = 0; i < path.Count; i++) {
+            float dist = (path[i] - curPoint).sqrMagnitude;
+            if (dist < minDist) {
+                minDist = dist;
+                closestPointIndex = i;
+            }
+        }
+
+        return closestPointIndex;
+    }
+
+    // Finds the closest point on a line of origin and direction from 'point'
+    private Vector3 ClosestPointOnLine(Vector3 point, Vector3 origin, Vector3 direction) {
+        direction.Normalize();
+        Vector3 lhs = point - origin;
+        float dotP = Vector3.Dot(lhs, direction);
+
+        Vector3 closestPoint = origin + direction * dotP;
+
+        // Need to clamp closestpoint within roadwidth of the start and endpoints of the line
+        Vector3 clampedClosestPoint = new Vector3(Mathf.Clamp(closestPoint.x, origin.x - 2*roadSettings.width, origin.x + direction.x + 2*roadSettings.width),
+                                                  Mathf.Clamp(closestPoint.y, origin.y - 2*roadSettings.width, origin.y + direction.y + 2*roadSettings.width),
+                                                  Mathf.Clamp(closestPoint.z, origin.z - 2*roadSettings.width, origin.z + direction.z + 2*roadSettings.width));
+
+        return clampedClosestPoint;
     }
 
     // Carves out height map at x and y based on curPoint in path and closestPointOnLine of path
@@ -303,44 +381,11 @@ public class Road
         }
     }
 
-
-    // Finds index of closest point on the path
-    private int FindClosestPointIndex(Vector3 curPoint) {
-        float minDist = float.MaxValue;
-        int closestPointIndex = 0;
-
-        for (int i = 0; i < path.Count; i++) {
-            float dist = Vector3.Distance(path[i], curPoint);
-            if (dist < minDist) {
-                minDist = dist;
-                closestPointIndex = i;
-            }
-        }
-
-        return closestPointIndex;
-    }
-
     // Finds the distance of a point from a line of origin and direction
     private float DistanceFromLine(Vector3 point, Vector3 origin, Vector3 direction) {
         Ray ray = new Ray(origin, direction);
         float distance = Vector3.Cross(ray.direction, point - ray.origin).magnitude;
         return distance;
-    }
-
-    // Finds the closest point on a line of origin and direction from 'point'
-    private Vector3 ClosestPointOnLine(Vector3 point, Vector3 origin, Vector3 direction) {
-        direction.Normalize();
-        Vector3 lhs = point - origin;
-        float dotP = Vector3.Dot(lhs, direction);
-
-        Vector3 closestPoint = origin + direction * dotP;
-
-        // Need to clamp closestpoint within roadwidth of the start and endpoints of the line
-        Vector3 clampedClosestPoint = new Vector3(Mathf.Clamp(closestPoint.x, origin.x - 2*roadSettings.width, origin.x + direction.x + 2*roadSettings.width),
-                                                  Mathf.Clamp(closestPoint.y, origin.y - 2*roadSettings.width, origin.y + direction.y + 2*roadSettings.width),
-                                                  Mathf.Clamp(closestPoint.z, origin.z - 2*roadSettings.width, origin.z + direction.z + 2*roadSettings.width));
-
-        return clampedClosestPoint;
     }
 
     private class Node : IHeapItem<Node> {
