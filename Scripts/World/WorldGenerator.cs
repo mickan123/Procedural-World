@@ -4,7 +4,6 @@ using UnityEngine;
 using System;
 
 public class WorldGenerator {
-
 	LODInfo[] detailLevels;
 	int colliderLODIndex;
 	WorldSettings worldSettings;

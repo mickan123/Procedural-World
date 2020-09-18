@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using MyBox;
 
 public class TerrainGenerator : MonoBehaviour {
-
 	public int colliderLODIndex;
 	public LODInfo[] detailLevels;
 

@@ -11,7 +11,8 @@ public static class PoissonDiskSampling {
 												System.Random prng,
 												int numSamplesBeforeRejection = 20) {
 		
-		float cellSize = settings.maxRadius / Mathf.Sqrt(2);
+		float maxRadius = settings.varyRadius ? settings.maxRadius : settings.radius;
+		float cellSize = maxRadius / Mathf.Sqrt(2);
 
 		List<int>[,] grid = new List<int>[Mathf.CeilToInt((float)mapSize / cellSize), Mathf.CeilToInt((float)mapSize / cellSize)];
 		for (int x = 0; x < grid.GetLength(0); x++) {
@@ -34,7 +35,11 @@ public static class PoissonDiskSampling {
 			{	
 				float randomFloat = Common.NextFloat(prng, 0f, 1f);
 				float angle = randomFloat * Mathf.PI * 2;
-				float radius = spawnNoiseMap[Mathf.RoundToInt(spawnCentre.x), Mathf.RoundToInt(spawnCentre.y)] * (settings.maxRadius - settings.minRadius) + settings.minRadius;
+				float radius = settings.radius;
+				if (settings.varyRadius) {
+					radius = spawnNoiseMap[Mathf.RoundToInt(spawnCentre.x), Mathf.RoundToInt(spawnCentre.y)] 
+								* (settings.maxRadius - settings.minRadius) + settings.minRadius;
+				}
 				Vector2 dir = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle));
 				
 				Vector2 candidate = spawnCentre + dir * Common.NextFloat(prng, radius, 2 * radius);

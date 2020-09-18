@@ -79,7 +79,7 @@ public static class HeightMapGenerator {
 		for (int w = 0; w < noiseSettings.sandDuneSettings.Length; w++) {
 
 			SandDuneSettings settings = noiseSettings.sandDuneSettings[w];
-			float duneHeight = ((2 * settings.sigma * settings.duneWidth) / Mathf.PI) * Mathf.Max(1 - settings.xm, 0.01f);
+			float duneHeight = ((2 * noiseSettings.sigma * settings.duneWidth) / Mathf.PI) * Mathf.Max(1 - noiseSettings.xm, 0.01f);
 
 			float[,] noiseValues = Noise.GenerateNoiseMap(width,
 														height,
@@ -97,9 +97,9 @@ public static class HeightMapGenerator {
 					x = Mathf.Clamp(x / settings.duneWidth, 0, 1);
 					
 					// Calculate dune height and equation according to Laurent Avenel (Wiwine) Terragen tutorial
-					float side = (x > settings.xm) ? 1f : 0f;
-					float cosTerm = 1f - Mathf.Cos((Mathf.PI / (settings.p * side + 1)) * ((x - side) / (settings.xm - side)));
-					float constant = ((settings.p * side + 1) / 2f);
+					float side = (x > noiseSettings.xm) ? 1f : 0f;
+					float cosTerm = 1f - Mathf.Cos((Mathf.PI / (noiseSettings.p * side + 1)) * ((x - side) / (noiseSettings.xm - side)));
+					float constant = ((noiseSettings.p * side + 1) / 2f);
 					
 					// Calculate height multiplier with range[0, 1], perlin height value must be > duneThreshold or it is clamped to 0 
 					float duneThresholdMultiplier = Mathf.Max(0, noiseValues[i, j] - settings.duneThreshold) / (Mathf.Max(1f - settings.duneThreshold, 0.01f));

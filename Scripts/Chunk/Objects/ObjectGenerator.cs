@@ -64,9 +64,16 @@ public static class ObjectGenerator {
 		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings, mapSize - 1, sampleCentre, spawnNoiseMap, prng);
 
 		points = FilterPointsByBiome(points, biome, info, prng);
-		points = FilterPointsBySlope(points, settings.minSlope, settings.maxSlope, heightMap);
-		points = FilterPointsByHeight(points, settings.minHeight, settings.maxHeight, heightMap);
-		points = FilterPointsOnRoad(points, roadStrengthMap);
+
+		if (settings.constrainSlope) {
+			points = FilterPointsBySlope(points, settings.minSlope, settings.maxSlope, heightMap);
+		}
+		if (settings.constrainHeight) {
+			points = FilterPointsByHeight(points, settings.minHeight, settings.maxHeight, heightMap);
+		}
+		if (!settings.spawnOnRoad) {
+			points = FilterPointsOnRoad(points, roadStrengthMap);
+		}
 
 		List<ObjectPosition> spawnPositions = new List<ObjectPosition>();
 		
@@ -82,10 +89,13 @@ public static class ObjectGenerator {
 
 			spawnPositions.Add(new ObjectPosition(position, rotation));
 		}
-
-		return new SpawnObject(settings.terrainObjects, spawnPositions, settings.scale, prng);
+	
+		return new SpawnObject(settings.terrainObjects, 
+								spawnPositions, 
+								settings.GetScale(prng),
+								settings.translation, 
+								prng);
 	}
-
 
 	public static List<Vector2> FilterPointsByBiome(List<Vector2> points, int biome, BiomeInfo info, System.Random prng) {
 
