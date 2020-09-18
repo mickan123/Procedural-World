@@ -10,11 +10,11 @@ public static class ObjectGenerator {
 		
 		System.Random prng = new System.Random((int)(sampleCentre.x + sampleCentre.y));
 		
-		for (int biome = 0; biome < settings.biomes.Length; biome++) {
+		for (int biome = 0; biome < settings.biomeSettings.Length; biome++) {
 			
 			if (HeightMapContainesBiome(info, biome)) {
-				for (int objectSetting = 0; objectSetting < settings.biomes[biome].terrainObjectSettings.Length; objectSetting++) {
-					biomeObjects.Add(GenerateTerrainObject(settings.biomes[biome].terrainObjectSettings[objectSetting], 
+				for (int objectSetting = 0; objectSetting < settings.biomeSettings[biome].terrainObjectSettings.Length; objectSetting++) {
+					biomeObjects.Add(GenerateTerrainObject(settings.biomeSettings[biome].terrainObjectSettings[objectSetting], 
 															biome,
 															heightMap,
 															road.roadStrengthMap, 
@@ -56,7 +56,7 @@ public static class ObjectGenerator {
 														mapSize,
 														settings.noiseMapSettings.perlinNoiseSettings,
 														sampleCentre,
-														terrainSettings.biomes[biome].heightMapSettings.noiseType,
+														terrainSettings.biomeSettings[biome].heightMapSettings.noiseType,
 														settings.noiseMapSettings.seed);
 				
 		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings, mapSize - 1, sampleCentre, spawnNoiseMap, prng);

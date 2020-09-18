@@ -24,7 +24,7 @@ public static class ThermalErosion  {
 				for (int y = 0; y < mapSize - 1; y++) {
 
 					int biome = info.biomeMap[x, y];
-					if (!terrainSettings.biomes[biome].thermalErosion) {
+					if (!terrainSettings.biomeSettings[biome].thermalErosion) {
 						continue;
 					}
 
@@ -59,12 +59,12 @@ public static class ThermalErosion  {
 		}
 
 		// Weight erosion by biome strengths and whether erosion is enabled
-        int numBiomes = terrainSettings.biomes.Length;
+        int numBiomes = terrainSettings.biomeSettings.Length;
         for (int i = 2; i < mapSize - 3; i++) { // Don't erode border elements as otherwise chunks don't align correctly
             for (int j = 2; j < mapSize - 3; j++) {
                 float val = 0;
                 for (int w = 0; w < numBiomes; w++) {
-                    if (terrainSettings.biomes[w].thermalErosion) {
+                    if (terrainSettings.biomeSettings[w].thermalErosion) {
                         val += info.biomeStrengths[i, j, w] * erodedVals[i, j];
                     } else {
                         val += info.biomeStrengths[i, j, w] * values[i, j];

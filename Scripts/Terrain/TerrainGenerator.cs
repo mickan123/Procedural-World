@@ -14,7 +14,7 @@ public class TerrainGenerator : MonoBehaviour {
 	public int colliderLODIndex;
 
 	[Separator("Terrain Generation Settings", true)]
-	public TerrainSettings terrainSettings;
+	[DisplayInspector] public TerrainSettings terrainSettings;
 	
 
 	private WorldManager generator;

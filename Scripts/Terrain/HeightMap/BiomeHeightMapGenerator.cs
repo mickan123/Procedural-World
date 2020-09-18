@@ -91,12 +91,12 @@ public static class BiomeHeightMapGenerator {
 		// Get rid of padding 
 		float[,] actualHeightNoiseMap = new float[width, height];
 		int[,] actualBiomeMap = new int[width, height];
-		float[,,] actualBiomeStrengths = new float[width, height, terrainSettings.biomes.Length];
+		float[,,] actualBiomeStrengths = new float[width, height, terrainSettings.biomeSettings.Length];
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
 				actualHeightNoiseMap[i, j] = heightNoiseMap[i + padding, j + padding];
 				actualBiomeMap[i, j] = biomeInfo.biomeMap[i + padding, j + padding];
-				for (int w = 0; w < terrainSettings.biomes.Length; w++) {
+				for (int w = 0; w < terrainSettings.biomeSettings.Length; w++) {
 					actualBiomeStrengths[i, j, w] = biomeInfo.biomeStrengths[i + padding, j + padding, w];
 				}
 			}
@@ -182,16 +182,16 @@ public static class BiomeHeightMapGenerator {
 												 BiomeInfo biomeInfo) {
 		
 		// Generate noise maps for all nearby and present biomes
-		int numBiomes = terrainSettings.biomes.Length;
+		int numBiomes = terrainSettings.biomeSettings.Length;
 		List<float[,]> biomeNoiseMaps = new List<float[,]>();
 		for (int i = 0; i < numBiomes; i++) {
 			biomeNoiseMaps.Add(HeightMapGenerator.GenerateHeightMap(width, 
 								height, 
-								terrainSettings.biomes[i].heightMapSettings, 
+								terrainSettings.biomeSettings[i].heightMapSettings, 
 								terrainSettings,
 								sampleCentre, 
 								HeightMapGenerator.NormalizeMode.GlobalBiome,
-								terrainSettings.biomes[i].heightMapSettings.seed));
+								terrainSettings.biomeSettings[i].heightMapSettings.seed));
 		}
 
 		// Calculate final noise map values by blending where near another biome
@@ -209,7 +209,7 @@ public static class BiomeHeightMapGenerator {
 	}
 
 	public static BiomeInfo GenerateBiomeInfo(int width, int height, float[,] humidityNoiseMap, float[,] temperatureNoiseMap, TerrainSettings settings) {
-		int numBiomes = settings.biomes.Length;
+		int numBiomes = settings.biomeSettings.Length;
 		int[,] biomeMap = new int[width, height];
 		float[,,] biomeStrengths = new float[width, height, numBiomes];
 
@@ -221,7 +221,7 @@ public static class BiomeHeightMapGenerator {
 
 				// Get current biome
 				for (int w = 0; w < numBiomes; w++) {
-					BiomeSettings curBiome = settings.biomes[w]; 
+					BiomeSettings curBiome = settings.biomeSettings[w]; 
 
 					if (humidity > curBiome.startHumidity 
 						&& humidity < curBiome.endHumidity
@@ -241,7 +241,7 @@ public static class BiomeHeightMapGenerator {
 
 				for (int w = 0; w < numBiomes; w++) {
 					if (w != actualBiomeIndex) {
-						BiomeSettings curBiome = settings.biomes[w]; 
+						BiomeSettings curBiome = settings.biomeSettings[w]; 
 						float humidityDist = Mathf.Min(Mathf.Abs(humidity - curBiome.startHumidity), 
 													   Mathf.Abs(humidity - curBiome.endHumidity));
 						float tempDist = Mathf.Min(Mathf.Abs(temperature - curBiome.startTemperature), 

@@ -64,7 +64,7 @@ public static class Noise {
 		// Get noiseSetting values that result in max possible height
 		int maxNumOctaves = 1;
 		float maxPersistance = 0;
-		PerlinNoiseSettings[] noiseSettingArray = terrainSettings.biomes.Select(x => x.heightMapSettings.perlinNoiseSettings).ToArray();
+		PerlinNoiseSettings[] noiseSettingArray = terrainSettings.biomeSettings.Select(x => x.heightMapSettings.perlinNoiseSettings).ToArray();
 		for (int i = 0; i < noiseSettingArray.Length; i++) {
 			if (noiseSettingArray[i].octaves > maxNumOctaves) {
 				maxNumOctaves = noiseSettingArray[i].octaves;

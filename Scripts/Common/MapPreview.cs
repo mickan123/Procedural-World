@@ -25,8 +25,7 @@ public class MapPreview : MonoBehaviour {
 	
 	[Separator("World Settings", true)]
 	public bool autoUpdate;
-	[DisplayInspector]
-	public TerrainSettings terrainSettings;
+	[DisplayInspector] public TerrainSettings terrainSettings;
 
 	public void Start() {
 		UpdatableData.mapUpdate -= OnValuesUpdated;
@@ -73,7 +72,7 @@ public class MapPreview : MonoBehaviour {
 		
 
 		if (drawMode == DrawMode.NoiseMapTexture) {
-			NoiseMapSettings noiseMapSettings= terrainSettings.biomes[noiseMapBiomeIndex].heightMapSettings;
+			NoiseMapSettings noiseMapSettings= terrainSettings.biomeSettings[noiseMapBiomeIndex].heightMapSettings;
 			float[,] heightMap = HeightMapGenerator.GenerateHeightMap(width,
                                                            height,
                                                            noiseMapSettings,
@@ -122,26 +121,26 @@ public class MapPreview : MonoBehaviour {
 
     private void DrawSingleBiome(int width, int height, float[,] humidityMap)
     {
-		BiomeSettings[] oldBiomes = new BiomeSettings[terrainSettings.biomes.Length];
+		BiomeSettings[] oldBiomes = new BiomeSettings[terrainSettings.biomeSettings.Length];
 		float oldTransitionDistance = terrainSettings.transitionDistance;
 
 		try {
-			for (int i = 0; i < terrainSettings.biomes.Length; i++)
+			for (int i = 0; i < terrainSettings.biomeSettings.Length; i++)
 			{
 				oldBiomes[i] = (BiomeSettings)(BiomeSettings.CreateInstance("BiomeSettings"));
-				oldBiomes[i].startHumidity = terrainSettings.biomes[i].startHumidity;
-				oldBiomes[i].endHumidity = terrainSettings.biomes[i].endHumidity;
-				oldBiomes[i].startTemperature = terrainSettings.biomes[i].startTemperature;
-				oldBiomes[i].endTemperature = terrainSettings.biomes[i].endTemperature;
+				oldBiomes[i].startHumidity = terrainSettings.biomeSettings[i].startHumidity;
+				oldBiomes[i].endHumidity = terrainSettings.biomeSettings[i].endHumidity;
+				oldBiomes[i].startTemperature = terrainSettings.biomeSettings[i].startTemperature;
+				oldBiomes[i].endTemperature = terrainSettings.biomeSettings[i].endTemperature;
 
-				terrainSettings.biomes[i].startHumidity = 0f;
-				terrainSettings.biomes[i].endHumidity = 0f;
-				terrainSettings.biomes[i].startTemperature = 0f;
-				terrainSettings.biomes[i].endTemperature = 0f;
+				terrainSettings.biomeSettings[i].startHumidity = 0f;
+				terrainSettings.biomeSettings[i].endHumidity = 0f;
+				terrainSettings.biomeSettings[i].startTemperature = 0f;
+				terrainSettings.biomeSettings[i].endTemperature = 0f;
 			}
 
-			terrainSettings.biomes[drawSingleBiomeIndex].endHumidity = 1f;
-			terrainSettings.biomes[drawSingleBiomeIndex].endTemperature = 1f;
+			terrainSettings.biomeSettings[drawSingleBiomeIndex].endHumidity = 1f;
+			terrainSettings.biomeSettings[drawSingleBiomeIndex].endTemperature = 1f;
 			terrainSettings.transitionDistance = 0f;
 			terrainSettings.ApplyToMaterial(terrainMaterial);
 
@@ -149,12 +148,12 @@ public class MapPreview : MonoBehaviour {
 
 		} finally {
 			// Reset settings
-			for (int i = 0; i < terrainSettings.biomes.Length; i++)
+			for (int i = 0; i < terrainSettings.biomeSettings.Length; i++)
 			{
-				terrainSettings.biomes[i].startHumidity = oldBiomes[i].startHumidity;
-				terrainSettings.biomes[i].endHumidity = oldBiomes[i].endHumidity;
-				terrainSettings.biomes[i].startTemperature = oldBiomes[i].startTemperature;
-				terrainSettings.biomes[i].endTemperature = oldBiomes[i].endTemperature;
+				terrainSettings.biomeSettings[i].startHumidity = oldBiomes[i].startHumidity;
+				terrainSettings.biomeSettings[i].endHumidity = oldBiomes[i].endHumidity;
+				terrainSettings.biomeSettings[i].startTemperature = oldBiomes[i].startTemperature;
+				terrainSettings.biomeSettings[i].endTemperature = oldBiomes[i].endTemperature;
 			}
 			terrainSettings.transitionDistance = oldTransitionDistance;
 		}
@@ -192,7 +191,7 @@ public class MapPreview : MonoBehaviour {
     {
         BiomeInfo biomeInfo = BiomeHeightMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, terrainSettings);
 
-        int numBiomes = terrainSettings.biomes.Length;
+        int numBiomes = terrainSettings.biomeSettings.Length;
         float[,] biomeTextureMap = new float[width, height];
         for (int i = 0; i < width; i++)
         {

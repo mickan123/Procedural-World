@@ -60,14 +60,14 @@ public static class HydraulicErosion {
         #endif
 
         int mapSize = values.GetLength(0);
-        int numBiomes = terrainSettings.biomes.Length;
+        int numBiomes = terrainSettings.biomeSettings.Length;
 
         // Check if we actually perform any erosion
         bool performErosion = false;    
         for (int i = 0; i < mapSize; i++) {
             for (int j = 0; j < mapSize; j++) {
                 for (int w = 0; w < numBiomes; w++) {
-                    if (info.biomeStrengths[i, j, w] != 0f && terrainSettings.biomes[w].hydraulicErosion) {
+                    if (info.biomeStrengths[i, j, w] != 0f && terrainSettings.biomeSettings[w].hydraulicErosion) {
                         performErosion = true;
                     }
                 } 
@@ -110,7 +110,7 @@ public static class HydraulicErosion {
                 for (int j = 0; j < mapSize; j++) {
                     float val = 0;
                     for (int w = 0; w < numBiomes; w++) {
-                        if (terrainSettings.biomes[w].hydraulicErosion) {
+                        if (terrainSettings.biomeSettings[w].hydraulicErosion) {
                             val += info.biomeStrengths[i, j, w] * map[i * mapSize + j];
                         } else {
                             val += info.biomeStrengths[i, j, w] * values[i, j];

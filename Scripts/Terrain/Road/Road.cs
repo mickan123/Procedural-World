@@ -370,8 +370,8 @@ public class Road
 
         // Calculate roadMultiplier dependent on which biomes have roads enabled
         float biomeRoadMultiplier = 0f;
-        for (int w = 0; w < terrainSettings.biomes.Length; w++) {
-            if (terrainSettings.biomes[w].allowRoads) {
+        for (int w = 0; w < terrainSettings.biomeSettings.Length; w++) {
+            if (terrainSettings.biomeSettings[w].allowRoads) {
                 biomeRoadMultiplier += biomeInfo.biomeStrengths[x, y, w];
             }
         }
