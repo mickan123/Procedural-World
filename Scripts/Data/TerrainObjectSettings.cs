@@ -43,8 +43,16 @@ public class TerrainObjectSettings : UpdatableData {
 
 
 	[Separator("Translation", true)]
-	public bool translate = true;
-	[ConditionalField("translate")] public Vector3 translation = new Vector3(0f, 0f, 0f);
+	public bool randomTranslation = false;
+	[ConditionalField("randomTranslation", true)] public Vector3 translation = new Vector3(0f, 0f, 0f);
+	[ConditionalField("randomTranslation")] public Vector3 minTranslation = new Vector3(0f, 0f, 0f);
+	[ConditionalField("randomTranslation")] public Vector3 maxTranslation = new Vector3(0f, 0f, 0f);
+
+	[Separator("Rotation", true)]
+	public bool randomRotation = false;
+	[ConditionalField("randomRotation", true)] public Vector3 rotation = new Vector3(0f, 0f, 0f);
+	[ConditionalField("randomRotation")] public Vector3 minRotation = new Vector3(0f, 0f, 0f);
+	[ConditionalField("randomRotation")] public Vector3 maxRotation = new Vector3(0f, 360f, 0f);
 
 
 	[Separator("Other", true)]
@@ -66,6 +74,28 @@ public class TerrainObjectSettings : UpdatableData {
 			float randomY = Common.NextFloat(prng, this.minScaleNonUniform.y, this.maxScaleNonUniform.y);
 			float randomZ = Common.NextFloat(prng, this.minScaleNonUniform.z, this.maxScaleNonUniform.z);
 			return new Vector3(randomX, randomY, randomZ);
+		}
+	}
+
+	public Vector3 GetTranslation(System.Random prng) {
+		if (this.randomTranslation) {
+			float randomX = Common.NextFloat(prng, this.minTranslation.x, this.maxTranslation.x);
+			float randomY = Common.NextFloat(prng, this.minTranslation.y, this.maxTranslation.y);
+			float randomZ = Common.NextFloat(prng, this.minTranslation.z, this.maxTranslation.z);
+			return new Vector3(randomX, randomY, randomZ);
+		} else {
+			return this.translation;
+		}
+	}
+
+	public Quaternion GetRotation(System.Random prng) {
+		if (this.randomRotation) {
+			float randomX = Common.NextFloat(prng, this.minRotation.x, this.maxRotation.x);
+			float randomY = Common.NextFloat(prng, this.minRotation.y, this.maxRotation.y);
+			float randomZ = Common.NextFloat(prng, this.minRotation.z, this.maxRotation.z);
+			return Quaternion.Euler(randomX, randomY, randomZ);
+		} else {
+			return Quaternion.Euler(rotation.x, rotation.y, rotation.z);
 		}
 	}
 
@@ -112,13 +142,9 @@ public class SpawnObject {
 	public List<ObjectPosition> positions;
 	private List<GameObject> spawnedObjects;
 	private System.Random prng;
-	private Vector3 scale;
-	private Vector3 translation;
 	
 	public SpawnObject(TerrainObject[] terrainObjects, 
 						List<ObjectPosition> positions, 
-						Vector3 scale, 
-						Vector3 translation,
 						System.Random prng) {
 		if (terrainObjects == null) {
 			this.terrainObjects = new TerrainObject[0];
@@ -126,8 +152,6 @@ public class SpawnObject {
 			this.terrainObjects = terrainObjects;
 		}
 		this.positions = positions;
-		this.scale = scale;
-		this.translation = translation;
 		this.prng = prng;
 		this.spawnedObjects = new List<GameObject>();
 	}
@@ -146,9 +170,9 @@ public class SpawnObject {
 				if (rand < terrainObjects[j].probability) {
 					GameObject obj = UnityEngine.Object.Instantiate(terrainObjects[j].gameObject);
 					obj.transform.parent = parent;
-					obj.transform.position = positions[i].position + this.translation;
+					obj.transform.position = positions[i].position;
 					obj.transform.rotation = positions[i].rotation;
-					obj.transform.localScale = this.scale;
+					obj.transform.localScale = positions[i].scale;
 					spawnedObjects.Add(obj);					
 					break;
 				}
@@ -172,9 +196,11 @@ public struct TerrainObject {
 public struct ObjectPosition {
 	public Vector3 position;
 	public Quaternion rotation;
+	public Vector3 scale;
 
-	public ObjectPosition(Vector3 position, Quaternion rotation) {
+	public ObjectPosition(Vector3 position, Vector3 scale, Quaternion rotation) {
 		this.position = position;
 		this.rotation = rotation;
+		this.scale = scale;
 	}
 }

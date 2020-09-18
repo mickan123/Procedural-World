@@ -85,15 +85,15 @@ public static class ObjectGenerator {
 											heightMap[Mathf.FloorToInt(spawnPoint.x), Mathf.FloorToInt(spawnPoint.y)], 
 											Mathf.FloorToInt(spawnPoint.y + sampleCentre.y) * worldSettings.meshSettings.meshScale);
 
-			Quaternion rotation = Quaternion.Euler(0f, Common.NextFloat(prng, 0f, 360f), 0f);
+			Quaternion rotation = settings.GetRotation(prng);
+			Vector3 scale = settings.GetScale(prng);
+			Vector3 translation = settings.GetTranslation(prng);
 
-			spawnPositions.Add(new ObjectPosition(position, rotation));
+			spawnPositions.Add(new ObjectPosition(position + translation, scale, rotation));
 		}
-	
+
 		return new SpawnObject(settings.terrainObjects, 
 								spawnPositions, 
-								settings.GetScale(prng),
-								settings.translation, 
 								prng);
 	}
 
