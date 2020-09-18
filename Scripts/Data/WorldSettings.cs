@@ -23,8 +23,6 @@ public class WorldSettings : UpdatableData {
 	private const int biomeStrengthTextureWidth = 256;
 	public readonly int maxLayerCount = 8;
 	public readonly int maxBiomeCount = 8;
-	
-	public ComputeShader erosionShader;
 	public Thread mainThread;
 	public float sqrTransitionDistance {
 		get {
@@ -32,10 +30,9 @@ public class WorldSettings : UpdatableData {
 		}
 	}
 
-	public void Init(ComputeShader erosionShader) {
+	public void Init() {
 		InitSeeds();
 		HydraulicErosion.Init(this);
-		this.erosionShader = erosionShader;
 		this.mainThread = System.Threading.Thread.CurrentThread;
 	}
 

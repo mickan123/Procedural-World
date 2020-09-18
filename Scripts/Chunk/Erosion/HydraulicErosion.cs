@@ -96,10 +96,10 @@ public static class HydraulicErosion {
             bool gpuDone = false; 
             if (worldSettings.IsMainThread())
             {   
-                GPUErosion(worldSettings, mapSize, map, randomIndices, ref gpuDone);
+                GPUErosion(settings, mapSize, map, randomIndices, ref gpuDone);
             }
             else {
-                Dispatcher.RunOnMainThread(() => GPUErosion(worldSettings, mapSize, map, randomIndices, ref gpuDone)); 
+                Dispatcher.RunOnMainThread(() => GPUErosion(settings, mapSize, map, randomIndices, ref gpuDone)); 
             }
             while (!gpuDone) {
                 Thread.Sleep(1);
@@ -134,42 +134,40 @@ public static class HydraulicErosion {
         return values;
     }
 
-    public static void GPUErosion(WorldSettings worldSettings, int mapSize, float[] map, int[] randomIndices, ref bool gpuDone) {
+    public static void GPUErosion(ErosionSettings settings, int mapSize, float[] map, int[] randomIndices, ref bool gpuDone) {
 
         // Send brush data to compute shader
         ComputeBuffer brushIndexBuffer = new ComputeBuffer(brushValues.brushIndexOffsets.Count, sizeof(int));
         ComputeBuffer brushWeightBuffer = new ComputeBuffer (brushValues.brushWeights.Count, sizeof(int));
         brushIndexBuffer.SetData(brushValues.brushIndexOffsets);
         brushWeightBuffer.SetData(brushValues.brushWeights);
-        worldSettings.erosionShader.SetBuffer (0, "brushIndices", brushIndexBuffer);
-        worldSettings.erosionShader.SetBuffer (0, "brushWeights", brushWeightBuffer);
+        settings.erosionShader.SetBuffer (0, "brushIndices", brushIndexBuffer);
+        settings.erosionShader.SetBuffer (0, "brushWeights", brushWeightBuffer);
         
         // Heightmap buffer
         ComputeBuffer mapBuffer = new ComputeBuffer(mapSize * mapSize, sizeof(float));
         mapBuffer.SetData(map);
-        worldSettings.erosionShader.SetBuffer(0, "map", mapBuffer);
+        settings.erosionShader.SetBuffer(0, "map", mapBuffer);
 
         // Send random indices to compute shader
         ComputeBuffer randomIndexBuffer = new ComputeBuffer(randomIndices.Length, sizeof(int));
         randomIndexBuffer.SetData (randomIndices);
-        worldSettings.erosionShader.SetBuffer(0, "randomIndices", randomIndexBuffer);
+        settings.erosionShader.SetBuffer(0, "randomIndices", randomIndexBuffer);
 
-        // Set erosion settings
-        ErosionSettings settings = worldSettings.erosionSettings;
-        worldSettings.erosionShader.SetInt("borderSize", settings.erosionBrushRadius);
-        worldSettings.erosionShader.SetInt("mapSize", mapSize);
-        worldSettings.erosionShader.SetInt("brushLength", brushValues.brushIndexOffsets.Count);
-        worldSettings.erosionShader.SetInt("maxLifetime", settings.maxLifetime);
-        worldSettings.erosionShader.SetFloat("inertia", settings.inertia);
-        worldSettings.erosionShader.SetFloat("sedimentCapacityFactor", settings.sedimentCapacityFactor);
-        worldSettings.erosionShader.SetFloat("minSedimentCapacity",settings.minSedimentCapacity);
-        worldSettings.erosionShader.SetFloat("depositSpeed", settings.depositSpeed);
-        worldSettings.erosionShader.SetFloat("erodeSpeed", settings.erodeSpeed);
-        worldSettings.erosionShader.SetFloat("evaporateSpeed", settings.evaporateSpeed);
-        worldSettings.erosionShader.SetFloat("gravity", settings.gravity);
-        worldSettings.erosionShader.SetFloat("startSpeed", settings.startSpeed);
-        worldSettings.erosionShader.SetFloat("startWater", settings.startWater);
-        worldSettings.erosionShader.Dispatch(0, mapSize, 1, 1); 
+        settings.erosionShader.SetInt("borderSize", settings.erosionBrushRadius);
+        settings.erosionShader.SetInt("mapSize", mapSize);
+        settings.erosionShader.SetInt("brushLength", brushValues.brushIndexOffsets.Count);
+        settings.erosionShader.SetInt("maxLifetime", settings.maxLifetime);
+        settings.erosionShader.SetFloat("inertia", settings.inertia);
+        settings.erosionShader.SetFloat("sedimentCapacityFactor", settings.sedimentCapacityFactor);
+        settings.erosionShader.SetFloat("minSedimentCapacity",settings.minSedimentCapacity);
+        settings.erosionShader.SetFloat("depositSpeed", settings.depositSpeed);
+        settings.erosionShader.SetFloat("erodeSpeed", settings.erodeSpeed);
+        settings.erosionShader.SetFloat("evaporateSpeed", settings.evaporateSpeed);
+        settings.erosionShader.SetFloat("gravity", settings.gravity);
+        settings.erosionShader.SetFloat("startSpeed", settings.startSpeed);
+        settings.erosionShader.SetFloat("startWater", settings.startWater);
+        settings.erosionShader.Dispatch(0, mapSize, 1, 1); 
         mapBuffer.GetData(map);
 
         gpuDone = true;

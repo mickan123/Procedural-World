@@ -9,7 +9,6 @@ public class MapPreview : MonoBehaviour {
 
 	#if UNITY_EDITOR
 	
-	public ComputeShader erosionShader;
 	public Renderer textureRender;
 	public MeshFilter meshFilter;
 
@@ -50,7 +49,7 @@ public class MapPreview : MonoBehaviour {
 		UpdatableData.mapUpdate += OnValuesUpdated;
 
 		worldSettings.ApplyToMaterial(terrainMaterial);
-		worldSettings.Init(erosionShader);
+		worldSettings.Init();
 		worldSettings.seed = this.seed;
 
 		this.heightMapSettings = worldSettings.biomes[0].heightMapSettings;

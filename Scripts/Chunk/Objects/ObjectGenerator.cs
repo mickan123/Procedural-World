@@ -133,8 +133,6 @@ public static class ObjectGenerator {
 
 			float slope = Mathf.Sqrt(gradientX * gradientX + gradientY * gradientY);
 
-			Debug.Log("SLOPE: " + slope + " DEG: " + Mathf.Rad2Deg * (Mathf.Acos(1 / slope)));
-
 			if (slope > maxSlope || slope < minSlope) {
 				points.RemoveAt(i);
 				i--;
@@ -160,7 +158,6 @@ public static class ObjectGenerator {
 			else {
 				float percentage = (height - minHeight) / (maxHeight - minHeight);
 				float minProb = heightProbabilityCurve.Evaluate(percentage);
-				Debug.Log(minProb);
 				if (Common.NextFloat(prng, 0f, 1f) > minProb) {
 					points.RemoveAt(i);
 					i--;

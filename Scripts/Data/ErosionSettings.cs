@@ -4,7 +4,7 @@ using UnityEngine;
 
 [CreateAssetMenu(), System.Serializable]
 public class ErosionSettings : UpdatableData {
-
+    public ComputeShader erosionShader;
     public float gravity = 4;
 
     [Header("Smoothing Settings")]

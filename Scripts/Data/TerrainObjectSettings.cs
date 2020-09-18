@@ -178,7 +178,9 @@ public class SpawnObject {
 				}
 			}
 		}
-		StaticBatchingUtility.Combine(spawnedObjects.ToArray(), spawnedObjects[0]);
+		if (spawnedObjects.Count > 0) {
+			StaticBatchingUtility.Combine(spawnedObjects.ToArray(), spawnedObjects[0]);
+		}
 	}
 }
 
