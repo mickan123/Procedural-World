@@ -6,7 +6,7 @@ public static class ThermalErosion  {
 
 	private static readonly int[,] offsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1} };
 
-	public static float[,] Erode(float[,] values, WorldSettings worldSettings, BiomeInfo info) {
+	public static float[,] Erode(float[,] values, TerrainSettings terrainSettings, BiomeInfo info) {
 		
 		int mapSize = values.GetLength(0);
 		int numNeighbours = offsets.GetLength(0);
@@ -17,14 +17,14 @@ public static class ThermalErosion  {
             }
         }
 
-		ErosionSettings settings = worldSettings.erosionSettings;
+		ErosionSettings settings = terrainSettings.erosionSettings;
 
 		for (int iter = 0; iter < settings.numThermalErosionIterations; iter++) {
 			for (int x = 0; x < mapSize - 1; x++) { // Don't erode edge cells as otherwise chunks won't align correctly
 				for (int y = 0; y < mapSize - 1; y++) {
 
 					int biome = info.biomeMap[x, y];
-					if (!worldSettings.biomes[biome].thermalErosion) {
+					if (!terrainSettings.biomes[biome].thermalErosion) {
 						continue;
 					}
 
@@ -59,12 +59,12 @@ public static class ThermalErosion  {
 		}
 
 		// Weight erosion by biome strengths and whether erosion is enabled
-        int numBiomes = worldSettings.biomes.Length;
+        int numBiomes = terrainSettings.biomes.Length;
         for (int i = 2; i < mapSize - 3; i++) { // Don't erode border elements as otherwise chunks don't align correctly
             for (int j = 2; j < mapSize - 3; j++) {
                 float val = 0;
                 for (int w = 0; w < numBiomes; w++) {
-                    if (worldSettings.biomes[w].thermalErosion) {
+                    if (terrainSettings.biomes[w].thermalErosion) {
                         val += info.biomeStrengths[i, j, w] * erodedVals[i, j];
                     } else {
                         val += info.biomeStrengths[i, j, w] * values[i, j];

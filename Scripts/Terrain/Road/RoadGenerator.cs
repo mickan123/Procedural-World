@@ -4,14 +4,14 @@ using UnityEngine;
 
 public static class RoadGenerator
 {
-    public static Road GenerateRoads(WorldSettings worldSettings, Vector2 chunkCentre, float[,] heightMap, BiomeInfo info) {
-        RoadSettings roadSettings = worldSettings.roadSettings;
+    public static Road GenerateRoads(TerrainSettings terrainSettings, Vector2 chunkCentre, float[,] heightMap, BiomeInfo info) {
+        RoadSettings roadSettings = terrainSettings.roadSettings;
 
         float mapSize = heightMap.GetLength(0);
         
         List<RoadRoute> destinations = GetRoadDestinations(mapSize, chunkCentre);
         
-        return new Road(worldSettings, 
+        return new Road(terrainSettings, 
                         heightMap,
                         info,
                         destinations,

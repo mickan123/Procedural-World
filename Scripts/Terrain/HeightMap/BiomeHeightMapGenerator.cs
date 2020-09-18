@@ -6,31 +6,31 @@ using System.Linq;
 public static class BiomeHeightMapGenerator {
 
 	private static readonly int[,] neighBouroffsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1} };
-	public static BiomeData GenerateBiomeNoiseMaps(int width, int height, WorldSettings worldSettings, Vector2 chunkCentre, WorldGenerator worldGenerator) {
+	public static BiomeData GenerateBiomeNoiseMaps(int width, int height, TerrainSettings terrainSettings, Vector2 chunkCentre, WorldManager worldGenerator) {
 		
-		int padding = worldSettings.erosionSettings.maxLifetime;
+		int padding = terrainSettings.erosionSettings.maxLifetime;
 		int paddedWidth = width + 2 * padding;
 		int paddedHeight = height + 2 * padding;
 		Vector2 paddedChunkCentre = new Vector2(chunkCentre.x - padding, chunkCentre.y - padding);
 
 		float[,] humidityNoiseMap = HeightMapGenerator.GenerateHeightMap(paddedWidth,
 																	paddedHeight,
-																	worldSettings.humidityMapSettings,
-																	worldSettings,
+																	terrainSettings.humidityMapSettings,
+																	terrainSettings,
 																	paddedChunkCentre,
 																	HeightMapGenerator.NormalizeMode.Global,
-																	worldSettings.humidityMapSettings.seed);
+																	terrainSettings.humidityMapSettings.seed);
 		float[,] temperatureNoiseMap = HeightMapGenerator.GenerateHeightMap(paddedWidth,
 																		paddedHeight,
-																		worldSettings.temperatureMapSettings,
-																		worldSettings,
+																		terrainSettings.temperatureMapSettings,
+																		terrainSettings,
 																		paddedChunkCentre,
 																		HeightMapGenerator.NormalizeMode.Global,
-																		worldSettings.temperatureMapSettings.seed);
+																		terrainSettings.temperatureMapSettings.seed);
 
 		#if (PROFILE && UNITY_EDITOR)
 		float biomeInfoStartTime = 0f;
-		if (worldSettings.IsMainThread()) {
+		if (terrainSettings.IsMainThread()) {
         	biomeInfoStartTime = Time.realtimeSinceStartup;
 		}
         #endif
@@ -39,9 +39,9 @@ public static class BiomeHeightMapGenerator {
 												paddedHeight,
 												humidityNoiseMap,
 												temperatureNoiseMap,
-												worldSettings);
+												terrainSettings);
 		#if (PROFILE && UNITY_EDITOR)
-		if (worldSettings.IsMainThread()) {
+		if (terrainSettings.IsMainThread()) {
 			float biomeInfoEndTime = Time.realtimeSinceStartup;
 			float biomeInfoTimeTaken = biomeInfoEndTime - biomeInfoStartTime;
 			Debug.Log("BiomeInfo time taken: " + biomeInfoTimeTaken + "s");
@@ -50,21 +50,21 @@ public static class BiomeHeightMapGenerator {
 
 		#if (PROFILE && UNITY_EDITOR)
 		float biomeNoiseMapStartTime = 0f;
-		if (worldSettings.IsMainThread()) {
+		if (terrainSettings.IsMainThread()) {
         	biomeNoiseMapStartTime = Time.realtimeSinceStartup;
 		}
         #endif
 				
 		float[,] heightNoiseMap = GenerateBiomeHeightMap(paddedWidth,
 														paddedHeight,
-														worldSettings,
+														terrainSettings,
 														humidityNoiseMap,
 														temperatureNoiseMap,
 														paddedChunkCentre,
 														biomeInfo);
 		
 		#if (PROFILE && UNITY_EDITOR)
-		if (worldSettings.IsMainThread()) {
+		if (terrainSettings.IsMainThread()) {
 			float biomeNoiseMapEndTime = Time.realtimeSinceStartup;
 			float biomeNoiseMapTimeTaken = biomeNoiseMapEndTime - biomeNoiseMapStartTime;
 			Debug.Log("Biome Noise Map time taken: " + biomeNoiseMapTimeTaken + "s");
@@ -73,15 +73,15 @@ public static class BiomeHeightMapGenerator {
 
 		#if (PROFILE && UNITY_EDITOR)
 		float erosionStartTime = 0f;
-		if (worldSettings.IsMainThread()) {
+		if (terrainSettings.IsMainThread()) {
         	erosionStartTime = Time.realtimeSinceStartup;
 		}
         #endif
 
-		ApplyErosion(heightNoiseMap, biomeInfo, worldSettings, chunkCentre, worldGenerator);
+		ApplyErosion(heightNoiseMap, biomeInfo, terrainSettings, chunkCentre, worldGenerator);
 
 		#if (PROFILE && UNITY_EDITOR)
-		if (worldSettings.IsMainThread()) {
+		if (terrainSettings.IsMainThread()) {
 			float erosionEndTime = Time.realtimeSinceStartup;
 			float erosionTimeTaken = erosionEndTime - erosionStartTime;
 			Debug.Log("Erosion time taken: " + erosionTimeTaken + "s");
@@ -91,12 +91,12 @@ public static class BiomeHeightMapGenerator {
 		// Get rid of padding 
 		float[,] actualHeightNoiseMap = new float[width, height];
 		int[,] actualBiomeMap = new int[width, height];
-		float[,,] actualBiomeStrengths = new float[width, height, worldSettings.biomes.Length];
+		float[,,] actualBiomeStrengths = new float[width, height, terrainSettings.biomes.Length];
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
 				actualHeightNoiseMap[i, j] = heightNoiseMap[i + padding, j + padding];
 				actualBiomeMap[i, j] = biomeInfo.biomeMap[i + padding, j + padding];
-				for (int w = 0; w < worldSettings.biomes.Length; w++) {
+				for (int w = 0; w < terrainSettings.biomes.Length; w++) {
 					actualBiomeStrengths[i, j, w] = biomeInfo.biomeStrengths[i + padding, j + padding, w];
 				}
 			}
@@ -107,13 +107,13 @@ public static class BiomeHeightMapGenerator {
 		return new BiomeData(actualHeightNoiseMap, actualBiomeInfo);
 	}
 
-	public static void ApplyErosion(float[,] heightNoiseMap, BiomeInfo biomeInfo, WorldSettings worldSettings, Vector2 chunkCentre, WorldGenerator worldGenerator) {
+	public static void ApplyErosion(float[,] heightNoiseMap, BiomeInfo biomeInfo, TerrainSettings terrainSettings, Vector2 chunkCentre, WorldManager worldGenerator) {
 
 		int width = heightNoiseMap.GetLength(0);
 		int height = heightNoiseMap.GetLength(1);
-		int padding = worldSettings.erosionSettings.maxLifetime;
+		int padding = terrainSettings.erosionSettings.maxLifetime;
 
-		float chunkWidth = worldSettings.meshSettings.numVerticesPerLine;
+		float chunkWidth = terrainSettings.meshSettings.numVerticesPerLine;
 		ChunkCoord curChunkCoord = new ChunkCoord(Mathf.RoundToInt(chunkCentre.x / chunkWidth), Mathf.RoundToInt(chunkCentre.y / chunkWidth));
 
 		if (worldGenerator != null) {
@@ -135,7 +135,7 @@ public static class BiomeHeightMapGenerator {
 				if (adjacentChunkCoords[i] == curChunkCoord) {
 					
 					erosionMask = CalculateBiomeBlendingMask(erosionMask, padding);
-					HydraulicErosion.Erode(heightNoiseMap, erosionMask, worldSettings, biomeInfo, worldGenerator, chunkCentre);
+					HydraulicErosion.Erode(heightNoiseMap, erosionMask, terrainSettings, biomeInfo, worldGenerator, chunkCentre);
 					
 					worldGenerator.DoneErosion(curChunkCoord, heightNoiseMap);
 					break;
@@ -148,7 +148,7 @@ public static class BiomeHeightMapGenerator {
 		else {
 			float[,] erosionMask = new float[width, height];
 			CalculateBiomeBlendingMask(erosionMask, padding);
-			HydraulicErosion.Erode(heightNoiseMap, erosionMask, worldSettings, biomeInfo, worldGenerator, chunkCentre);
+			HydraulicErosion.Erode(heightNoiseMap, erosionMask, terrainSettings, biomeInfo, worldGenerator, chunkCentre);
 		}
 	}
 
@@ -175,23 +175,23 @@ public static class BiomeHeightMapGenerator {
 
 	public static float[,] GenerateBiomeHeightMap(int width, 
 												 int height, 
-												 WorldSettings worldSettings,
+												 TerrainSettings terrainSettings,
 												 float[,] humidityNoiseMap, 
 												 float[,] temperatureNoiseMap, 
 												 Vector2 sampleCentre, 
 												 BiomeInfo biomeInfo) {
 		
 		// Generate noise maps for all nearby and present biomes
-		int numBiomes = worldSettings.biomes.Length;
+		int numBiomes = terrainSettings.biomes.Length;
 		List<float[,]> biomeNoiseMaps = new List<float[,]>();
 		for (int i = 0; i < numBiomes; i++) {
 			biomeNoiseMaps.Add(HeightMapGenerator.GenerateHeightMap(width, 
 								height, 
-								worldSettings.biomes[i].heightMapSettings, 
-								worldSettings,
+								terrainSettings.biomes[i].heightMapSettings, 
+								terrainSettings,
 								sampleCentre, 
 								HeightMapGenerator.NormalizeMode.GlobalBiome,
-								worldSettings.biomes[i].heightMapSettings.seed));
+								terrainSettings.biomes[i].heightMapSettings.seed));
 		}
 
 		// Calculate final noise map values by blending where near another biome
@@ -208,7 +208,7 @@ public static class BiomeHeightMapGenerator {
 		return finalNoiseMapValues;
 	}
 
-	public static BiomeInfo GenerateBiomeInfo(int width, int height, float[,] humidityNoiseMap, float[,] temperatureNoiseMap, WorldSettings settings) {
+	public static BiomeInfo GenerateBiomeInfo(int width, int height, float[,] humidityNoiseMap, float[,] temperatureNoiseMap, TerrainSettings settings) {
 		int numBiomes = settings.biomes.Length;
 		int[,] biomeMap = new int[width, height];
 		float[,,] biomeStrengths = new float[width, height, numBiomes];

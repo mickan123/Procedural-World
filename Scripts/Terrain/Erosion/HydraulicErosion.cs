@@ -45,29 +45,29 @@ public static class HydraulicErosion {
         }   
     }
 
-    public static void Init(WorldSettings settings) {
+    public static void Init(TerrainSettings settings) {
         ErosionSettings erosionSettings = settings.erosionSettings;
         brushValues = new BrushValues(erosionSettings, settings.meshSettings.numVerticesPerLine);
     }
 
-    public static float[,] Erode(float[,] values, float[,] mask, WorldSettings worldSettings, BiomeInfo info, WorldGenerator worldGenerator, Vector2 chunkCentre) {
+    public static float[,] Erode(float[,] values, float[,] mask, TerrainSettings terrainSettings, BiomeInfo info, WorldManager worldGenerator, Vector2 chunkCentre) {
         
         #if (PROFILE && UNITY_EDITOR)
         float erosionStartTime = 0f;
-        if (worldSettings.IsMainThread()) {
+        if (terrainSettings.IsMainThread()) {
             erosionStartTime = Time.realtimeSinceStartup;
         }
         #endif
 
         int mapSize = values.GetLength(0);
-        int numBiomes = worldSettings.biomes.Length;
+        int numBiomes = terrainSettings.biomes.Length;
 
         // Check if we actually perform any erosion
         bool performErosion = false;    
         for (int i = 0; i < mapSize; i++) {
             for (int j = 0; j < mapSize; j++) {
                 for (int w = 0; w < numBiomes; w++) {
-                    if (info.biomeStrengths[i, j, w] != 0f && worldSettings.biomes[w].hydraulicErosion) {
+                    if (info.biomeStrengths[i, j, w] != 0f && terrainSettings.biomes[w].hydraulicErosion) {
                         performErosion = true;
                     }
                 } 
@@ -84,7 +84,7 @@ public static class HydraulicErosion {
             }
 
             // Generate random indices to use
-            ErosionSettings settings = worldSettings.erosionSettings;
+            ErosionSettings settings = terrainSettings.erosionSettings;
             int[] randomIndices = new int[settings.numHydraulicErosionIterations];
             System.Random prng = new System.Random(settings.seed);
             for (int i = 0; i < settings.numHydraulicErosionIterations; i++) {
@@ -94,7 +94,7 @@ public static class HydraulicErosion {
             }
             
             bool gpuDone = false; 
-            if (worldSettings.IsMainThread())
+            if (terrainSettings.IsMainThread())
             {   
                 GPUErosion(settings, mapSize, map, randomIndices, ref gpuDone);
             }
@@ -110,7 +110,7 @@ public static class HydraulicErosion {
                 for (int j = 0; j < mapSize; j++) {
                     float val = 0;
                     for (int w = 0; w < numBiomes; w++) {
-                        if (worldSettings.biomes[w].hydraulicErosion) {
+                        if (terrainSettings.biomes[w].hydraulicErosion) {
                             val += info.biomeStrengths[i, j, w] * map[i * mapSize + j];
                         } else {
                             val += info.biomeStrengths[i, j, w] * values[i, j];
@@ -124,7 +124,7 @@ public static class HydraulicErosion {
         }
         
         #if (PROFILE && UNITY_EDITOR)
-        if (worldSettings.IsMainThread()) {
+        if (terrainSettings.IsMainThread()) {
             float erosionEndTime = Time.realtimeSinceStartup;
             float erosionTimeTaken = erosionEndTime - erosionStartTime;
             Debug.Log("Erosion time taken: " + erosionTimeTaken + "s");
@@ -179,8 +179,8 @@ public static class HydraulicErosion {
     }
 
     
-    public static void ErodeDrop(Drop drop, WorldSettings worldSettings, float[,] map, int mapSize, WorldGenerator worldGenerator) {
-        ErosionSettings settings = worldSettings.erosionSettings;
+    public static void ErodeDrop(Drop drop, TerrainSettings terrainSettings, float[,] map, int mapSize, WorldManager worldGenerator) {
+        ErosionSettings settings = terrainSettings.erosionSettings;
 
         for (int lifetime = drop.lifetime; lifetime < settings.maxLifetime; lifetime ++) {
             int nodeX = (int) drop.posX;

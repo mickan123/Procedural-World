@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
+using MyBox;
 
 
 [ExecuteInEditMode]
@@ -9,26 +9,24 @@ public class MapPreview : MonoBehaviour {
 
 	#if UNITY_EDITOR
 	
+	[Separator("Renderer Objects", true)]
 	public Renderer textureRender;
 	public MeshFilter meshFilter;
-
-	public enum DrawMode { NoiseMap, MeshNoBiome, BiomesMesh, FalloffMap, Biomes, HumidityMap, TemperatureMap, SingleBiome };
-	public DrawMode drawMode;
-	public Vector2 centre;
-
-	public int singleBiome;  // If DrawMode is SingleBiome it will render this biome number
-
-	public WorldSettings worldSettings;
-	private NoiseMapSettings heightMapSettings;
-
 	public Material terrainMaterial;
 
-	[Range(0, MeshSettings.numSupportedLODs - 1)]
-	public int EditorPreviewLOD;
-	
-	public bool autoUpdate;
-
+	public enum DrawMode { SingleBiomeMesh, BiomesMesh, NoiseMapTexture, FalloffMapTexture, BiomesTexture, HumidityMapTexture, TemperatureMapTexture };
+	[Separator("Drawing Settings", true)]
 	public int seed;
+	[Range(0, MeshSettings.numSupportedLODs - 1)] public int EditorPreviewLOD;
+	public DrawMode drawMode;
+	[ConditionalField(nameof(drawMode), false, DrawMode.SingleBiomeMesh)]public int drawSingleBiomeIndex;
+	[ConditionalField(nameof(drawMode), false, DrawMode.NoiseMapTexture)] public int noiseMapBiomeIndex;
+	public Vector2 centre;
+	
+	[Separator("World Settings", true)]
+	public bool autoUpdate;
+	[DisplayInspector]
+	public TerrainSettings terrainSettings;
 
 	public void Start() {
 		UpdatableData.mapUpdate -= OnValuesUpdated;
@@ -48,69 +46,59 @@ public class MapPreview : MonoBehaviour {
 		UpdatableData.mapUpdate -= OnValuesUpdated;
 		UpdatableData.mapUpdate += OnValuesUpdated;
 
-		worldSettings.ApplyToMaterial(terrainMaterial);
-		worldSettings.Init();
-		worldSettings.seed = this.seed;
+		terrainSettings.ApplyToMaterial(terrainMaterial);
+		terrainSettings.Init();
+		terrainSettings.seed = this.seed;
 
-		this.heightMapSettings = worldSettings.biomes[0].heightMapSettings;
 
 		ResetMapPreview();
 
-		int width = worldSettings.meshSettings.numVerticesPerLine;
-		int height = worldSettings.meshSettings.numVerticesPerLine;
+		int width = terrainSettings.meshSettings.numVerticesPerLine;
+		int height = terrainSettings.meshSettings.numVerticesPerLine;
 
 		float[,] humidityMap = HeightMapGenerator.GenerateHeightMap(width,
                                                             height,
-                                                            worldSettings.humidityMapSettings,
-                                                            worldSettings,
+                                                            terrainSettings.humidityMapSettings,
+                                                            terrainSettings,
                                                             centre,
 															HeightMapGenerator.NormalizeMode.Global,
-                                                            worldSettings.humidityMapSettings.seed);
+                                                            terrainSettings.humidityMapSettings.seed);
 		float[,] temperatureMap = HeightMapGenerator.GenerateHeightMap(width,
                                                                height,
-                                                               worldSettings.temperatureMapSettings,
-                                                               worldSettings,
+                                                               terrainSettings.temperatureMapSettings,
+                                                               terrainSettings,
                                                                centre,
 															   HeightMapGenerator.NormalizeMode.Global,
-                                                               worldSettings.temperatureMapSettings.seed);
+                                                               terrainSettings.temperatureMapSettings.seed);
 		
 
-		if (drawMode == DrawMode.NoiseMap) {
+		if (drawMode == DrawMode.NoiseMapTexture) {
+			NoiseMapSettings noiseMapSettings= terrainSettings.biomes[noiseMapBiomeIndex].heightMapSettings;
 			float[,] heightMap = HeightMapGenerator.GenerateHeightMap(width,
                                                            height,
-                                                           heightMapSettings,
-                                                           worldSettings,
+                                                           noiseMapSettings,
+                                                           terrainSettings,
                                                            centre,
 														   HeightMapGenerator.NormalizeMode.GlobalBiome,
-                                                           heightMapSettings.seed);
+                                                           noiseMapSettings.seed);
 			DrawTexture(TextureGenerator.TextureFromHeightMap(heightMap));
 		} 
-		else if (drawMode == DrawMode.MeshNoBiome) {
-			float[,] heightMap = HeightMapGenerator.GenerateHeightMap(width,
-                                                           height,
-                                                           heightMapSettings,
-                                                           worldSettings,
-                                                           centre,
-														   HeightMapGenerator.NormalizeMode.GlobalBiome,
-                                                           heightMapSettings.seed);
-			DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap, worldSettings.meshSettings, EditorPreviewLOD));
-		}
-		else if (drawMode == DrawMode.FalloffMap) {
+		else if (drawMode == DrawMode.FalloffMapTexture) {
 			DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(width)));
 		}
 		else if (drawMode == DrawMode.BiomesMesh) {
             DrawBiomeMesh(width, height, humidityMap);
         }
-        else if (drawMode == DrawMode.Biomes) {
+        else if (drawMode == DrawMode.BiomesTexture) {
             DrawBiomes(width, height, humidityMap, temperatureMap);
         }
-        else if (drawMode == DrawMode.HumidityMap) {
+        else if (drawMode == DrawMode.HumidityMapTexture) {
 			DrawTexture(TextureGenerator.TextureFromHeightMap(humidityMap));
 		}
-		else if (drawMode == DrawMode.TemperatureMap) {
+		else if (drawMode == DrawMode.TemperatureMapTexture) {
 			DrawTexture(TextureGenerator.TextureFromHeightMap(temperatureMap));
 		}
-		else if (drawMode == DrawMode.SingleBiome) {
+		else if (drawMode == DrawMode.SingleBiomeMesh) {
             DrawSingleBiome(width, height, humidityMap);
         }
     }
@@ -134,41 +122,41 @@ public class MapPreview : MonoBehaviour {
 
     private void DrawSingleBiome(int width, int height, float[,] humidityMap)
     {
-		BiomeSettings[] oldBiomes = new BiomeSettings[worldSettings.biomes.Length];
-		float oldTransitionDistance = worldSettings.transitionDistance;
+		BiomeSettings[] oldBiomes = new BiomeSettings[terrainSettings.biomes.Length];
+		float oldTransitionDistance = terrainSettings.transitionDistance;
 
 		try {
-			for (int i = 0; i < worldSettings.biomes.Length; i++)
+			for (int i = 0; i < terrainSettings.biomes.Length; i++)
 			{
 				oldBiomes[i] = (BiomeSettings)(BiomeSettings.CreateInstance("BiomeSettings"));
-				oldBiomes[i].startHumidity = worldSettings.biomes[i].startHumidity;
-				oldBiomes[i].endHumidity = worldSettings.biomes[i].endHumidity;
-				oldBiomes[i].startTemperature = worldSettings.biomes[i].startTemperature;
-				oldBiomes[i].endTemperature = worldSettings.biomes[i].endTemperature;
+				oldBiomes[i].startHumidity = terrainSettings.biomes[i].startHumidity;
+				oldBiomes[i].endHumidity = terrainSettings.biomes[i].endHumidity;
+				oldBiomes[i].startTemperature = terrainSettings.biomes[i].startTemperature;
+				oldBiomes[i].endTemperature = terrainSettings.biomes[i].endTemperature;
 
-				worldSettings.biomes[i].startHumidity = 0f;
-				worldSettings.biomes[i].endHumidity = 0f;
-				worldSettings.biomes[i].startTemperature = 0f;
-				worldSettings.biomes[i].endTemperature = 0f;
+				terrainSettings.biomes[i].startHumidity = 0f;
+				terrainSettings.biomes[i].endHumidity = 0f;
+				terrainSettings.biomes[i].startTemperature = 0f;
+				terrainSettings.biomes[i].endTemperature = 0f;
 			}
 
-			worldSettings.biomes[singleBiome].endHumidity = 1f;
-			worldSettings.biomes[singleBiome].endTemperature = 1f;
-			worldSettings.transitionDistance = 0f;
-			worldSettings.ApplyToMaterial(terrainMaterial);
+			terrainSettings.biomes[drawSingleBiomeIndex].endHumidity = 1f;
+			terrainSettings.biomes[drawSingleBiomeIndex].endTemperature = 1f;
+			terrainSettings.transitionDistance = 0f;
+			terrainSettings.ApplyToMaterial(terrainMaterial);
 
 			DrawBiomeMesh(width, height, humidityMap);
 
 		} finally {
 			// Reset settings
-			for (int i = 0; i < worldSettings.biomes.Length; i++)
+			for (int i = 0; i < terrainSettings.biomes.Length; i++)
 			{
-				worldSettings.biomes[i].startHumidity = oldBiomes[i].startHumidity;
-				worldSettings.biomes[i].endHumidity = oldBiomes[i].endHumidity;
-				worldSettings.biomes[i].startTemperature = oldBiomes[i].startTemperature;
-				worldSettings.biomes[i].endTemperature = oldBiomes[i].endTemperature;
+				terrainSettings.biomes[i].startHumidity = oldBiomes[i].startHumidity;
+				terrainSettings.biomes[i].endHumidity = oldBiomes[i].endHumidity;
+				terrainSettings.biomes[i].startTemperature = oldBiomes[i].startTemperature;
+				terrainSettings.biomes[i].endTemperature = oldBiomes[i].endTemperature;
 			}
-			worldSettings.transitionDistance = oldTransitionDistance;
+			terrainSettings.transitionDistance = oldTransitionDistance;
 		}
     }
 
@@ -176,23 +164,23 @@ public class MapPreview : MonoBehaviour {
     {
 		#if (PROFILE && UNITY_EDITOR)
 		float startTime = 0f;
-		if (worldSettings.IsMainThread()) {
+		if (terrainSettings.IsMainThread()) {
         	startTime = Time.realtimeSinceStartup;
 		}
         #endif
-		ChunkData chunkData = ChunkDataGenerator.GenerateChunkData(worldSettings, centre, null);
+		ChunkData chunkData = ChunkDataGenerator.GenerateChunkData(terrainSettings, centre, null);
 
-		MeshData meshData = MeshGenerator.GenerateTerrainMesh(chunkData.biomeData.heightNoiseMap, worldSettings.meshSettings, EditorPreviewLOD);
+		MeshData meshData = MeshGenerator.GenerateTerrainMesh(chunkData.biomeData.heightNoiseMap, terrainSettings.meshSettings, EditorPreviewLOD);
         DrawMesh(meshData);
 
-		TerrainChunk.UpdateMaterial(chunkData, worldSettings, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
+		TerrainChunk.UpdateMaterial(chunkData, terrainSettings, new MaterialPropertyBlock(), meshFilter.GetComponents<MeshRenderer>()[0]);
 
 		for (int i = 0; i < chunkData.objects.Count; i++) {
 			chunkData.objects[i].Spawn(this.transform);
 		}
 
 		#if (PROFILE && UNITY_EDITOR)
-		if (worldSettings.IsMainThread()) {
+		if (terrainSettings.IsMainThread()) {
 			float endTime = Time.realtimeSinceStartup;
 			float totalTimeTaken = endTime - startTime;
 			Debug.Log("Total time taken: " + totalTimeTaken + "s");
@@ -202,9 +190,9 @@ public class MapPreview : MonoBehaviour {
 
     private void DrawBiomes(int width, int height, float[,] humidityMap, float[,] temperatureMap)
     {
-        BiomeInfo biomeInfo = BiomeHeightMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, worldSettings);
+        BiomeInfo biomeInfo = BiomeHeightMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, terrainSettings);
 
-        int numBiomes = worldSettings.biomes.Length;
+        int numBiomes = terrainSettings.biomes.Length;
         float[,] biomeTextureMap = new float[width, height];
         for (int i = 0; i < width; i++)
         {

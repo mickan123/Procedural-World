@@ -59,12 +59,12 @@ public static class Noise {
 		return noiseMap;
 	}
 
-	public static float[,] normalizeGlobalBiomeValues(float[,] input, WorldSettings worldSettings) {
+	public static float[,] normalizeGlobalBiomeValues(float[,] input, TerrainSettings terrainSettings) {
 		
 		// Get noiseSetting values that result in max possible height
 		int maxNumOctaves = 1;
 		float maxPersistance = 0;
-		PerlinNoiseSettings[] noiseSettingArray = worldSettings.biomes.Select(x => x.heightMapSettings.perlinNoiseSettings).ToArray();
+		PerlinNoiseSettings[] noiseSettingArray = terrainSettings.biomes.Select(x => x.heightMapSettings.perlinNoiseSettings).ToArray();
 		for (int i = 0; i < noiseSettingArray.Length; i++) {
 			if (noiseSettingArray[i].octaves > maxNumOctaves) {
 				maxNumOctaves = noiseSettingArray[i].octaves;

@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-public class WorldGenerator {
+public class WorldManager {
 	LODInfo[] detailLevels;
 	int colliderLODIndex;
-	WorldSettings worldSettings;
+	TerrainSettings terrainSettings;
 	Transform viewer;
 	Transform parent;
 	Material mapMaterial;
@@ -25,16 +25,16 @@ public class WorldGenerator {
 
 	public bool destroyed = false;
 
-	public WorldGenerator(LODInfo[] detailLevels, int colliderLODIndex, WorldSettings worldSettings, Transform viewer, Transform parent, Material mapMaterial) {
+	public WorldManager(LODInfo[] detailLevels, int colliderLODIndex, TerrainSettings terrainSettings, Transform viewer, Transform parent, Material mapMaterial) {
 		this.detailLevels = detailLevels;
 		this.colliderLODIndex = colliderLODIndex;
-		this.worldSettings = worldSettings;
+		this.terrainSettings = terrainSettings;
 		this.viewer = viewer;
 		this.parent = parent;
 		this.mapMaterial = mapMaterial;
 
 		float maxViewDst = detailLevels[detailLevels.Length - 1].visibleDstThreshold;
-		meshWorldSize = worldSettings.meshSettings.meshWorldSize - 1;
+		meshWorldSize = terrainSettings.meshSettings.meshWorldSize - 1;
 		chunksVisibleInViewDst = Mathf.RoundToInt(maxViewDst / meshWorldSize);
 	}
 
@@ -71,7 +71,7 @@ public class WorldGenerator {
 						terrainChunkDictionary[viewedChunkCoord].terrainChunk.UpdateTerrainChunk();
 					} else {
 						TerrainChunk newChunk = new TerrainChunk(viewedChunkCoord, 
-																 this.worldSettings,
+																 this.terrainSettings,
 																 this.detailLevels, 
 																 this.colliderLODIndex, 
 																 this.parent, 
@@ -109,7 +109,7 @@ public class WorldGenerator {
 			System.Threading.Thread.Sleep(500);
 		}	
 
-		int padding = worldSettings.erosionSettings.maxLifetime;
+		int padding = terrainSettings.erosionSettings.maxLifetime;
 		int mapSize = heightMap.GetLength(0);
 		float[,] adjacentHeightMap = terrainChunkDictionary[adjacentChunkCoord].heightMap;
 		

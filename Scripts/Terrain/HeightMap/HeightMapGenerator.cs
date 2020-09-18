@@ -10,7 +10,7 @@ public static class HeightMapGenerator {
 	public static float[,] GenerateHeightMap(int width, 
 											int height, 
 											NoiseMapSettings noiseSettings, 
-											WorldSettings worldSettings,
+											TerrainSettings terrainSettings,
 											Vector2 sampleCentre, 
 											NormalizeMode normalizeMode,
 											int seed) {
@@ -18,13 +18,13 @@ public static class HeightMapGenerator {
 		float[,] heightMap;
 		if (noiseSettings.noiseType == NoiseMapSettings.NoiseType.Simplex ||
 		    noiseSettings.noiseType == NoiseMapSettings.NoiseType.Perlin) {
-			heightMap = GenerateDefaultHeightMap(width, height, noiseSettings, worldSettings, sampleCentre, normalizeMode, seed);
+			heightMap = GenerateDefaultHeightMap(width, height, noiseSettings, terrainSettings, sampleCentre, normalizeMode, seed);
 		} 
 		else if (noiseSettings.noiseType == NoiseMapSettings.NoiseType.SandDune) {
-			heightMap = GenerateSandDuneHeightMap(width, height, noiseSettings, worldSettings.meshSettings, sampleCentre, seed);
+			heightMap = GenerateSandDuneHeightMap(width, height, noiseSettings, terrainSettings.meshSettings, sampleCentre, seed);
 		}
 		else {
-			heightMap = GenerateDefaultHeightMap(width, height, noiseSettings, worldSettings, sampleCentre, normalizeMode, seed);
+			heightMap = GenerateDefaultHeightMap(width, height, noiseSettings, terrainSettings, sampleCentre, normalizeMode, seed);
 		}
 		
 		AnimationCurve heightCurve_threadsafe = new AnimationCurve(noiseSettings.heightCurve.keys);
@@ -41,7 +41,7 @@ public static class HeightMapGenerator {
 	public static float[,] GenerateDefaultHeightMap(int width, 
 											int height, 
 											NoiseMapSettings noiseSettings, 
-											WorldSettings worldSettings,
+											TerrainSettings terrainSettings,
 											Vector2 sampleCentre, 
 											NormalizeMode normalizeMode,
 											int seed) {
@@ -49,7 +49,7 @@ public static class HeightMapGenerator {
 		float[,] values = Noise.GenerateNoiseMap(width, height, noiseSettings.perlinNoiseSettings, sampleCentre, noiseSettings.noiseType, seed);
 
 		if (normalizeMode == NormalizeMode.GlobalBiome) {
-			values = Noise.normalizeGlobalBiomeValues(values, worldSettings);
+			values = Noise.normalizeGlobalBiomeValues(values, terrainSettings);
 		}
 		else if (normalizeMode == NormalizeMode.Global) {
 			values = Noise.normalizeGlobalValues(values, noiseSettings.perlinNoiseSettings);

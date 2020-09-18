@@ -5,7 +5,7 @@ using System.Linq;
 
 public static class ObjectGenerator {
 
-	public static List<SpawnObject> GenerateBiomeObjects(float[,] heightMap, BiomeInfo info, Road road, WorldSettings settings, Vector2 sampleCentre) {
+	public static List<SpawnObject> GenerateBiomeObjects(float[,] heightMap, BiomeInfo info, Road road, TerrainSettings settings, Vector2 sampleCentre) {
 		List<SpawnObject> biomeObjects = new List<SpawnObject>();
 		
 		System.Random prng = new System.Random((int)(sampleCentre.x + sampleCentre.y));
@@ -45,7 +45,7 @@ public static class ObjectGenerator {
 													float[,] heightMap,
 													float[,] roadStrengthMap, 
 													BiomeInfo info, 
-													WorldSettings worldSettings, 
+													TerrainSettings terrainSettings, 
 													Vector2 sampleCentre,
 													System.Random prng) {
 
@@ -56,7 +56,7 @@ public static class ObjectGenerator {
 														mapSize,
 														settings.noiseMapSettings.perlinNoiseSettings,
 														sampleCentre,
-														worldSettings.biomes[biome].heightMapSettings.noiseType,
+														terrainSettings.biomes[biome].heightMapSettings.noiseType,
 														settings.noiseMapSettings.seed);
 				
 		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings, mapSize - 1, sampleCentre, spawnNoiseMap, prng);
@@ -80,9 +80,9 @@ public static class ObjectGenerator {
 		for (int point = 0; point < points.Count; point++) {
 			Vector2 spawnPoint = points[point];
 
-			Vector3 position = new Vector3(Mathf.FloorToInt(spawnPoint.x + sampleCentre.x) * worldSettings.meshSettings.meshScale,
+			Vector3 position = new Vector3(Mathf.FloorToInt(spawnPoint.x + sampleCentre.x) * terrainSettings.meshSettings.meshScale,
 											heightMap[Mathf.FloorToInt(spawnPoint.x), Mathf.FloorToInt(spawnPoint.y)], 
-											Mathf.FloorToInt(spawnPoint.y + sampleCentre.y) * worldSettings.meshSettings.meshScale);
+											Mathf.FloorToInt(spawnPoint.y + sampleCentre.y) * terrainSettings.meshSettings.meshScale);
 
 			Quaternion rotation = settings.GetRotation(prng);
 			Vector3 scale = settings.GetScale(prng);

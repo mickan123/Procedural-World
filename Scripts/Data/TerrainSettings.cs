@@ -1,9 +1,10 @@
 ﻿using System.Collections;
 using UnityEngine;
 using System.Threading;
+using MyBox;
 
 [CreateAssetMenu(), System.Serializable]
-public class WorldSettings : UpdatableData {
+public class TerrainSettings : UpdatableData {
 
 	public NoiseMapSettings humidityMapSettings;
 	public NoiseMapSettings temperatureMapSettings;

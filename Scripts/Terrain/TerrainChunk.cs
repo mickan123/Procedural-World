@@ -31,11 +31,11 @@ public class TerrainChunk {
 	float maxViewDst;
 
 	MeshSettings meshSettings;
-	WorldSettings worldSettings;
+	TerrainSettings terrainSettings;
 	Transform viewer;
 
 	public TerrainChunk(ChunkCoord coord, 
-						WorldSettings worldSettings,
+						TerrainSettings terrainSettings,
 						LODInfo[] detailLevels, 
 						int colliderLODIndex, 
 						Transform parent, 
@@ -44,8 +44,8 @@ public class TerrainChunk {
 		this.coord = coord;
 		this.detailLevels = detailLevels;
 		this.colliderLODIndex = colliderLODIndex;
-		this.worldSettings = worldSettings;
-		this.meshSettings = worldSettings.meshSettings;
+		this.terrainSettings = terrainSettings;
+		this.meshSettings = terrainSettings.meshSettings;
 		this.viewer = viewer;
 
 		sampleCentre = new Vector2(coord.x * meshSettings.meshWorldSize / meshSettings.meshScale, 
@@ -76,8 +76,8 @@ public class TerrainChunk {
 		maxViewDst = detailLevels[detailLevels.Length - 1].visibleDstThreshold;
 	}
 
-	public void Load(WorldGenerator worldGenerator) {
-		ThreadedDataRequester.RequestData(() => ChunkDataGenerator.GenerateChunkData(worldSettings, sampleCentre, worldGenerator), OnChunkDataReceived);											
+	public void Load(WorldManager worldGenerator) {
+		ThreadedDataRequester.RequestData(() => ChunkDataGenerator.GenerateChunkData(terrainSettings, sampleCentre, worldGenerator), OnChunkDataReceived);											
 	}
 
 	void OnChunkDataReceived(object chunkData) {
@@ -87,7 +87,7 @@ public class TerrainChunk {
 		
 		heightMapReceived = true;
 		
-		UpdateMaterial(this.chunkData, worldSettings, matBlock, meshRenderer);
+		UpdateMaterial(this.chunkData, terrainSettings, matBlock, meshRenderer);
 		UpdateTerrainChunk();
 
 		List<SpawnObject> spawnObjects = this.chunkData.objects;
@@ -97,23 +97,23 @@ public class TerrainChunk {
 		}
 	}
 
-	public static void UpdateMaterial(ChunkData chunkData, WorldSettings worldSettings, MaterialPropertyBlock matBlock, MeshRenderer renderer) {
+	public static void UpdateMaterial(ChunkData chunkData, TerrainSettings terrainSettings, MaterialPropertyBlock matBlock, MeshRenderer renderer) {
 		BiomeInfo info = chunkData.biomeData.biomeInfo;
 		int width = info.biomeMap.GetLength(0);
 
 		// Create texture to pass in biome maps and biome strengths
-		int numBiomes = worldSettings.biomes.Length;
+		int numBiomes = terrainSettings.biomes.Length;
 		Texture2D biomeMapTex = new Texture2D(width, width, TextureFormat.RGBA32, false, false);
 		
 		int finalTexWidth = 256;
 		int biomesPerTexture = 4;
-		Texture2D[] biomeStrengthTextures = new Texture2D[worldSettings.maxBiomeCount / biomesPerTexture + 1];
-		for (int i = 0; i < worldSettings.maxBiomeCount / biomesPerTexture + 1; i++) {
+		Texture2D[] biomeStrengthTextures = new Texture2D[terrainSettings.maxBiomeCount / biomesPerTexture + 1];
+		for (int i = 0; i < terrainSettings.maxBiomeCount / biomesPerTexture + 1; i++) {
 			biomeStrengthTextures[i] = new Texture2D(width, width, TextureFormat.RGBA32, false, false);
 		}
 		Texture2DArray biomeStrengthTexArray = new Texture2DArray(finalTexWidth,
 																finalTexWidth,
-																worldSettings.maxBiomeCount,
+																terrainSettings.maxBiomeCount,
 																TextureFormat.RGBA32,
 																false,
 																false);
@@ -125,7 +125,7 @@ public class TerrainChunk {
 			for (int y = 0; y < width; y ++) {				 
 				biomeMapTex.SetPixel(x, y, new Color(chunkData.road.roadStrengthMap[x, y], 0f, 0f, 0f));
 
-				for (int w = 0; w < worldSettings.maxBiomeCount; w += biomesPerTexture) {
+				for (int w = 0; w < terrainSettings.maxBiomeCount; w += biomesPerTexture) {
 					int texIndex = w / biomesPerTexture; 
 
 					Color biomeStrengths = new Color((w < numBiomes) ? info.biomeStrengths[x, y, w] : 0f,

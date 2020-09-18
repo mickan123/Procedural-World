@@ -12,7 +12,7 @@ public class Road
                                                { 1 , 2}, { 1 ,-2}, { -1, 2}, {-1 , -2}};
                                                
     RoadSettings roadSettings;
-    WorldSettings worldSettings;
+    TerrainSettings terrainSettings;
 
     List<Vector3> path;
 
@@ -21,9 +21,9 @@ public class Road
     private float[,] originalHeightMap;
     private BiomeInfo biomeInfo;
 
-    public Road(WorldSettings worldSettings, float[,] heightMap, BiomeInfo info, List<RoadRoute> roadRoutes, Vector2 chunkCentre) {
-        this.roadSettings = worldSettings.roadSettings;
-        this.worldSettings = worldSettings;
+    public Road(TerrainSettings terrainSettings, float[,] heightMap, BiomeInfo info, List<RoadRoute> roadRoutes, Vector2 chunkCentre) {
+        this.roadSettings = terrainSettings.roadSettings;
+        this.terrainSettings = terrainSettings;
 
         this.heightMap = heightMap;
         this.biomeInfo = info;
@@ -81,7 +81,7 @@ public class Road
     private void CreateRoad(Vector3 roadStart, Vector3 roadEnd, Vector3 roadStart2nd, Vector3 roadEnd2nd) {
         #if (UNITY_EDITOR && PROFILE)
         float pathFindStartTime = 0f;
-        if (worldSettings.IsMainThread()) {
+        if (terrainSettings.IsMainThread()) {
             pathFindStartTime = Time.realtimeSinceStartup;
         }
         #endif
@@ -89,7 +89,7 @@ public class Road
         FindPath(roadStart2nd, roadEnd2nd);
 
         #if (UNITY_EDITOR && PROFILE)
-        if (worldSettings.IsMainThread()) {
+        if (terrainSettings.IsMainThread()) {
             float pathFindEndTime = Time.realtimeSinceStartup;
             float pathFindTimeTaken = pathFindEndTime - pathFindStartTime;
             Debug.Log("Path finding time taken: " + pathFindTimeTaken + "s");
@@ -107,7 +107,7 @@ public class Road
 
         #if (UNITY_EDITOR && PROFILE)
         float pathCarveStartTime = 0f;
-        if (worldSettings.IsMainThread()) {
+        if (terrainSettings.IsMainThread()) {
             pathCarveStartTime = Time.realtimeSinceStartup;
         }
         #endif
@@ -115,7 +115,7 @@ public class Road
         CarvePath(workingHeightMap, workingHeightMap);
 
         #if (UNITY_EDITOR && PROFILE)
-        if (worldSettings.IsMainThread()) {
+        if (terrainSettings.IsMainThread()) {
             float pathCarveEndTime = Time.realtimeSinceStartup;
             float pathCarveTimeTaken = pathCarveEndTime - pathCarveStartTime;
             Debug.Log("Path carving time taken: " + pathCarveTimeTaken + "s");
@@ -370,8 +370,8 @@ public class Road
 
         // Calculate roadMultiplier dependent on which biomes have roads enabled
         float biomeRoadMultiplier = 0f;
-        for (int w = 0; w < worldSettings.biomes.Length; w++) {
-            if (worldSettings.biomes[w].allowRoads) {
+        for (int w = 0; w < terrainSettings.biomes.Length; w++) {
+            if (terrainSettings.biomes[w].allowRoads) {
                 biomeRoadMultiplier += biomeInfo.biomeStrengths[x, y, w];
             }
         }
