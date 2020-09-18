@@ -58,9 +58,7 @@ public static class ObjectGenerator {
 														sampleCentre,
 														worldSettings.biomes[biome].heightMapSettings.noiseType,
 														settings.noiseMapSettings.seed);
-		
-		
-		
+				
 		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings, mapSize - 1, sampleCentre, spawnNoiseMap, prng);
 
 		points = FilterPointsByBiome(points, biome, info, prng);
@@ -134,6 +132,8 @@ public static class ObjectGenerator {
         	float gradientY = (heightSW - heightNW) * (1 - x) + (heightSE - heightNE) * x;
 
 			float slope = Mathf.Sqrt(gradientX * gradientX + gradientY * gradientY);
+
+			Debug.Log("SLOPE: " + slope + " DEG: " + Mathf.Rad2Deg * (Mathf.Acos(1 / slope)));
 
 			if (slope > maxSlope || slope < minSlope) {
 				points.RemoveAt(i);

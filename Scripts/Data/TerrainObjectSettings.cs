@@ -42,7 +42,6 @@ public class TerrainObjectSettings : UpdatableData {
 	[ConditionalField("randomScaleUniform")] public float maxScaleUniform = 1;
 
 
-
 	[Separator("Translation", true)]
 	public bool randomTranslation = false;
 	[ConditionalField("randomTranslation", true)] public Vector3 translation = new Vector3(0f, 0f, 0f);
