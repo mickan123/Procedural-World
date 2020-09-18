@@ -8,6 +8,8 @@ public static class ObjectGenerator {
 	public static List<SpawnObject> GenerateBiomeObjects(float[,] heightMap, BiomeInfo info, Road road, WorldSettings settings, Vector2 sampleCentre) {
 		List<SpawnObject> biomeObjects = new List<SpawnObject>();
 		
+		System.Random prng = new System.Random((int)(sampleCentre.x + sampleCentre.y));
+		
 		for (int biome = 0; biome < settings.biomes.Length; biome++) {
 			
 			if (HeightMapContainesBiome(info, biome)) {
@@ -18,7 +20,8 @@ public static class ObjectGenerator {
 															road.roadStrengthMap, 
 															info, 
 															settings, 
-															sampleCentre));    
+															sampleCentre,
+															prng));    
 				}
 			}
 		}
@@ -43,7 +46,8 @@ public static class ObjectGenerator {
 													float[,] roadStrengthMap, 
 													BiomeInfo info, 
 													WorldSettings worldSettings, 
-													Vector2 sampleCentre) {
+													Vector2 sampleCentre,
+													System.Random prng) {
 
 															
 		int mapSize = heightMap.GetLength(0);
@@ -55,9 +59,9 @@ public static class ObjectGenerator {
 														worldSettings.biomes[biome].heightMapSettings.noiseType,
 														settings.noiseMapSettings.seed);
 		
-		System.Random prng = new System.Random((int)(sampleCentre.x + sampleCentre.y));
 		
-		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings, mapSize - 1, sampleCentre, spawnNoiseMap);
+		
+		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings, mapSize - 1, sampleCentre, spawnNoiseMap, prng);
 
 		points = FilterPointsByBiome(points, biome, info, prng);
 		points = FilterPointsBySlope(points, settings.minSlope, settings.maxSlope, heightMap);

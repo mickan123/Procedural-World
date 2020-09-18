@@ -8,6 +8,7 @@ public static class PoissonDiskSampling {
 												int mapSize, 
 												Vector2 sampleCentre, 
 												float[,] spawnNoiseMap, 
+												System.Random prng,
 												int numSamplesBeforeRejection = 20) {
 		
 		float cellSize = settings.maxRadius / Mathf.Sqrt(2);
@@ -21,7 +22,6 @@ public static class PoissonDiskSampling {
 		List<Vector2> points = new List<Vector2>();
 		List<Vector2> spawnPoints = new List<Vector2>();
 
-		System.Random prng = new System.Random((int)(sampleCentre.x + sampleCentre.y));
 		int numPoints = 0;
 		spawnPoints.Add(new Vector2((float)mapSize / 2, (float)mapSize / 2));
 		while (spawnPoints.Count > 0) {

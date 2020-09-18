@@ -212,7 +212,7 @@ public class TerrainChunk {
 					lodMeshes [colliderLODIndex].RequestMesh(heightMap, meshSettings);
 				}
 			}
-			Debug.Log(sqrDstFromViewerToEdge);
+
 			if (sqrDstFromViewerToEdge < colliderGenerationDistanceThreshold * colliderGenerationDistanceThreshold) {
 				if (lodMeshes[colliderLODIndex].hasMesh) {
 					meshCollider.sharedMesh = lodMeshes[colliderLODIndex].mesh;

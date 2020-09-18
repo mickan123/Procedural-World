@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 [CreateAssetMenu(), System.Serializable()]
 public class TerrainObjectSettings : UpdatableData {
@@ -44,7 +45,7 @@ public class TerrainObjectSettings : UpdatableData {
 public class SpawnObject {
 	public TerrainObject[] terrainObjects;
 	public List<ObjectPosition> positions;
-
+	public List<GameObject> spawnedObjects;
 	private System.Random prng;
 	private float scale;
 	
@@ -57,6 +58,7 @@ public class SpawnObject {
 		this.positions = positions;
 		this.scale = scale;
 		this.prng = prng;
+		this.spawnedObjects = new List<GameObject>();
 	}
 
 	public void SetParent(Transform transform) {
@@ -67,7 +69,6 @@ public class SpawnObject {
 
 	public void Spawn(Transform parent) {
 		for (int i = 0; i < positions.Count; i++) {
-			
 			float rand = (float)prng.NextDouble();
 
 			for (int j = 0; j < terrainObjects.Length; j++) {
@@ -77,10 +78,12 @@ public class SpawnObject {
 					obj.transform.position = positions[i].position;
 					obj.transform.rotation = positions[i].rotation;
 					obj.transform.localScale = new Vector3(scale, scale, scale);
+					spawnedObjects.Add(obj);					
 					break;
 				}
 			}
 		}
+		StaticBatchingUtility.Combine(spawnedObjects.ToArray(), spawnedObjects[0]);
 	}
 }
 
