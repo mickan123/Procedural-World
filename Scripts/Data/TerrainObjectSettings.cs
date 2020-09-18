@@ -14,13 +14,14 @@ public class TerrainObjectSettings : UpdatableData {
 	[ConditionalField("varyRadius", true)] public float radius = 5f;
 	[ConditionalField("varyRadius")] public float minRadius = 5f;
 	[ConditionalField("varyRadius")] public float maxRadius = 50f; 
-	[ConditionalField("varyRadius"), DisplayInspector] public NoiseMapSettings noiseMapSettings; //
+	[ConditionalField("varyRadius"), DisplayInspector] public NoiseMapSettings noiseMapSettings;
 
 
 	[Separator("Height", true)]
 	public bool constrainHeight = false;
 	[ConditionalField("constrainHeight")] public float minHeight = 0f;
 	[ConditionalField("constrainHeight")] public float maxHeight = 100f;
+	[ConditionalField("constrainHeight")] public AnimationCurve heightProbabilityCurve = new AnimationCurve();
 
 
 	[Separator("Slope", true)]

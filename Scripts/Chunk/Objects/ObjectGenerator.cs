@@ -69,7 +69,8 @@ public static class ObjectGenerator {
 			points = FilterPointsBySlope(points, settings.minSlope, settings.maxSlope, heightMap);
 		}
 		if (settings.constrainHeight) {
-			points = FilterPointsByHeight(points, settings.minHeight, settings.maxHeight, heightMap);
+			AnimationCurve threadSafeCurve = new AnimationCurve(settings.heightProbabilityCurve.keys);
+			points = FilterPointsByHeight(points, settings.minHeight, settings.maxHeight, heightMap, settings.heightProbabilityCurve, prng);
 		}
 		if (!settings.spawnOnRoad) {
 			points = FilterPointsOnRoad(points, roadStrengthMap);
@@ -143,13 +144,27 @@ public static class ObjectGenerator {
 		return points;
 	}
 
-	public static List<Vector2> FilterPointsByHeight(List<Vector2> points, float minHeight, float maxHeight, float[,] heightMap) {
-
+	public static List<Vector2> FilterPointsByHeight(List<Vector2> points, 
+														float minHeight, 
+														float maxHeight, 
+														float[,] heightMap,
+														AnimationCurve heightProbabilityCurve,
+														System.Random prng) {
+		
 		for (int i = 0; i < points.Count; i++) {
 			float height = heightMap[(int)points[i].x, (int)points[i].y];
 			if (height > maxHeight || height < minHeight) {
 				points.RemoveAt(i);
 				i--;
+			}
+			else {
+				float percentage = (height - minHeight) / (maxHeight - minHeight);
+				float minProb = heightProbabilityCurve.Evaluate(percentage);
+				Debug.Log(minProb);
+				if (Common.NextFloat(prng, 0f, 1f) > minProb) {
+					points.RemoveAt(i);
+					i--;
+				}
 			}
 		}
 
