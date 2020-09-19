@@ -49,7 +49,6 @@ public class MapPreview : MonoBehaviour {
 		terrainSettings.Init();
 		terrainSettings.seed = this.seed;
 
-
 		ResetMapPreview();
 
 		int width = terrainSettings.meshSettings.numVerticesPerLine;
@@ -121,11 +120,11 @@ public class MapPreview : MonoBehaviour {
 
     private void DrawSingleBiome(int width, int height, float[,] humidityMap)
     {
-		BiomeSettings[] oldBiomes = new BiomeSettings[terrainSettings.biomeSettings.Length];
+		BiomeSettings[] oldBiomes = new BiomeSettings[terrainSettings.biomeSettings.Count];
 		float oldTransitionDistance = terrainSettings.transitionDistance;
 
 		try {
-			for (int i = 0; i < terrainSettings.biomeSettings.Length; i++)
+			for (int i = 0; i < terrainSettings.biomeSettings.Count; i++)
 			{
 				oldBiomes[i] = (BiomeSettings)(BiomeSettings.CreateInstance("BiomeSettings"));
 				oldBiomes[i].startHumidity = terrainSettings.biomeSettings[i].startHumidity;
@@ -148,7 +147,7 @@ public class MapPreview : MonoBehaviour {
 
 		} finally {
 			// Reset settings
-			for (int i = 0; i < terrainSettings.biomeSettings.Length; i++)
+			for (int i = 0; i < terrainSettings.biomeSettings.Count; i++)
 			{
 				terrainSettings.biomeSettings[i].startHumidity = oldBiomes[i].startHumidity;
 				terrainSettings.biomeSettings[i].endHumidity = oldBiomes[i].endHumidity;
@@ -191,7 +190,7 @@ public class MapPreview : MonoBehaviour {
     {
         BiomeInfo biomeInfo = BiomeHeightMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, terrainSettings);
 
-        int numBiomes = terrainSettings.biomeSettings.Length;
+        int numBiomes = terrainSettings.biomeSettings.Count;
         float[,] biomeTextureMap = new float[width, height];
         for (int i = 0; i < width; i++)
         {

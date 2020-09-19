@@ -60,7 +60,7 @@ public static class HydraulicErosion {
         #endif
 
         int mapSize = values.GetLength(0);
-        int numBiomes = terrainSettings.biomeSettings.Length;
+        int numBiomes = terrainSettings.biomeSettings.Count;
 
         // Check if we actually perform any erosion
         bool performErosion = false;    

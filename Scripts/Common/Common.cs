@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 
 public static class Common {
 
@@ -42,4 +43,23 @@ public static class Common {
 		value = (value - min) / (max - min);
 		return value;
 	}
+
+	public static void DisplayScriptableObjectEditor(SerializedProperty property, string name, Object targetObject, Editor targetEditor) {
+        EditorGUILayout.PropertyField(property, true);
+
+        if (property.objectReferenceValue != null) {
+            property.isExpanded = EditorGUILayout.Foldout(property.isExpanded, name, true, EditorStyles.foldout);
+        }
+
+        if (property.isExpanded) {
+            if (targetEditor == null) {
+                targetEditor = Editor.CreateEditor(targetObject);
+            }
+            EditorGUI.indentLevel++;
+            targetEditor.DrawDefaultInspector();
+            EditorGUI.indentLevel--;
+        }
+        EditorGUILayout.Space();
+        EditorGUILayout.Space();
+    }
 }

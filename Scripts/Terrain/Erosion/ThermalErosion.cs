@@ -59,7 +59,7 @@ public static class ThermalErosion  {
 		}
 
 		// Weight erosion by biome strengths and whether erosion is enabled
-        int numBiomes = terrainSettings.biomeSettings.Length;
+        int numBiomes = terrainSettings.biomeSettings.Count;
         for (int i = 2; i < mapSize - 3; i++) { // Don't erode border elements as otherwise chunks don't align correctly
             for (int j = 2; j < mapSize - 3; j++) {
                 float val = 0;

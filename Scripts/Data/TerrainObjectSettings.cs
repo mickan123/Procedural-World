@@ -5,57 +5,49 @@ using MyBox;
 [CreateAssetMenu(), System.Serializable()]
 public class TerrainObjectSettings : UpdatableData {
 
-	[Separator("Objects", true)]
 	public TerrainObject[] terrainObjects;
 
-
-	[Separator("Radius", true)]
+	// Spawn radius vars
 	public bool varyRadius = false;
-	[ConditionalField("varyRadius", true)] public float radius = 5f;
-	[ConditionalField("varyRadius")] public float minRadius = 5f;
-	[ConditionalField("varyRadius")] public float maxRadius = 50f; 
-	[ConditionalField("varyRadius"), DisplayInspector] public NoiseMapSettings noiseMapSettings;
+	public float radius = 5f;
+	public float minRadius = 5f;
+	public float maxRadius = 50f; 
+	public NoiseMapSettings noiseMapSettings;
 
-
-	[Separator("Height", true)]
+	// Height vars
 	public bool constrainHeight = false;
-	[ConditionalField("constrainHeight")] public float minHeight = 0f;
-	[ConditionalField("constrainHeight")] public float maxHeight = 100f;
-	[ConditionalField("constrainHeight")] public AnimationCurve heightProbabilityCurve = new AnimationCurve();
+	public float minHeight = 0f;
+	public float maxHeight = 100f;
+	public AnimationCurve heightProbabilityCurve = new AnimationCurve();
 
-
-	[Separator("Slope", true)]
+	// Slope vars
 	public bool constrainSlope = false;
-	[ConditionalField("constrainSlope")] public float minSlope = 0f;
-	[ConditionalField("constrainSlope")] public float maxSlope = 1f;
+	public float minSlope = 0f;
+	public float maxSlope = 1f;
 
-
-	[Separator("Scale", true)]
+	// Scale vars
 	public bool uniformScale = true;
 	public bool randomScale = false;
-	[HideInInspector] public bool randomScaleUniform, randomScaleNonUniform, uniformScaleNotRandom, nonUniformScaleNotRandom;
-	[ConditionalField("uniformScaleNotRandom")] public float scale = 1f;
-	[ConditionalField("nonUniformScaleNotRandom")] public Vector3 nonUniformScale = new Vector3(1f, 1f, 1f);
-	[ConditionalField("randomScaleNonUniform")] public Vector3 minScaleNonUniform = new Vector3(1f, 1f, 1f);
-	[ConditionalField("randomScaleNonUniform")] public Vector3 maxScaleNonUniform = new Vector3(1f, 1f, 1f);
-	[ConditionalField("randomScaleUniform")] public float minScaleUniform = 1;
-	[ConditionalField("randomScaleUniform")] public float maxScaleUniform = 1;
+	public float scale = 1f;
+	public Vector3 nonUniformScale = new Vector3(1f, 1f, 1f);
+	public Vector3 minScaleNonUniform = new Vector3(1f, 1f, 1f);
+	public Vector3 maxScaleNonUniform = new Vector3(1f, 1f, 1f);
+	public float minScaleUniform = 1;
+	public float maxScaleUniform = 1;
 
-
-	[Separator("Translation", true)]
+	// Translation vars
 	public bool randomTranslation = false;
-	[ConditionalField("randomTranslation", true)] public Vector3 translation = new Vector3(0f, 0f, 0f);
-	[ConditionalField("randomTranslation")] public Vector3 minTranslation = new Vector3(0f, 0f, 0f);
-	[ConditionalField("randomTranslation")] public Vector3 maxTranslation = new Vector3(0f, 0f, 0f);
+	public Vector3 translation = new Vector3(0f, 0f, 0f);
+	public Vector3 minTranslation = new Vector3(0f, 0f, 0f);
+	public Vector3 maxTranslation = new Vector3(0f, 0f, 0f);
 
-	[Separator("Rotation", true)]
+	// Rotation vars
 	public bool randomRotation = false;
-	[ConditionalField("randomRotation", true)] public Vector3 rotation = new Vector3(0f, 0f, 0f);
-	[ConditionalField("randomRotation")] public Vector3 minRotation = new Vector3(0f, 0f, 0f);
-	[ConditionalField("randomRotation")] public Vector3 maxRotation = new Vector3(0f, 360f, 0f);
+	public Vector3 rotation = new Vector3(0f, 0f, 0f);
+	public Vector3 minRotation = new Vector3(0f, 0f, 0f);
+	public Vector3 maxRotation = new Vector3(0f, 360f, 0f);
 
-
-	[Separator("Other", true)]
+	// Other vars
 	public bool spawnOnRoad = false;
 	
 	public Vector3 GetScale(System.Random prng) {
@@ -102,8 +94,10 @@ public class TerrainObjectSettings : UpdatableData {
 	#if UNITY_EDITOR
 
 	public void ValidateValues() {
-		noiseMapSettings.ValidateValues();
-
+		if (noiseMapSettings != null) {
+			noiseMapSettings.ValidateValues();
+		}
+		
 		minRadius = Mathf.Max(minRadius, 0f);
 		maxRadius = Mathf.Max(maxRadius, minRadius);
 
@@ -112,12 +106,6 @@ public class TerrainObjectSettings : UpdatableData {
 
 		minSlope = Mathf.Max(minSlope, 0f);
 		maxSlope = Mathf.Max(maxSlope, minSlope);
-
-		uniformScaleNotRandom = uniformScale && !randomScale;
-		nonUniformScaleNotRandom = !uniformScale && !randomScale;
-		
-		randomScaleUniform = uniformScale && randomScale;
-		randomScaleNonUniform = !uniformScale && randomScale;
 
 		for (int i = 0; i < terrainObjects.Length; i++) {
 			terrainObjects[i].probability = Mathf.Clamp01(terrainObjects[i].probability);

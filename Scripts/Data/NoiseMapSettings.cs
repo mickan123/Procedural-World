@@ -8,19 +8,13 @@ public class NoiseMapSettings : UpdatableData {
 
 	public enum NoiseType { Perlin, Simplex, SandDune }
 	public NoiseType noiseType;
-	public PerlinNoiseSettings perlinNoiseSettings;
-	public SandDuneSettings[] sandDuneSettings;
-	[Range(0, 1)] public float xm = 0.7f;
-	[Range(0, 1)] public float p = 1f; // Profile of sand dune
+	[ConditionalField(nameof(noiseType), false, NoiseType.Perlin)] public PerlinNoiseSettings perlinNoiseSettings;
+	[ConditionalField(nameof(noiseType), false, NoiseType.Simplex)] public PerlinNoiseSettings simplexNoiseSettings;
+	[ConditionalField(nameof(noiseType), false, NoiseType.SandDune)] public SandDuneSettings sandDuneSettings;
 	public float heightMultiplier;
 	public AnimationCurve heightCurve;
 	[HideInInspector] public int seed; // Set by global seed
-	private readonly float reposeAngle = 34.0f; // Maximum slope of sand is 34 degrees
-	public float sigma {
-		get {
-			return Mathf.Tan(Mathf.Deg2Rad * reposeAngle);;
-		}
-	}
+	
 	public float minHeight {
 		get {
 			return heightMultiplier * heightCurve.Evaluate(0);
@@ -37,11 +31,11 @@ public class NoiseMapSettings : UpdatableData {
 	#if UNITY_EDITOR
 
 	public virtual void ValidateValues() {
-		perlinNoiseSettings.ValidateValues();
+		if (perlinNoiseSettings != null) {
+			perlinNoiseSettings.ValidateValues();
+		}
 		if (sandDuneSettings != null) {
-			for (int i = 0; i < sandDuneSettings.Length; i++) {
-				sandDuneSettings[i].ValidateValues();
-			}
+			sandDuneSettings.ValidateValues();
 		}
 	}
 
@@ -71,16 +65,33 @@ public class PerlinNoiseSettings {
 
 [System.Serializable()]
 public class SandDuneSettings {
+	[Range(0, 1)] public float xm = 0.7f;
+	[Range(0, 1)] public float p = 1f; // Profile of sand dune
+	private readonly float reposeAngle = 34.0f; // Maximum slope of sand is 34 degrees
+	public float sigma {
+		get {
+			return Mathf.Tan(Mathf.Deg2Rad * reposeAngle);;
+		}
+	}
+	
+	public SandDunePeriod[] sandDunePeriods;
+	public void ValidateValues() {
+		for (int i = 0; i < sandDunePeriods.Length; i++) {
+			if (sandDunePeriods[i] != null) {
+				sandDunePeriods[i].duneOffset = Mathf.Max(0, sandDunePeriods[i].duneOffset);
+				sandDunePeriods[i].maxDuneVariation = Mathf.Max(0, sandDunePeriods[i].maxDuneVariation);
+				sandDunePeriods[i].duneGap = Mathf.Max(0, sandDunePeriods[i].duneGap);
+				sandDunePeriods[i].duneWidth = Mathf.Max(1, sandDunePeriods[i].duneWidth);
+			}
+		}	
+	}
+}
+
+[System.Serializable()]
+public class SandDunePeriod {
 	public float duneWidth = 25f;
 	public float duneOffset = 0f;
 	public float maxDuneVariation = 50f;
 	public float duneGap = 3f;
 	[Range(0, 1)] public float duneThreshold = 0.3f; // Height needs to be above this value to spawn a dune
-
-	public void ValidateValues() {
-		duneOffset = Mathf.Max(0, duneOffset);
-		maxDuneVariation = Mathf.Max(0, maxDuneVariation);
-		duneGap = Mathf.Max(0, duneGap);
-		duneWidth = Mathf.Max(1, duneWidth);
-	}
 }

@@ -10,10 +10,10 @@ public static class ObjectGenerator {
 		
 		System.Random prng = new System.Random((int)(sampleCentre.x + sampleCentre.y));
 		
-		for (int biome = 0; biome < settings.biomeSettings.Length; biome++) {
+		for (int biome = 0; biome < settings.biomeSettings.Count; biome++) {
 			
 			if (HeightMapContainesBiome(info, biome)) {
-				for (int objectSetting = 0; objectSetting < settings.biomeSettings[biome].terrainObjectSettings.Length; objectSetting++) {
+				for (int objectSetting = 0; objectSetting < settings.biomeSettings[biome].terrainObjectSettings.Count; objectSetting++) {
 					biomeObjects.Add(GenerateTerrainObject(settings.biomeSettings[biome].terrainObjectSettings[objectSetting], 
 															biome,
 															heightMap,

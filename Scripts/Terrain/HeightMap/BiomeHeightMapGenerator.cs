@@ -91,12 +91,12 @@ public static class BiomeHeightMapGenerator {
 		// Get rid of padding 
 		float[,] actualHeightNoiseMap = new float[width, height];
 		int[,] actualBiomeMap = new int[width, height];
-		float[,,] actualBiomeStrengths = new float[width, height, terrainSettings.biomeSettings.Length];
+		float[,,] actualBiomeStrengths = new float[width, height, terrainSettings.biomeSettings.Count];
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
 				actualHeightNoiseMap[i, j] = heightNoiseMap[i + padding, j + padding];
 				actualBiomeMap[i, j] = biomeInfo.biomeMap[i + padding, j + padding];
-				for (int w = 0; w < terrainSettings.biomeSettings.Length; w++) {
+				for (int w = 0; w < terrainSettings.biomeSettings.Count; w++) {
 					actualBiomeStrengths[i, j, w] = biomeInfo.biomeStrengths[i + padding, j + padding, w];
 				}
 			}
@@ -182,7 +182,7 @@ public static class BiomeHeightMapGenerator {
 												 BiomeInfo biomeInfo) {
 		
 		// Generate noise maps for all nearby and present biomes
-		int numBiomes = terrainSettings.biomeSettings.Length;
+		int numBiomes = terrainSettings.biomeSettings.Count;
 		List<float[,]> biomeNoiseMaps = new List<float[,]>();
 		for (int i = 0; i < numBiomes; i++) {
 			biomeNoiseMaps.Add(HeightMapGenerator.GenerateHeightMap(width, 
@@ -209,7 +209,7 @@ public static class BiomeHeightMapGenerator {
 	}
 
 	public static BiomeInfo GenerateBiomeInfo(int width, int height, float[,] humidityNoiseMap, float[,] temperatureNoiseMap, TerrainSettings settings) {
-		int numBiomes = settings.biomeSettings.Length;
+		int numBiomes = settings.biomeSettings.Count;
 		int[,] biomeMap = new int[width, height];
 		float[,,] biomeStrengths = new float[width, height, numBiomes];
 

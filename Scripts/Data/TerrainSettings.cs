@@ -2,6 +2,7 @@
 using UnityEngine;
 using System.Threading;
 using MyBox;
+using System.Collections.Generic;
 
 [CreateAssetMenu(), System.Serializable]
 public class TerrainSettings : UpdatableData {
@@ -15,7 +16,7 @@ public class TerrainSettings : UpdatableData {
 	public NoiseMapSettings humidityMapSettings;
 	public NoiseMapSettings temperatureMapSettings;
 	[Range(0,1)] public float transitionDistance;
-	public BiomeSettings[] biomeSettings;
+	public List<BiomeSettings> biomeSettings = new List<BiomeSettings>();
 
 	// Erosion settings
 	public ErosionSettings erosionSettings;
@@ -57,10 +58,10 @@ public class TerrainSettings : UpdatableData {
 		humidityMapSettings.seed = prng.Next(-100000, 100000);
 		erosionSettings.seed = prng.Next(-100000, 100000);
 
-		for (int i = 0; i < biomeSettings.Length; i++) {
+		for (int i = 0; i < biomeSettings.Count; i++) {
 			biomeSettings[i].heightMapSettings.seed = prng.Next(-100000, 100000);
 
-			for (int j = 0; j < biomeSettings[i].terrainObjectSettings.Length; j++) {
+			for (int j = 0; j < biomeSettings[i].terrainObjectSettings.Count; j++) {
 				if (biomeSettings[i].terrainObjectSettings[j] != null) {
 					biomeSettings[i].terrainObjectSettings[j].noiseMapSettings.seed = prng.Next(-100000, 100000);
 				}
@@ -70,7 +71,7 @@ public class TerrainSettings : UpdatableData {
 
 	public void ApplyToMaterial(Material material) {
 
-		float[] layerCounts = new float[biomeSettings.Length];
+		float[] layerCounts = new float[biomeSettings.Count];
 
 		Color[] baseColours = new Color[maxLayerCount * maxBiomeCount];
 		float[] baseStartHeights = new float[maxLayerCount * maxBiomeCount];
@@ -79,7 +80,7 @@ public class TerrainSettings : UpdatableData {
 		float[] baseTextureScales = new float[maxLayerCount * maxBiomeCount];
 		Texture2DArray texturesArray = new Texture2DArray(textureSize, textureSize, maxLayerCount * maxBiomeCount, textureFormat, true);
 
-		for (int i = 0; i < biomeSettings.Length; i++) {
+		for (int i = 0; i < biomeSettings.Count; i++) {
 
 			layerCounts[i] = biomeSettings[i].textureData.layers.Length;
 
@@ -118,7 +119,7 @@ public class TerrainSettings : UpdatableData {
 	public float minHeight {
 		get {
 			float minHeight = float.MaxValue;
-			for (int i = 0; i< biomeSettings.Length; i++) {
+			for (int i = 0; i< biomeSettings.Count; i++) {
 				if (biomeSettings[i].heightMapSettings.minHeight < minHeight) {
 					minHeight = biomeSettings[i].heightMapSettings.minHeight;
 				}
@@ -130,7 +131,7 @@ public class TerrainSettings : UpdatableData {
 	public float maxHeight {
 		get {
 			float maxHeight = float.MinValue;
-			for (int i = 0; i< biomeSettings.Length; i++) {
+			for (int i = 0; i< biomeSettings.Count; i++) {
 				if (biomeSettings[i].heightMapSettings.maxHeight > maxHeight) {
 					maxHeight = biomeSettings[i].heightMapSettings.maxHeight;
 				}
@@ -152,8 +153,10 @@ public class TerrainSettings : UpdatableData {
 		erosionSettings.ValidateValues();
 		meshSettings.ValidateValues();
 
-		for (int i = 0; i < biomeSettings.Length; i++) {
-			biomeSettings[i].ValidateValues();
+		for (int i = 0; i < biomeSettings.Count; i++) {
+			if (biomeSettings[i] != null) {
+				biomeSettings[i].ValidateValues();
+			}
 		}
 		base.OnValidate();
 	}
