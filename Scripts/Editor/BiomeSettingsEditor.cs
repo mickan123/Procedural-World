@@ -108,8 +108,8 @@ public class BiomeSettingsEditor : Editor
         EditorGUILayout.PropertyField(allowRoads, true);
         EditorGUILayout.Space();
 
-        Common.DisplayScriptableObjectEditor(textureData, "Texture Data", myTarget.textureData, textureDataEditor);
-        Common.DisplayScriptableObjectEditor(heightMapSettings, "Height Map Settings", myTarget.heightMapSettings, heightMapSettingsEditor);
+        Common.DisplayScriptableObjectEditor(textureData, myTarget.textureData, textureDataEditor);
+        Common.DisplayScriptableObjectEditor(heightMapSettings, myTarget.heightMapSettings, heightMapSettingsEditor);
         terrainObjectSettingsList.DoLayoutList();
 
         if (EditorGUI.EndChangeCheck()) {

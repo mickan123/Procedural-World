@@ -104,7 +104,7 @@ public class TerrainObjectSettingsEditor : Editor
         if (myTarget.varyRadius) {
             EditorGUILayout.PropertyField(minRadius, true);
             EditorGUILayout.PropertyField(maxRadius, true);
-            Common.DisplayScriptableObjectEditor(noiseMapSettings, "Object Spawn Noise Settings", myTarget.noiseMapSettings, noiseMapSettingsEditor);
+            Common.DisplayScriptableObjectEditor(noiseMapSettings, myTarget.noiseMapSettings, noiseMapSettingsEditor);
         }
         else {
             EditorGUILayout.PropertyField(radius, true);

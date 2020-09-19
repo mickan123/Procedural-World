@@ -44,11 +44,11 @@ public static class Common {
 		return value;
 	}
 
-	public static void DisplayScriptableObjectEditor(SerializedProperty property, string name, Object targetObject, Editor targetEditor) {
-        EditorGUILayout.PropertyField(property, true);
+	public static void DisplayScriptableObjectEditor(SerializedProperty property, Object targetObject, Editor targetEditor) {
+        EditorGUILayout.PropertyField(property, true, GUILayout.Height(-2));
 
         if (property.objectReferenceValue != null) {
-            property.isExpanded = EditorGUILayout.Foldout(property.isExpanded, name, true, EditorStyles.foldout);
+            property.isExpanded = EditorGUILayout.Foldout(property.isExpanded, GUIContent.none, true, EditorStyles.foldout);
         }
 
         if (property.isExpanded) {

@@ -185,23 +185,23 @@ public class TerrainSettingsEditor : Editor
         EditorGUILayout.Space();
         EditorGUILayout.Space();
         
-        Common.DisplayScriptableObjectEditor(humidityMapSettings, "Humidity Settings", myTarget.humidityMapSettings, humidityMapSettingsEditor);
-        Common.DisplayScriptableObjectEditor(temperatureMapSettings, "Temperature Settings", myTarget.temperatureMapSettings, temperatureMapSettingsEditor);
+        Common.DisplayScriptableObjectEditor(humidityMapSettings, myTarget.humidityMapSettings, humidityMapSettingsEditor);
+        Common.DisplayScriptableObjectEditor(temperatureMapSettings, myTarget.temperatureMapSettings, temperatureMapSettingsEditor);
 
         EditorGUILayout.Space();
         biomeSettingsList.DoLayoutList();
     }
 
     private void ErosionTab() {
-        Common.DisplayScriptableObjectEditor(erosionSettings, "Erosion Settings", myTarget.erosionSettings, erosionSettingsEditor);
+        Common.DisplayScriptableObjectEditor(erosionSettings, myTarget.erosionSettings, erosionSettingsEditor);
     }
 
     private void MeshTab() {
-        Common.DisplayScriptableObjectEditor(meshSettings, "Mesh Settings", myTarget.meshSettings, meshSettingsEditor);
+        Common.DisplayScriptableObjectEditor(meshSettings, myTarget.meshSettings, meshSettingsEditor);
     }
 
     private void RoadsTab() {
-        Common.DisplayScriptableObjectEditor(roadSettings, "Road Settings", myTarget.roadSettings, roadSettingsEditor);
+        Common.DisplayScriptableObjectEditor(roadSettings, myTarget.roadSettings, roadSettingsEditor);
     }
 
     private void RiversTab() {
