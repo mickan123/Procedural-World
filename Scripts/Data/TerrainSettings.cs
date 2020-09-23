@@ -140,6 +140,7 @@ public class TerrainSettings : ScriptableObject {
 		this.previewMeshFilter = new MeshFilter();
 
 		this.previewMeshObject = new GameObject("Preview Object");
+		this.previewMeshObject.AddComponent<HideOnPlay>();
 		this.previewMeshRenderer  = this.previewMeshObject.AddComponent<MeshRenderer>();
 		this.previewMeshFilter = this.previewMeshObject.AddComponent<MeshFilter>();
 		this.previewMeshCollider = this.previewMeshObject.AddComponent<MeshCollider>();

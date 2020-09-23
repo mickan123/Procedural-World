@@ -8,15 +8,13 @@ public class TerrainGenerator : MonoBehaviour {
 	public Transform viewer;
 	public Material mapMaterial;
 
-
 	[Separator("Level of Detail Settings", true)]
 	public LODInfo[] detailLevels;
 	public int colliderLODIndex;
 
 	[Separator("Terrain Generation Settings", true)]
-	[DisplayInspector] public TerrainSettings terrainSettings;
+	public TerrainSettings terrainSettings;
 	
-
 	private WorldManager generator;
 
 	void Start() {
