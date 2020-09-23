@@ -3,7 +3,7 @@ using UnityEngine;
 using MyBox;
 
 [CreateAssetMenu(), System.Serializable()]
-public class TerrainObjectSettings : UpdatableData {
+public class TerrainObjectSettings : ScriptableObject {
 
 	public TerrainObject[] terrainObjects;
 
@@ -93,9 +93,9 @@ public class TerrainObjectSettings : UpdatableData {
 
 	#if UNITY_EDITOR
 
-	public void ValidateValues() {
+	public  void OnValidate() {
 		if (noiseMapSettings != null) {
-			noiseMapSettings.ValidateValues();
+			noiseMapSettings.OnValidate();
 		}
 		
 		minRadius = Mathf.Max(minRadius, 0f);
@@ -115,11 +115,6 @@ public class TerrainObjectSettings : UpdatableData {
 			terrainObjects[i].probability = Mathf.Max(terrainObjects[i - 1].probability, 
 													  terrainObjects[i].probability);
 		}
-	}
-
-	protected override void OnValidate() {
-		ValidateValues();
-		base.OnValidate();
 	}
 
 	#endif

@@ -56,7 +56,8 @@ public static class Common {
                 targetEditor = Editor.CreateEditor(targetObject);
             }
             EditorGUI.indentLevel++;
-            targetEditor.DrawDefaultInspector();
+
+            targetEditor.OnInspectorGUI();
             EditorGUI.indentLevel--;
         }
         EditorGUILayout.Space();

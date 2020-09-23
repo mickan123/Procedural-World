@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditorInternal;
 
 [CustomEditor(typeof(TerrainObjectSettings))]
-public class TerrainObjectSettingsEditor : Editor
+public class TerrainObjectSettingsEditor : ScriptlessEditor
 {
     private TerrainObjectSettings myTarget;
     private SerializedObject soTarget;
@@ -16,7 +16,6 @@ public class TerrainObjectSettingsEditor : Editor
     private SerializedProperty minRadius;
     private SerializedProperty maxRadius;
     private SerializedProperty noiseMapSettings;
-    private Editor noiseMapSettingsEditor;
 
     // Height vars
     private SerializedProperty constrainHeight;
@@ -63,7 +62,6 @@ public class TerrainObjectSettingsEditor : Editor
         minRadius = soTarget.FindProperty("minRadius");
         maxRadius = soTarget.FindProperty("maxRadius");
         noiseMapSettings = soTarget.FindProperty("noiseMapSettings");
-        noiseMapSettingsEditor = null;
 
         constrainHeight = soTarget.FindProperty("constrainHeight");
         minHeight = soTarget.FindProperty("minHeight");
@@ -104,7 +102,16 @@ public class TerrainObjectSettingsEditor : Editor
         if (myTarget.varyRadius) {
             EditorGUILayout.PropertyField(minRadius, true);
             EditorGUILayout.PropertyField(maxRadius, true);
-            Common.DisplayScriptableObjectEditor(noiseMapSettings, myTarget.noiseMapSettings, noiseMapSettingsEditor);
+
+            noiseMapSettings.isExpanded = EditorGUILayout.Foldout(noiseMapSettings.isExpanded, "Noise Map Settings", true, EditorStyles.foldout);
+            if (noiseMapSettings.isExpanded) {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.ObjectField(noiseMapSettings);
+                EditorGUILayout.PropertyField(noiseMapSettings, true);
+                EditorGUI.indentLevel--;
+            }
+            EditorGUILayout.Space();
+            EditorGUILayout.Space();
         }
         else {
             EditorGUILayout.PropertyField(radius, true);

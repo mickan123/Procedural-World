@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditorInternal;
 
 [CustomEditor(typeof(BiomeSettings))]
-public class BiomeSettingsEditor : Editor
+public class BiomeSettingsEditor : ScriptlessEditor
 {
     private BiomeSettings myTarget;
     private SerializedObject soTarget;
@@ -13,9 +13,9 @@ public class BiomeSettingsEditor : Editor
     private SerializedProperty textureData;
     private SerializedProperty heightMapSettings;
     private SerializedProperty terrainObjectSettings; 
+    private ReorderableList textureDataList;
     private ReorderableList terrainObjectSettingsList;
-    private Editor textureDataEditor;
-    private Editor heightMapSettingsEditor;
+    private TextureDataEditor textureDataEditor;
     private Dictionary<TerrainObjectSettings, TerrainObjectSettingsEditor> terrainObjectSettingsEditors;
 
     private SerializedProperty hydraulicErosion;
@@ -34,7 +34,6 @@ public class BiomeSettingsEditor : Editor
         textureData = soTarget.FindProperty("textureData");
         heightMapSettings = soTarget.FindProperty("heightMapSettings");
         textureDataEditor = null;
-        heightMapSettingsEditor = null;
         terrainObjectSettingsEditors = new Dictionary<TerrainObjectSettings, TerrainObjectSettingsEditor>();
         CreateTerrainObjectSettingsList();
 
@@ -67,22 +66,22 @@ public class BiomeSettingsEditor : Editor
 
         terrainObjectSettingsList.drawElementCallback = (Rect rect, int index, bool active, bool focused) => {
             SerializedProperty property = terrainObjectSettingsList.serializedProperty.GetArrayElementAtIndex(index);
-            EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property, true);
-            rect.y += EditorGUIUtility.singleLineHeight;
-            if (active) {
-                
-                if (property.objectReferenceValue != null) {
-                    TerrainObjectSettings settings = property.objectReferenceValue as TerrainObjectSettings;
-                    if (!terrainObjectSettingsEditors.ContainsKey(settings)) {
-                        terrainObjectSettingsEditors[settings] = CreateEditor(property.objectReferenceValue) as TerrainObjectSettingsEditor;
-                    }
-                    terrainObjectSettingsEditors[settings].OnInspectorGUI();
-                }
+            EditorGUI.indentLevel++;
+            property.isExpanded = EditorGUI.Foldout(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property.isExpanded, GUIContent.none, true, EditorStyles.foldout);
+            EditorGUI.ObjectField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property);
+            if (property.isExpanded) {
+                EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property, true);
             }
+            EditorGUI.indentLevel--;
         };
 
         terrainObjectSettingsList.elementHeightCallback = (int index) => {
-           return EditorGUIUtility.singleLineHeight * 2;
+            SerializedProperty property = terrainObjectSettingsList.serializedProperty.GetArrayElementAtIndex(index);
+            if (property.isExpanded) {
+                return EditorGUI.GetPropertyHeight(property, true) + EditorGUIUtility.singleLineHeight;
+            } else {
+                return 2 * EditorGUIUtility.singleLineHeight;
+            }
         };
 
         terrainObjectSettingsList.onAddCallback = (ReorderableList list) => {
@@ -90,7 +89,6 @@ public class BiomeSettingsEditor : Editor
             list.serializedProperty.arraySize++;
             list.index = index;
             
-            var element = list.serializedProperty.GetArrayElementAtIndex(index);
             myTarget.terrainObjectSettings.Add(ScriptableObject.CreateInstance("TerrainObjectSettings") as TerrainObjectSettings);
         };
     }
@@ -109,7 +107,17 @@ public class BiomeSettingsEditor : Editor
         EditorGUILayout.Space();
 
         Common.DisplayScriptableObjectEditor(textureData, myTarget.textureData, textureDataEditor);
-        Common.DisplayScriptableObjectEditor(heightMapSettings, myTarget.heightMapSettings, heightMapSettingsEditor);
+
+        heightMapSettings.isExpanded = EditorGUILayout.Foldout(heightMapSettings.isExpanded, "Height Map Settings", true, EditorStyles.foldout);
+        if (heightMapSettings.isExpanded) {
+            EditorGUI.indentLevel++;
+            EditorGUILayout.ObjectField(heightMapSettings);
+            EditorGUILayout.PropertyField(heightMapSettings, true);
+            EditorGUI.indentLevel--;
+        }
+        EditorGUILayout.Space();
+        EditorGUILayout.Space();
+
         terrainObjectSettingsList.DoLayoutList();
 
         if (EditorGUI.EndChangeCheck()) {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(), System.Serializable]
-public class RoadSettings : UpdatableData
+public class RoadSettings : ScriptableObject
 {
 	public TextureData roadTexture;
 	public float width = 1f;
@@ -14,13 +14,8 @@ public class RoadSettings : UpdatableData
 
     #if UNITY_EDITOR
 
-	public virtual void ValidateValues() {
+	public void OnValidate() {
 		smoothness = Mathf.Max(1, smoothness);
-	}
-
-	protected override void OnValidate() {
-		ValidateValues();
-		base.OnValidate();
 	}
 
 	#endif

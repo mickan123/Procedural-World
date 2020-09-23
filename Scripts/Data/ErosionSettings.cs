@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(), System.Serializable]
-public class ErosionSettings : UpdatableData {
+public class ErosionSettings : ScriptableObject {
     public ComputeShader erosionShader;
     public float gravity = 4;
 
@@ -42,14 +42,9 @@ public class ErosionSettings : UpdatableData {
 
     #if UNITY_EDITOR
 
-	public void ValidateValues() {
-        smoothFilterWidth = Mathf.Max(0, smoothFilterWidth);
+	public void OnValidate() {
+		smoothFilterWidth = Mathf.Max(0, smoothFilterWidth);
         smoothWidth = Mathf.Max(0, smoothWidth);
-	}
-
-	protected override void OnValidate() {
-		ValidateValues();
-		base.OnValidate();
 	}
 
 	#endif

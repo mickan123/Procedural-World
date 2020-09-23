@@ -4,21 +4,20 @@ using UnityEngine;
 using System.Linq;
 
 [System.Serializable, CreateAssetMenu()]
-public class TextureData : UpdatableData {
+public class TextureData : ScriptableObject {
 
-	public TextureLayer[] layers;
+	public TextureLayer[] textureLayers;
 
 	#if UNITY_EDITOR
 
-	public void ValidateValues() {
-		for (int i = 0; i < layers.Length; i++) {
-			layers[i].ValidateValues();
-		}		
-	}
-
-	protected override void OnValidate() {
-		ValidateValues();
-		base.OnValidate();
+	public void OnValidate() {
+		if (textureLayers != null) {
+			for (int i = 0; i < textureLayers.Length; i++) {
+				if (textureLayers[i] != null) {
+					textureLayers[i].ValidateValues();
+				}
+			}
+		}	
 	}
 
 	#endif

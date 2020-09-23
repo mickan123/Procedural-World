@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable, CreateAssetMenu()]
-public class BiomeSettings : UpdatableData {
+public class BiomeSettings : ScriptableObject {
 	
 	public TextureData textureData;
 	public NoiseMapSettings heightMapSettings;
@@ -23,23 +23,18 @@ public class BiomeSettings : UpdatableData {
 
 	#if UNITY_EDITOR
 	
-	public void ValidateValues() {
+	public void OnValidate() {
 		for (int i = 0; i < terrainObjectSettings.Count; i++) {
 			if (terrainObjectSettings[i] != null) {
-				terrainObjectSettings[i].ValidateValues();
+				terrainObjectSettings[i].OnValidate();
 			}
 		}
 		if (heightMapSettings != null) {
-			heightMapSettings.ValidateValues();
+			heightMapSettings.OnValidate();
 		}
 		if (textureData != null) {
-			textureData.ValidateValues();
+			textureData.OnValidate();
 		}
-	}
-
-	protected override void OnValidate() {
-		ValidateValues();
-		base.OnValidate();
 	}
 
 	#endif

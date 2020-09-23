@@ -1,18 +1,18 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using MyBox;
 
 [CreateAssetMenu(), System.Serializable]
-public class NoiseMapSettings : UpdatableData {
+public class NoiseMapSettings : ScriptableObject {
 
 	public enum NoiseType { Perlin, Simplex, SandDune }
 	public NoiseType noiseType;
-	[ConditionalField(nameof(noiseType), false, NoiseType.Perlin)] public PerlinNoiseSettings perlinNoiseSettings;
-	[ConditionalField(nameof(noiseType), false, NoiseType.Simplex)] public PerlinNoiseSettings simplexNoiseSettings;
-	[ConditionalField(nameof(noiseType), false, NoiseType.SandDune)] public SandDuneSettings sandDuneSettings;
+	public PerlinNoiseSettings perlinNoiseSettings;
+	public PerlinNoiseSettings simplexNoiseSettings;
+	public SandDuneSettings sandDuneSettings;
 	public float heightMultiplier;
 	public AnimationCurve heightCurve;
+	
 	[HideInInspector] public int seed; // Set by global seed
 	
 	public float minHeight {
@@ -30,18 +30,14 @@ public class NoiseMapSettings : UpdatableData {
 
 	#if UNITY_EDITOR
 
-	public virtual void ValidateValues() {
+	public virtual void OnValidate() {
+
 		if (perlinNoiseSettings != null) {
 			perlinNoiseSettings.ValidateValues();
 		}
 		if (sandDuneSettings != null) {
 			sandDuneSettings.ValidateValues();
 		}
-	}
-
-	protected override void OnValidate() {
-		ValidateValues();
-		base.OnValidate();
 	}
 
 	#endif
@@ -76,14 +72,16 @@ public class SandDuneSettings {
 	
 	public SandDunePeriod[] sandDunePeriods;
 	public void ValidateValues() {
-		for (int i = 0; i < sandDunePeriods.Length; i++) {
-			if (sandDunePeriods[i] != null) {
-				sandDunePeriods[i].duneOffset = Mathf.Max(0, sandDunePeriods[i].duneOffset);
-				sandDunePeriods[i].maxDuneVariation = Mathf.Max(0, sandDunePeriods[i].maxDuneVariation);
-				sandDunePeriods[i].duneGap = Mathf.Max(0, sandDunePeriods[i].duneGap);
-				sandDunePeriods[i].duneWidth = Mathf.Max(1, sandDunePeriods[i].duneWidth);
+		if (sandDunePeriods != null) {
+			for (int i = 0; i < sandDunePeriods.Length; i++) {
+				if (sandDunePeriods[i] != null) {
+					sandDunePeriods[i].duneOffset = Mathf.Max(0, sandDunePeriods[i].duneOffset);
+					sandDunePeriods[i].maxDuneVariation = Mathf.Max(0, sandDunePeriods[i].maxDuneVariation);
+					sandDunePeriods[i].duneGap = Mathf.Max(0, sandDunePeriods[i].duneGap);
+					sandDunePeriods[i].duneWidth = Mathf.Max(1, sandDunePeriods[i].duneWidth);
+				}
 			}
-		}	
+		}
 	}
 }
 

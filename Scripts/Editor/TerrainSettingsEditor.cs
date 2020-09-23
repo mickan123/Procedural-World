@@ -16,8 +16,6 @@ public class TerrainSettingsEditor : Editor
     private SerializedProperty transitionDistance;
     private SerializedProperty biomeSettings;
     private ReorderableList biomeSettingsList;
-    private Editor humidityMapSettingsEditor;
-    private Editor temperatureMapSettingsEditor;
     private Dictionary<BiomeSettings, BiomeSettingsEditor> biomeSettingsEditors;
 
     // Erosion settings
@@ -32,6 +30,16 @@ public class TerrainSettingsEditor : Editor
     private SerializedProperty roadSettings;
     private Editor roadSettingsEditor;
 
+    // Preview settings
+    private SerializedProperty previewTextureObject;
+    private SerializedProperty previewMeshObject;
+    private SerializedProperty previewMaterial;
+    private SerializedProperty drawMode;
+    private SerializedProperty centre;
+    private SerializedProperty editorPreviewLOD;
+    private SerializedProperty drawSingleBiomeIndex;
+    private SerializedProperty noiseMapBiomeIndex;
+
     // Always display settings
     private SerializedProperty seed;
 
@@ -44,8 +52,6 @@ public class TerrainSettingsEditor : Editor
         humidityMapSettings = soTarget.FindProperty("humidityMapSettings");
         temperatureMapSettings = soTarget.FindProperty("temperatureMapSettings");
         transitionDistance = soTarget.FindProperty("transitionDistance");
-        humidityMapSettingsEditor = null;
-        temperatureMapSettingsEditor = null;
         biomeSettingsEditors = new Dictionary<BiomeSettings, BiomeSettingsEditor>();
         CreateBiomeSettingsList();
         
@@ -60,6 +66,16 @@ public class TerrainSettingsEditor : Editor
         // Road settings
         roadSettings = soTarget.FindProperty("roadSettings");
         roadSettingsEditor = null;
+
+        // Preview settings
+        previewTextureObject = soTarget.FindProperty("previewTextureObject");
+        previewMeshObject = soTarget.FindProperty("previewMeshObject");
+        previewMaterial = soTarget.FindProperty("previewMaterial");
+        drawMode = soTarget.FindProperty("drawMode");
+        centre = soTarget.FindProperty("centre");
+        editorPreviewLOD = soTarget.FindProperty("editorPreviewLOD");
+        drawSingleBiomeIndex = soTarget.FindProperty("drawSingleBiomeIndex");
+        noiseMapBiomeIndex = soTarget.FindProperty("noiseMapBiomeIndex");
 
         // Always display settings
         seed = soTarget.FindProperty("seed");
@@ -84,9 +100,7 @@ public class TerrainSettingsEditor : Editor
 
         biomeSettingsList.drawElementCallback = (Rect rect, int index, bool active, bool focused) => {
             SerializedProperty property = biomeSettingsList.serializedProperty.GetArrayElementAtIndex(index);
-        
-            EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property, true);
-            rect.y += EditorGUIUtility.singleLineHeight;
+            EditorGUI.ObjectField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property);
             
             if (active) {
                 if (property.objectReferenceValue != null) {
@@ -94,13 +108,14 @@ public class TerrainSettingsEditor : Editor
                     if (!biomeSettingsEditors.ContainsKey(settings)) {
                         biomeSettingsEditors[settings] = CreateEditor(property.objectReferenceValue) as BiomeSettingsEditor;
                     }
+                    
                     biomeSettingsEditors[settings].OnInspectorGUI();
                 }
             }
         };
 
         biomeSettingsList.elementHeightCallback = (int index) => {
-           return EditorGUIUtility.singleLineHeight * 2;
+            return EditorGUIUtility.singleLineHeight * 2;
         };
 
         biomeSettingsList.onAddCallback = (ReorderableList list) => {
@@ -108,7 +123,6 @@ public class TerrainSettingsEditor : Editor
             list.serializedProperty.arraySize++;
             list.index = index;
             
-            var element = list.serializedProperty.GetArrayElementAtIndex(index);
             myTarget.biomeSettings.Add(ScriptableObject.CreateInstance("BiomeSettings") as BiomeSettings);
         };
     }   
@@ -140,11 +154,15 @@ public class TerrainSettingsEditor : Editor
                 break;            
         }
 
-        myTarget.toolbarBottom = GUILayout.Toolbar(myTarget.toolbarBottom, new string[] { "Rivers" });
+        myTarget.toolbarBottom = GUILayout.Toolbar(myTarget.toolbarBottom, new string[] { "Rivers", "Preview" });
         switch (myTarget.toolbarBottom) {
             case 0:
                 myTarget.toolbarTop = -1;
                 myTarget.currentTab = "Rivers";
+                break;
+            case 1:
+                myTarget.toolbarTop = -1;
+                myTarget.currentTab = "Preview";
                 break;
         }
 
@@ -155,7 +173,6 @@ public class TerrainSettingsEditor : Editor
 
         EditorGUI.BeginChangeCheck();
 
-        // Tab options
         switch (myTarget.currentTab) {
             case "Biomes":
                 BiomesTab();
@@ -172,6 +189,9 @@ public class TerrainSettingsEditor : Editor
             case "Rivers":
                 RiversTab();
                 break;
+            case "Preview":
+                PreviewTab();
+                break;
         }
 
         if (EditorGUI.EndChangeCheck()) {
@@ -185,8 +205,25 @@ public class TerrainSettingsEditor : Editor
         EditorGUILayout.Space();
         EditorGUILayout.Space();
         
-        Common.DisplayScriptableObjectEditor(humidityMapSettings, myTarget.humidityMapSettings, humidityMapSettingsEditor);
-        Common.DisplayScriptableObjectEditor(temperatureMapSettings, myTarget.temperatureMapSettings, temperatureMapSettingsEditor);
+        humidityMapSettings.isExpanded = EditorGUILayout.Foldout(humidityMapSettings.isExpanded, "Humidity Map Settings", true, EditorStyles.foldout);
+        if (humidityMapSettings.isExpanded) {
+            EditorGUI.indentLevel++;
+            EditorGUILayout.ObjectField(humidityMapSettings);
+            EditorGUILayout.PropertyField(humidityMapSettings, true);
+            EditorGUI.indentLevel--;
+        }
+        EditorGUILayout.Space();
+        EditorGUILayout.Space();
+
+        temperatureMapSettings.isExpanded = EditorGUILayout.Foldout(temperatureMapSettings.isExpanded, "Temperature Map Settings", true, EditorStyles.foldout);
+        if (temperatureMapSettings.isExpanded) {
+            EditorGUI.indentLevel++;
+            EditorGUILayout.ObjectField(temperatureMapSettings);
+            EditorGUILayout.PropertyField(temperatureMapSettings, true);
+            EditorGUI.indentLevel--;
+        }
+        EditorGUILayout.Space();
+        EditorGUILayout.Space();
 
         EditorGUILayout.Space();
         biomeSettingsList.DoLayoutList();
@@ -207,4 +244,28 @@ public class TerrainSettingsEditor : Editor
     private void RiversTab() {
 
     }
+
+    private void PreviewTab() {
+        EditorGUILayout.LabelField("Preview Objects", EditorStyles.boldLabel);
+        EditorGUILayout.ObjectField(previewTextureObject.exposedReferenceValue, typeof(Renderer), true);
+        EditorGUILayout.PropertyField(previewMeshObject);
+        EditorGUILayout.PropertyField(previewMaterial);
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Preview Settings", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(drawMode, true);
+        EditorGUILayout.PropertyField(centre, true);
+        EditorGUILayout.PropertyField(editorPreviewLOD, true);
+        if (drawMode.enumValueIndex == (int)TerrainSettings.DrawMode.SingleBiomeMesh) {
+            EditorGUILayout.PropertyField(drawSingleBiomeIndex, true);
+        }   
+        if (drawMode.enumValueIndex == (int)TerrainSettings.DrawMode.NoiseMapTexture) {
+            EditorGUILayout.PropertyField(noiseMapBiomeIndex, true);
+        }
+        EditorGUILayout.Space();
+        if (GUILayout.Button("Generate")) {
+			myTarget.DrawMapInEditor();
+		}
+    }
+
+    
 }

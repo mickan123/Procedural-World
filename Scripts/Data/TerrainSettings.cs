@@ -5,7 +5,7 @@ using MyBox;
 using System.Collections.Generic;
 
 [CreateAssetMenu(), System.Serializable]
-public class TerrainSettings : UpdatableData {
+public class TerrainSettings : ScriptableObject {
 
 	// Custom editor toolbar tabs settings
 	[HideInInspector] public int toolbarTop;
@@ -36,6 +36,17 @@ public class TerrainSettings : UpdatableData {
 	private const int biomeStrengthTextureWidth = 256;
 	public readonly int maxLayerCount = 8;
 	public readonly int maxBiomeCount = 8;
+
+	// Preview settings
+	public Renderer previewTextureObject;
+	public MeshFilter previewMeshObject;
+	public Material previewMaterial;
+	public enum DrawMode { SingleBiomeMesh, BiomesMesh, NoiseMapTexture, FalloffMapTexture, BiomesTexture, HumidityMapTexture, TemperatureMapTexture };
+	public DrawMode drawMode;
+	public Vector2 centre;
+	[Range(0, MeshSettings.numSupportedLODs - 1)] public int editorPreviewLOD;
+	public int drawSingleBiomeIndex = 0;
+	public int noiseMapBiomeIndex = 0;
 
 	public Thread mainThread;
 
@@ -82,11 +93,11 @@ public class TerrainSettings : UpdatableData {
 
 		for (int i = 0; i < biomeSettings.Count; i++) {
 
-			layerCounts[i] = biomeSettings[i].textureData.layers.Length;
+			layerCounts[i] = biomeSettings[i].textureData.textureLayers.Length;
 
-			for (int j = 0; j < biomeSettings[i].textureData.layers.Length; j++) {
+			for (int j = 0; j < biomeSettings[i].textureData.textureLayers.Length; j++) {
 
-				TextureLayer curLayer = biomeSettings[i].textureData.layers[j];
+				TextureLayer curLayer = biomeSettings[i].textureData.textureLayers[j];
 				baseColours[i * maxLayerCount + j] = curLayer.tint;
 				baseStartHeights[i * maxLayerCount + j] = curLayer.startHeight;
 				baseBlends[i * maxLayerCount + j] = curLayer.blendStrength;
@@ -112,8 +123,176 @@ public class TerrainSettings : UpdatableData {
 		material.SetFloat("maxHeight", maxHeight);
 		material.SetInt("chunkWidth", meshSettings.meshWorldSize);
 
-		material.SetTexture("roadTexture", roadSettings.roadTexture.layers[0].texture);
-		material.SetFloat("roadTextureScale", roadSettings.roadTexture.layers[0].textureScale);
+		material.SetTexture("roadTexture", roadSettings.roadTexture.textureLayers[0].texture);
+		material.SetFloat("roadTextureScale", roadSettings.roadTexture.textureLayers[0].textureScale);
+	}
+
+	public void DrawMapInEditor() {
+		this.ApplyToMaterial(this.previewMaterial);
+		this.Init();
+
+		ResetMapPreview();
+
+		int width = this.meshSettings.numVerticesPerLine;
+		int height = this.meshSettings.numVerticesPerLine;
+
+		float[,] humidityMap = HeightMapGenerator.GenerateHeightMap(width,
+                                                            height,
+                                                            this.humidityMapSettings,
+                                                            this,
+                                                            centre,
+															HeightMapGenerator.NormalizeMode.Global,
+                                                            this.humidityMapSettings.seed);
+		float[,] temperatureMap = HeightMapGenerator.GenerateHeightMap(width,
+                                                               height,
+                                                               this.temperatureMapSettings,
+                                                               this,
+                                                               centre,
+															   HeightMapGenerator.NormalizeMode.Global,
+                                                               this.temperatureMapSettings.seed);
+		
+
+		if (drawMode == DrawMode.NoiseMapTexture) {
+			NoiseMapSettings noiseMapSettings= this.biomeSettings[noiseMapBiomeIndex].heightMapSettings;
+			float[,] heightMap = HeightMapGenerator.GenerateHeightMap(width,
+                                                           height,
+                                                           noiseMapSettings,
+                                                           this,
+                                                           centre,
+														   HeightMapGenerator.NormalizeMode.GlobalBiome,
+                                                           noiseMapSettings.seed);
+			DrawTexture(TextureGenerator.TextureFromHeightMap(heightMap));
+		} 
+		else if (drawMode == DrawMode.FalloffMapTexture) {
+			DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(width)));
+		}
+		else if (drawMode == DrawMode.BiomesMesh) {
+            DrawBiomeMesh(width, height, humidityMap);
+        }
+        else if (drawMode == DrawMode.BiomesTexture) {
+            DrawBiomes(width, height, humidityMap, temperatureMap);
+        }
+        else if (drawMode == DrawMode.HumidityMapTexture) {
+			DrawTexture(TextureGenerator.TextureFromHeightMap(humidityMap));
+		}
+		else if (drawMode == DrawMode.TemperatureMapTexture) {
+			DrawTexture(TextureGenerator.TextureFromHeightMap(temperatureMap));
+		}
+		else if (drawMode == DrawMode.SingleBiomeMesh) {
+            DrawSingleBiome(width, height, humidityMap);
+        }
+    }
+
+	private void ResetMapPreview() {
+		// Cleanup previously spawned objects
+
+		for (int i = 0; i < this.previewMeshObject.transform.childCount; i++) {
+			Transform child = this.previewMeshObject.transform.GetChild(i);
+			if (child.name != "Preview Texture" && child.name != "Preview Mesh") {
+				DestroyImmediate(child.gameObject);
+				i--;
+			}
+		}
+
+		for (int i = 0; i < this.previewMeshObject.transform.childCount; i++) {
+			Transform child = this.previewMeshObject.transform.GetChild(i);
+			DestroyImmediate(child.gameObject);
+			i--;
+		}
+	}
+
+    private void DrawSingleBiome(int width, int height, float[,] humidityMap)
+    {
+		BiomeSettings[] oldBiomes = new BiomeSettings[this.biomeSettings.Count];
+		float oldTransitionDistance = this.transitionDistance;
+
+		try {
+			for (int i = 0; i < this.biomeSettings.Count; i++)
+			{
+				oldBiomes[i] = (BiomeSettings)(BiomeSettings.CreateInstance("BiomeSettings"));
+				oldBiomes[i].startHumidity = this.biomeSettings[i].startHumidity;
+				oldBiomes[i].endHumidity = this.biomeSettings[i].endHumidity;
+				oldBiomes[i].startTemperature = this.biomeSettings[i].startTemperature;
+				oldBiomes[i].endTemperature = this.biomeSettings[i].endTemperature;
+
+				this.biomeSettings[i].startHumidity = 0f;
+				this.biomeSettings[i].endHumidity = 0f;
+				this.biomeSettings[i].startTemperature = 0f;
+				this.biomeSettings[i].endTemperature = 0f;
+			}
+
+			this.biomeSettings[drawSingleBiomeIndex].endHumidity = 1f;
+			this.biomeSettings[drawSingleBiomeIndex].endTemperature = 1f;
+			this.transitionDistance = 0f;
+			this.ApplyToMaterial(this.previewMaterial);
+
+			DrawBiomeMesh(width, height, humidityMap);
+
+		} finally {
+			// Reset settings
+			for (int i = 0; i < this.biomeSettings.Count; i++)
+			{
+				this.biomeSettings[i].startHumidity = oldBiomes[i].startHumidity;
+				this.biomeSettings[i].endHumidity = oldBiomes[i].endHumidity;
+				this.biomeSettings[i].startTemperature = oldBiomes[i].startTemperature;
+				this.biomeSettings[i].endTemperature = oldBiomes[i].endTemperature;
+			}
+			this.transitionDistance = oldTransitionDistance;
+		}
+    }
+
+    private void DrawBiomeMesh(int width, int height, float[,] humidityMap)
+    {
+		#if (PROFILE && UNITY_EDITOR)
+		float startTime = 0f;
+		if (terrainSettings.IsMainThread()) {
+        	startTime = Time.realtimeSinceStartup;
+		}
+        #endif
+		ChunkData chunkData = ChunkDataGenerator.GenerateChunkData(this, centre, null);
+
+		MeshData meshData = MeshGenerator.GenerateTerrainMesh(chunkData.biomeData.heightNoiseMap, this.meshSettings, editorPreviewLOD);
+        DrawMesh(meshData);
+
+		TerrainChunk.UpdateMaterial(chunkData, this, new MaterialPropertyBlock(), previewMeshObject.GetComponents<MeshRenderer>()[0]);
+
+		for (int i = 0; i < chunkData.objects.Count; i++) {
+			chunkData.objects[i].Spawn(this.previewMeshObject.transform);
+		}
+
+		#if (PROFILE && UNITY_EDITOR)
+		if (terrainSettings.IsMainThread()) {
+			float endTime = Time.realtimeSinceStartup;
+			float totalTimeTaken = endTime - startTime;
+			Debug.Log("Total time taken: " + totalTimeTaken + "s");
+		}
+        #endif
+    }
+
+    private void DrawBiomes(int width, int height, float[,] humidityMap, float[,] temperatureMap)
+    {
+        BiomeInfo biomeInfo = BiomeHeightMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, this);
+
+        int numBiomes = this.biomeSettings.Count;
+        float[,] biomeTextureMap = new float[width, height];
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                biomeTextureMap[i, j] = (float)biomeInfo.biomeMap[i, j] / (float)(numBiomes - 1);
+            }
+        }
+
+        DrawTexture(TextureGenerator.TextureFromHeightMap(biomeTextureMap));
+    }
+
+	public void DrawTexture(Texture2D texture) {
+		this.previewTextureObject.sharedMaterial.mainTexture = texture;
+		this.previewTextureObject.transform.localScale = new Vector3(-96, 1, 96);
+	}
+
+	public void DrawMesh(MeshData meshData) {
+		this.previewMeshObject.sharedMesh = meshData.CreateMesh();
 	}
 
 	public float minHeight {
@@ -146,19 +325,18 @@ public class TerrainSettings : UpdatableData {
 
 	#if UNITY_EDITOR
 
-	protected override void OnValidate() {
+	public void OnValidate() {
 		// TODO ensure no overlapping biome values
-		humidityMapSettings.ValidateValues();
-		temperatureMapSettings.ValidateValues();
-		erosionSettings.ValidateValues();
-		meshSettings.ValidateValues();
+		humidityMapSettings.OnValidate();
+		temperatureMapSettings.OnValidate();
+		erosionSettings.OnValidate();
+		meshSettings.OnValidate();
 
 		for (int i = 0; i < biomeSettings.Count; i++) {
 			if (biomeSettings[i] != null) {
-				biomeSettings[i].ValidateValues();
+				biomeSettings[i].OnValidate();
 			}
 		}
-		base.OnValidate();
 	}
 
 	#endif

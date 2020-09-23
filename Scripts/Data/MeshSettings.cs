@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(), System.Serializable]
-public class MeshSettings : UpdatableData {
+public class MeshSettings : ScriptableObject {
 
 	public const int numSupportedLODs = 5;
 	public const int numSupportedChunkSizes = 9;
@@ -20,13 +20,8 @@ public class MeshSettings : UpdatableData {
 
 	#if UNITY_EDITOR
 
-	public void ValidateValues() {
+	public void OnValidate() {
 		// Placeholder for custom validation for mesh settings
-	}
-
-	protected override void OnValidate() {
-		ValidateValues();
-		base.OnValidate();
 	}
 
 	#endif
