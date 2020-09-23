@@ -31,13 +31,11 @@ public class TerrainSettingsEditor : Editor
     private Editor roadSettingsEditor;
 
     // Preview settings
-    private SerializedProperty previewTextureObject;
-    private SerializedProperty previewMeshObject;
     private SerializedProperty previewMaterial;
     private SerializedProperty drawMode;
     private SerializedProperty centre;
     private SerializedProperty editorPreviewLOD;
-    private SerializedProperty drawSingleBiomeIndex;
+    private SerializedProperty singleBiomeIndex;
     private SerializedProperty noiseMapBiomeIndex;
 
     // Always display settings
@@ -68,13 +66,11 @@ public class TerrainSettingsEditor : Editor
         roadSettingsEditor = null;
 
         // Preview settings
-        previewTextureObject = soTarget.FindProperty("previewTextureObject");
-        previewMeshObject = soTarget.FindProperty("previewMeshObject");
         previewMaterial = soTarget.FindProperty("previewMaterial");
         drawMode = soTarget.FindProperty("drawMode");
         centre = soTarget.FindProperty("centre");
         editorPreviewLOD = soTarget.FindProperty("editorPreviewLOD");
-        drawSingleBiomeIndex = soTarget.FindProperty("drawSingleBiomeIndex");
+        singleBiomeIndex = soTarget.FindProperty("singleBiomeIndex");
         noiseMapBiomeIndex = soTarget.FindProperty("noiseMapBiomeIndex");
 
         // Always display settings
@@ -131,8 +127,7 @@ public class TerrainSettingsEditor : Editor
         soTarget.Update();
         EditorGUI.BeginChangeCheck();
 
-        // Common options
-        EditorGUILayout.PropertyField(seed);
+        CommonOptions();
 
         myTarget.toolbarTop = GUILayout.Toolbar(myTarget.toolbarTop, new string[] { "Biomes", "Erosion", "Mesh", "Roads"});
         switch (myTarget.toolbarTop) {
@@ -199,6 +194,11 @@ public class TerrainSettingsEditor : Editor
         }
     }
 
+    private void CommonOptions() {
+        EditorGUILayout.PropertyField(seed);
+        EditorGUILayout.Space();
+    }
+
     private void BiomesTab() {
         
         EditorGUILayout.PropertyField(transitionDistance);
@@ -246,17 +246,13 @@ public class TerrainSettingsEditor : Editor
     }
 
     private void PreviewTab() {
-        EditorGUILayout.LabelField("Preview Objects", EditorStyles.boldLabel);
-        EditorGUILayout.ObjectField(previewTextureObject.exposedReferenceValue, typeof(Renderer), true);
-        EditorGUILayout.PropertyField(previewMeshObject);
-        EditorGUILayout.PropertyField(previewMaterial);
-        EditorGUILayout.Space();
         EditorGUILayout.LabelField("Preview Settings", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(previewMaterial);
         EditorGUILayout.PropertyField(drawMode, true);
         EditorGUILayout.PropertyField(centre, true);
         EditorGUILayout.PropertyField(editorPreviewLOD, true);
         if (drawMode.enumValueIndex == (int)TerrainSettings.DrawMode.SingleBiomeMesh) {
-            EditorGUILayout.PropertyField(drawSingleBiomeIndex, true);
+            EditorGUILayout.PropertyField(singleBiomeIndex, true);
         }   
         if (drawMode.enumValueIndex == (int)TerrainSettings.DrawMode.NoiseMapTexture) {
             EditorGUILayout.PropertyField(noiseMapBiomeIndex, true);

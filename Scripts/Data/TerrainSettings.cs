@@ -37,15 +37,20 @@ public class TerrainSettings : ScriptableObject {
 	public readonly int maxLayerCount = 8;
 	public readonly int maxBiomeCount = 8;
 
-	// Preview settings
-	public Renderer previewTextureObject;
-	public MeshFilter previewMeshObject;
+	// Preview objects
+	private Renderer previewTextureObject;
+	private MeshFilter previewMeshFilter;
+	private GameObject previewMeshObject;
+	private MeshCollider previewMeshCollider;
+	private MeshRenderer previewMeshRenderer;
 	public Material previewMaterial;
+
+	// Preview settings
 	public enum DrawMode { SingleBiomeMesh, BiomesMesh, NoiseMapTexture, FalloffMapTexture, BiomesTexture, HumidityMapTexture, TemperatureMapTexture };
 	public DrawMode drawMode;
 	public Vector2 centre;
 	[Range(0, MeshSettings.numSupportedLODs - 1)] public int editorPreviewLOD;
-	public int drawSingleBiomeIndex = 0;
+	public int singleBiomeIndex = 0;
 	public int noiseMapBiomeIndex = 0;
 
 	public Thread mainThread;
@@ -131,7 +136,16 @@ public class TerrainSettings : ScriptableObject {
 		this.ApplyToMaterial(this.previewMaterial);
 		this.Init();
 
-		ResetMapPreview();
+		this.previewTextureObject = new Renderer();
+		this.previewMeshFilter = new MeshFilter();
+
+		this.previewMeshObject = new GameObject("Preview Object");
+		this.previewMeshRenderer  = this.previewMeshObject.AddComponent<MeshRenderer>();
+		this.previewMeshFilter = this.previewMeshObject.AddComponent<MeshFilter>();
+		this.previewMeshCollider = this.previewMeshObject.AddComponent<MeshCollider>();
+		this.previewMeshRenderer.material = this.previewMaterial;
+
+		ResetPreview();
 
 		int width = this.meshSettings.numVerticesPerLine;
 		int height = this.meshSettings.numVerticesPerLine;
@@ -183,21 +197,10 @@ public class TerrainSettings : ScriptableObject {
         }
     }
 
-	private void ResetMapPreview() {
-		// Cleanup previously spawned objects
-
-		for (int i = 0; i < this.previewMeshObject.transform.childCount; i++) {
-			Transform child = this.previewMeshObject.transform.GetChild(i);
-			if (child.name != "Preview Texture" && child.name != "Preview Mesh") {
-				DestroyImmediate(child.gameObject);
-				i--;
-			}
-		}
-
-		for (int i = 0; i < this.previewMeshObject.transform.childCount; i++) {
-			Transform child = this.previewMeshObject.transform.GetChild(i);
-			DestroyImmediate(child.gameObject);
-			i--;
+	private void ResetPreview() {
+		GameObject prevPreviewObject = GameObject.Find("Preview Object");
+		if (prevPreviewObject){
+			DestroyImmediate(prevPreviewObject.gameObject);
 		}
 	}
 
@@ -221,8 +224,8 @@ public class TerrainSettings : ScriptableObject {
 				this.biomeSettings[i].endTemperature = 0f;
 			}
 
-			this.biomeSettings[drawSingleBiomeIndex].endHumidity = 1f;
-			this.biomeSettings[drawSingleBiomeIndex].endTemperature = 1f;
+			this.biomeSettings[singleBiomeIndex].endHumidity = 1f;
+			this.biomeSettings[singleBiomeIndex].endTemperature = 1f;
 			this.transitionDistance = 0f;
 			this.ApplyToMaterial(this.previewMaterial);
 
@@ -292,7 +295,7 @@ public class TerrainSettings : ScriptableObject {
 	}
 
 	public void DrawMesh(MeshData meshData) {
-		this.previewMeshObject.sharedMesh = meshData.CreateMesh();
+		this.previewMeshFilter.sharedMesh = meshData.CreateMesh();
 	}
 
 	public float minHeight {
