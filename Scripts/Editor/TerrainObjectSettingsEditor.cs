@@ -52,6 +52,7 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
 
     // Other vars
     private SerializedProperty spawnOnRoad;
+    private SerializedProperty hide;
 
     private void OnEnable() {
         myTarget = (TerrainObjectSettings)target;
@@ -91,6 +92,7 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
         minRotation = soTarget.FindProperty("minRotation");
         maxRotation = soTarget.FindProperty("maxRotation");
 
+        hide = soTarget.FindProperty("hide");
         spawnOnRoad = soTarget.FindProperty("spawnOnRoad");
     }
 
@@ -177,6 +179,7 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
         EditorGUILayout.Space();
 
         EditorGUILayout.LabelField("Other", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(hide, true);
         EditorGUILayout.PropertyField(spawnOnRoad, true);
         EditorGUILayout.Space();
 

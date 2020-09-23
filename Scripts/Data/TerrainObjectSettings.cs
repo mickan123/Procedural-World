@@ -48,6 +48,7 @@ public class TerrainObjectSettings : ScriptableObject {
 	public Vector3 maxRotation = new Vector3(0f, 360f, 0f);
 
 	// Other vars
+	public bool hide = false;
 	public bool spawnOnRoad = false;
 	
 	public Vector3 GetScale(System.Random prng) {
@@ -125,10 +126,12 @@ public class SpawnObject {
 	public List<ObjectPosition> positions;
 	private List<GameObject> spawnedObjects;
 	private System.Random prng;
+	private bool hide;
 	
 	public SpawnObject(TerrainObject[] terrainObjects, 
 						List<ObjectPosition> positions, 
-						System.Random prng) {
+						System.Random prng,
+						bool hide) {
 		if (terrainObjects == null) {
 			this.terrainObjects = new TerrainObject[0];
 		} else {
@@ -137,6 +140,7 @@ public class SpawnObject {
 		this.positions = positions;
 		this.prng = prng;
 		this.spawnedObjects = new List<GameObject>();
+		this.hide = hide;
 	}
 
 	public void SetParent(Transform transform) {
@@ -156,6 +160,7 @@ public class SpawnObject {
 					obj.transform.position = positions[i].position;
 					obj.transform.rotation = positions[i].rotation;
 					obj.transform.localScale = positions[i].scale;
+					obj.SetActive(!hide);
 					spawnedObjects.Add(obj);					
 					break;
 				}

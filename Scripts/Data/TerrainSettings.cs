@@ -133,11 +133,13 @@ public class TerrainSettings : ScriptableObject {
 	}
 
 	public void DrawMapInEditor() {
+
+		this.ResetPreview();
+
 		this.ApplyToMaterial(this.previewMaterial);
 		this.Init();
-
+		
 		this.previewTextureObject = new Renderer();
-		this.previewMeshFilter = new MeshFilter();
 
 		this.previewMeshObject = new GameObject("Preview Object");
 		this.previewMeshObject.AddComponent<HideOnPlay>();
@@ -145,8 +147,6 @@ public class TerrainSettings : ScriptableObject {
 		this.previewMeshFilter = this.previewMeshObject.AddComponent<MeshFilter>();
 		this.previewMeshCollider = this.previewMeshObject.AddComponent<MeshCollider>();
 		this.previewMeshRenderer.material = this.previewMaterial;
-
-		ResetPreview();
 
 		int width = this.meshSettings.numVerticesPerLine;
 		int height = this.meshSettings.numVerticesPerLine;

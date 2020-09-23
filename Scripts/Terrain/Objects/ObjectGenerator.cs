@@ -93,7 +93,8 @@ public static class ObjectGenerator {
 
 		return new SpawnObject(settings.terrainObjects, 
 								spawnPositions, 
-								prng);
+								prng,
+								settings.hide);
 	}
 
 	public static List<Vector2> FilterPointsByBiome(List<Vector2> points, int biome, BiomeInfo info, System.Random prng) {

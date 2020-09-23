@@ -69,6 +69,7 @@ public class BiomeSettingsEditor : ScriptlessEditor
             EditorGUI.indentLevel++;
             property.isExpanded = EditorGUI.Foldout(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property.isExpanded, GUIContent.none, true, EditorStyles.foldout);
             EditorGUI.ObjectField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property);
+            rect.y += EditorGUIUtility.singleLineHeight;
             if (property.isExpanded) {
                 EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property, true);
             }
@@ -78,7 +79,7 @@ public class BiomeSettingsEditor : ScriptlessEditor
         terrainObjectSettingsList.elementHeightCallback = (int index) => {
             SerializedProperty property = terrainObjectSettingsList.serializedProperty.GetArrayElementAtIndex(index);
             if (property.isExpanded) {
-                return EditorGUI.GetPropertyHeight(property, true) + EditorGUIUtility.singleLineHeight;
+                return EditorGUI.GetPropertyHeight(property, true) + 2 * EditorGUIUtility.singleLineHeight;
             } else {
                 return 2 * EditorGUIUtility.singleLineHeight;
             }

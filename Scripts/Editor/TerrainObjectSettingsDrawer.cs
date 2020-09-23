@@ -47,6 +47,7 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
         var minRotation = serializedObject.FindProperty("minRotation");
         var maxRotation = serializedObject.FindProperty("maxRotation");
 
+        var hide = serializedObject.FindProperty("hide");
         var spawnOnRoad = serializedObject.FindProperty("spawnOnRoad");
 
         position.y += EditorGUIUtility.singleLineHeight;
@@ -173,6 +174,8 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
 
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Other", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
+        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), hide, true);
+        position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), spawnOnRoad, true);
         position.y += EditorGUIUtility.singleLineHeight;
         position.y += EditorGUIUtility.singleLineHeight;
@@ -208,7 +211,7 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
         var randomRotation = serializedObject.FindProperty("randomRotation");
         height += (randomRotation.boolValue) ? 5f * EditorGUIUtility.singleLineHeight : 4f * EditorGUIUtility.singleLineHeight;
 
-        height += 3f * EditorGUIUtility.singleLineHeight;
+        height += 4f * EditorGUIUtility.singleLineHeight;
 
         var noiseMapSettings = serializedObject.FindProperty("noiseMapSettings");
         if (noiseMapSettings.isExpanded) {
