@@ -62,12 +62,12 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), maxRadius, true);
             position.y += EditorGUIUtility.singleLineHeight;
             
+            EditorGUI.ObjectField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), noiseMapSettings);
             noiseMapSettings.isExpanded = EditorGUI.Foldout(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), 
                                                             noiseMapSettings.isExpanded, 
                                                             GUIContent.none, 
                                                             true, 
                                                             EditorStyles.foldout);
-            EditorGUI.ObjectField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), noiseMapSettings);
             position.y += EditorGUIUtility.singleLineHeight;
             if (noiseMapSettings.isExpanded) {
                 EditorGUI.indentLevel++;

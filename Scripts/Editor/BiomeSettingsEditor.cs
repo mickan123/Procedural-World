@@ -67,8 +67,8 @@ public class BiomeSettingsEditor : ScriptlessEditor
         terrainObjectSettingsList.drawElementCallback = (Rect rect, int index, bool active, bool focused) => {
             SerializedProperty property = terrainObjectSettingsList.serializedProperty.GetArrayElementAtIndex(index);
             EditorGUI.indentLevel++;
-            property.isExpanded = EditorGUI.Foldout(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property.isExpanded, GUIContent.none, true, EditorStyles.foldout);
             EditorGUI.ObjectField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property);
+            property.isExpanded = EditorGUI.Foldout(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property.isExpanded, GUIContent.none, true, EditorStyles.foldout);
             rect.y += EditorGUIUtility.singleLineHeight;
             if (property.isExpanded) {
                 EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property, true);
