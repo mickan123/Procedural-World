@@ -189,6 +189,11 @@ public class TerrainSettingsEditor : Editor
                 break;
         }
 
+        EditorGUILayout.Space();
+        if (GUILayout.Button("Generate")) {
+			myTarget.DrawMapInEditor();
+		}
+
         if (EditorGUI.EndChangeCheck()) {
             soTarget.ApplyModifiedProperties();
         }
@@ -257,10 +262,6 @@ public class TerrainSettingsEditor : Editor
         if (drawMode.enumValueIndex == (int)TerrainSettings.DrawMode.NoiseMapTexture) {
             EditorGUILayout.PropertyField(noiseMapBiomeIndex, true);
         }
-        EditorGUILayout.Space();
-        if (GUILayout.Button("Generate")) {
-			myTarget.DrawMapInEditor();
-		}
     }
 
     

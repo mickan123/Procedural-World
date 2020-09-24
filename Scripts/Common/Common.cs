@@ -44,7 +44,7 @@ public static class Common {
 		return value;
 	}
 
-	public static void DisplayScriptableObjectEditor(SerializedProperty property, Object targetObject, Editor targetEditor) {
+	public static Editor DisplayScriptableObjectEditor(SerializedProperty property, Object targetObject, Editor targetEditor) {
         EditorGUILayout.PropertyField(property, true, GUILayout.Height(-2));
 
         if (property.objectReferenceValue != null) {
@@ -62,5 +62,7 @@ public static class Common {
         }
         EditorGUILayout.Space();
         EditorGUILayout.Space();
+
+		return targetEditor;
     }
 }

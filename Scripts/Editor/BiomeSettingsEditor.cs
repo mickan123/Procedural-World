@@ -107,7 +107,7 @@ public class BiomeSettingsEditor : ScriptlessEditor
         EditorGUILayout.PropertyField(allowRoads, true);
         EditorGUILayout.Space();
 
-        Common.DisplayScriptableObjectEditor(textureData, myTarget.textureData, textureDataEditor);
+        textureDataEditor = (TextureDataEditor)Common.DisplayScriptableObjectEditor(textureData, myTarget.textureData, textureDataEditor);
 
         heightMapSettings.isExpanded = EditorGUILayout.Foldout(heightMapSettings.isExpanded, "Height Map Settings", true, EditorStyles.foldout);
         if (heightMapSettings.isExpanded) {
