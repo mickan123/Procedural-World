@@ -25,7 +25,6 @@ public static class ObjectGenerator {
 				}
 			}
 		}
-
 		return biomeObjects;
 	}
 
@@ -49,46 +48,28 @@ public static class ObjectGenerator {
 													Vector2 sampleCentre,
 													System.Random prng) {
 
-															
-		int mapSize = heightMap.GetLength(0);
-
-		float[,] spawnNoiseMap = Noise.GenerateNoiseMap(mapSize,
-														mapSize,
-														settings.noiseMapSettings.perlinNoiseSettings,
-														sampleCentre,
-														terrainSettings.biomeSettings[biome].heightMapSettings.noiseType,
-														settings.noiseMapSettings.seed);
-				
-		List<Vector2> points = PoissonDiskSampling.GeneratePoints(settings, mapSize - 1, sampleCentre, spawnNoiseMap, prng);
-
-		points = FilterPointsByBiome(points, biome, info, prng);
-
-		if (settings.constrainSlope) {
-			points = FilterPointsBySlope(points, settings.minSlope, settings.maxSlope, heightMap);
+																	
+		// Generate spawn points by selected algorithm
+		List<Vector3> points;
+		if (settings.spawnMode == TerrainObjectSettings.SpawnMode.PoissonDiskSampling) {
+			points = PoissonDiskSampling.GeneratePoints(settings, sampleCentre, heightMap, prng, terrainSettings, biome);
 		}
-		if (settings.constrainHeight) {
-			AnimationCurve threadSafeCurve = new AnimationCurve(settings.heightProbabilityCurve.keys);
-			points = FilterPointsByHeight(points, settings.minHeight, settings.maxHeight, heightMap, settings.heightProbabilityCurve, prng);
+		else if (settings.spawnMode == TerrainObjectSettings.SpawnMode.Random) {
+			points = RandomPoints.GeneratePoints(settings, prng, heightMap);
 		}
-		if (!settings.spawnOnRoad) {
-			points = FilterPointsOnRoad(points, roadStrengthMap);
+		else {
+			points = PoissonDiskSampling.GeneratePoints(settings, sampleCentre, heightMap,  prng, terrainSettings, biome);
 		}
 
+		// Filter points dependent on settings
+		FilterSpawnPoints(ref points, settings, biome, info, heightMap, roadStrengthMap, prng);
+
+		// Generate object positions
 		List<ObjectPosition> spawnPositions = new List<ObjectPosition>();
-		
-
 		for (int point = 0; point < points.Count; point++) {
-			Vector2 spawnPoint = points[point];
-
-			Vector3 position = new Vector3(Mathf.FloorToInt(spawnPoint.x + sampleCentre.x) * terrainSettings.meshSettings.meshScale,
-											heightMap[Mathf.FloorToInt(spawnPoint.x), Mathf.FloorToInt(spawnPoint.y)], 
-											Mathf.FloorToInt(spawnPoint.y + sampleCentre.y) * terrainSettings.meshSettings.meshScale);
-
-			Quaternion rotation = settings.GetRotation(prng);
-			Vector3 scale = settings.GetScale(prng);
-			Vector3 translation = settings.GetTranslation(prng);
-
-			spawnPositions.Add(new ObjectPosition(position + translation, scale, rotation));
+			spawnPositions.Add(new ObjectPosition(points[point] + settings.GetTranslation(prng), 
+												  settings.GetScale(prng), 
+												  settings.GetRotation(prng)));
 		}
 
 		return new SpawnObject(settings.terrainObjects, 
@@ -97,37 +78,55 @@ public static class ObjectGenerator {
 								settings.hide);
 	}
 
-	public static List<Vector2> FilterPointsByBiome(List<Vector2> points, int biome, BiomeInfo info, System.Random prng) {
+	public static void FilterSpawnPoints(ref List<Vector3> points, 
+										 TerrainObjectSettings settings, 
+										 int biome, 
+										 BiomeInfo info, 
+										 float[,] heightMap, 
+										 float[,] roadStrengthMap,
+										 System.Random prng) {
 
+		FilterPointsByBiome(ref points, biome, info, prng);
+		if (settings.constrainSlope) {
+			FilterPointsBySlope(ref points, settings.minSlope, settings.maxSlope, heightMap);
+		}
+		if (settings.constrainHeight) {
+			AnimationCurve threadSafeCurve = new AnimationCurve(settings.heightProbabilityCurve.keys);
+			FilterPointsByHeight(ref points, settings.minHeight, settings.maxHeight, heightMap, settings.heightProbabilityCurve, prng);
+		}
+		if (!settings.spawnOnRoad) {
+			FilterPointsOnRoad(ref points, roadStrengthMap);
+		}
+	}
+
+	public static void FilterPointsByBiome(ref List<Vector3> points, int biome, BiomeInfo info, System.Random prng) {
 		for (int i = 0; i < points.Count; i++) {
 			float rand = (float)prng.NextDouble(); 
 
 			int coordX = (int) points[i].x;
-        	int coordY = (int) points[i].y;
+        	int coordZ = (int) points[i].z;
 
-			if (rand > info.biomeStrengths[coordX, coordY, biome] * info.biomeStrengths[coordX, coordY, biome] * info.biomeStrengths[coordX, coordY, biome]) {
+			if (rand > info.biomeStrengths[coordX, coordZ, biome] * info.biomeStrengths[coordX, coordZ, biome] * info.biomeStrengths[coordX, coordZ, biome]) {
 				points.RemoveAt(i);
 				i--;
 			}
 		}
-		return points;
 	}
 
-	public static List<Vector2> FilterPointsBySlope(List<Vector2> points, float minSlope, float maxSlope, float[,] heightMap) {
-
+	public static void FilterPointsBySlope(ref List<Vector3> points, float minSlope, float maxSlope, float[,] heightMap) {
 		for (int i = 0; i < points.Count; i++) {
 			
 			int coordX = (int) points[i].x;
-        	int coordY = (int) points[i].y;
+        	int coordZ = (int) points[i].z;
 
 			// Calculate offset inside the cell (0,0) = at NW node, (1,1) = at SE node
 			float x = points[i].x - coordX;
-			float y = points[i].y - coordY;
+			float y = points[i].y - coordZ;
 
-			float heightNW = heightMap[coordX, coordY];
-			float heightNE = heightMap[coordX + 1, coordY];
-			float heightSW = heightMap[coordX, coordY + 1];
-			float heightSE = heightMap[coordX + 1, coordY + 1];
+			float heightNW = heightMap[coordX, coordZ];
+			float heightNE = heightMap[coordX + 1, coordZ];
+			float heightSW = heightMap[coordX, coordZ + 1];
+			float heightSE = heightMap[coordX + 1, coordZ + 1];
 
 			float gradientX = (heightNE - heightNW) * (1 - y) + (heightSE - heightSW) * y;
         	float gradientY = (heightSW - heightNW) * (1 - x) + (heightSE - heightNE) * x;
@@ -139,19 +138,17 @@ public static class ObjectGenerator {
 				i--;
 			}
 		}
-
-		return points;
 	}
 
-	public static List<Vector2> FilterPointsByHeight(List<Vector2> points, 
-														float minHeight, 
-														float maxHeight, 
-														float[,] heightMap,
-														AnimationCurve heightProbabilityCurve,
-														System.Random prng) {
+	public static void FilterPointsByHeight(ref List<Vector3> points, 
+											float minHeight, 
+											float maxHeight, 
+											float[,] heightMap,
+											AnimationCurve heightProbabilityCurve,
+											System.Random prng) {
 		
 		for (int i = 0; i < points.Count; i++) {
-			float height = heightMap[(int)points[i].x, (int)points[i].y];
+			float height = heightMap[(int)points[i].x, (int)points[i].z];
 			if (height > maxHeight || height < minHeight) {
 				points.RemoveAt(i);
 				i--;
@@ -165,19 +162,15 @@ public static class ObjectGenerator {
 				}
 			}
 		}
-
-		return points;
 	}
 
-	public static List<Vector2> FilterPointsOnRoad(List<Vector2> points, float[,] roadStrengthMap) {
+	public static void  FilterPointsOnRoad(ref List<Vector3> points, float[,] roadStrengthMap) {
 		for (int i = 0; i < points.Count; i++) {
-			if (roadStrengthMap[(int)points[i].x, (int)points[i].y] != 0f ||
-				roadStrengthMap[(int)points[i].x + 1, (int)points[i].y + 1] != 0f) {
+			float roadStrength = Common.HeightFromFloatCoord(points[i].x, points[i].z, roadStrengthMap);
+			if (roadStrength > 0f) {
 				points.RemoveAt(i);
 				i--;
 			}
 		}
-
-		return points;
 	}
 }

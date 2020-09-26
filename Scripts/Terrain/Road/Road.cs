@@ -38,8 +38,8 @@ public class Road
         for (int i = 0; i < roadRoutes.Count; i++) {
             path = new List<Vector3>();
 
-            Vector3 roadStart = new Vector3(roadRoutes[i].roadStart.x, HeightFromFloatCoord(roadRoutes[i].roadStart, heightMap), roadRoutes[i].roadStart.y);
-            Vector3 roadEnd = new Vector3(roadRoutes[i].roadEnd.x, HeightFromFloatCoord(roadRoutes[i].roadEnd, heightMap), roadRoutes[i].roadEnd.y);
+            Vector3 roadStart = new Vector3(roadRoutes[i].roadStart.x, Common.HeightFromFloatCoord(roadRoutes[i].roadStart, heightMap), roadRoutes[i].roadStart.y);
+            Vector3 roadEnd = new Vector3(roadRoutes[i].roadEnd.x, Common.HeightFromFloatCoord(roadRoutes[i].roadEnd, heightMap), roadRoutes[i].roadEnd.y);
 
             // Create second point perpendicular to edge from start and end points to make sure last part of path is perpendsicular to edge of chunk
             Vector3 roadStart2nd = roadStart + new Vector3((roadStart.x == 0) ? 5 : (roadStart.x == mapSize - 1) ? -5 : 0,
@@ -53,30 +53,7 @@ public class Road
         }
     }
 
-    private float HeightFromFloatCoord(Vector2 coord, float[,] heightMap) {
-        return HeightFromFloatCoord(coord.x, coord.y, heightMap);
-    }
-
-    private float HeightFromFloatCoord(float x, float y, float[,] heightMap) {
-        int maxIndex = heightMap.GetLength(0) - 1;
-        int indexX = Mathf.Clamp((int)x, 0, maxIndex);
-        int indexY = Mathf.Clamp((int)y, 0, maxIndex);
-        
-        x = x - indexX;
-        y = y - indexY;
-
-        float heightNW = heightMap[indexX, indexY];
-        float heightNE = heightMap[indexX, Mathf.Min(indexY + 1, maxIndex)];
-        float heightSW = heightMap[Mathf.Min(indexX + 1, maxIndex), indexY];
-        float heightSE = heightMap[Mathf.Min(indexX + 1, maxIndex), Mathf.Min(indexY + 1, maxIndex)];
-
-        float height = heightNW * (1 - x) * (1 - y) 
-                     + heightNE *  x      * (1 - y) 
-                     + heightSW * (1 - x) * y
-                     + heightSE *  x      * y;       
-        
-        return height;
-    }
+    
 
     private void CreateRoad(Vector3 roadStart, Vector3 roadEnd, Vector3 roadStart2nd, Vector3 roadEnd2nd) {
         #if (UNITY_EDITOR && PROFILE)
@@ -262,8 +239,8 @@ public class Road
             int range = 10;
             for (int i = -range; i <= range; i++) {
                 for (int j = -range; j <= range; j++) {
-                    float originalY = HeightFromFloatCoord(points[0].x + i, points[0].z + j, this.originalHeightMap);
-                    float currentY = HeightFromFloatCoord(points[0].x + i, points[0].z + j, this.heightMap);
+                    float originalY = Common.HeightFromFloatCoord(points[0].x + i, points[0].z + j, this.originalHeightMap);
+                    float currentY = Common.HeightFromFloatCoord(points[0].x + i, points[0].z + j, this.heightMap);
                     if (originalY != currentY) {
                         averageWithCurrent = true;
                     }
@@ -271,7 +248,7 @@ public class Road
             }
             
             if (averageWithCurrent) {
-                float newY = (HeightFromFloatCoord(points[0].x, points[0].z, this.heightMap) + points[0].y) /2f;
+                float newY = (Common.HeightFromFloatCoord(points[0].x, points[0].z, this.heightMap) + points[0].y) /2f;
                 smoothedPoints.Add(new Vector3(points[0].x, newY, points[0].z));
             }
             else {

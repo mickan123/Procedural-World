@@ -10,6 +10,10 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
     private TerrainObjectSettings myTarget;
     private SerializedObject soTarget;
 
+    private SerializedProperty terrainObjects;
+    private SerializedProperty spawnMode;
+    private SerializedProperty numRandomSpawns;
+
     // Radius vars
     private SerializedProperty varyRadius;
     private SerializedProperty radius;
@@ -57,6 +61,10 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
     private void OnEnable() {
         myTarget = (TerrainObjectSettings)target;
         soTarget = new SerializedObject(target);
+        
+        terrainObjects = soTarget.FindProperty("terrainObjects");
+        spawnMode = soTarget.FindProperty("spawnMode");
+        numRandomSpawns = soTarget.FindProperty("numRandomSpawns");
 
         varyRadius = soTarget.FindProperty("varyRadius");
         radius = soTarget.FindProperty("radius");
@@ -98,6 +106,14 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
 
     public override void OnInspectorGUI() {
         EditorGUI.BeginChangeCheck();
+
+        EditorGUILayout.LabelField("Game Objects", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(terrainObjects, true);
+        EditorGUILayout.PropertyField(spawnMode, true);
+        if (spawnMode.enumValueIndex == (int)TerrainObjectSettings.SpawnMode.Random) {
+            EditorGUILayout.PropertyField(numRandomSpawns, true);
+        }
+        EditorGUILayout.Space();
 
         EditorGUILayout.LabelField("Radius", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(varyRadius, true);

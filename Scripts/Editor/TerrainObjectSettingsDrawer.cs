@@ -13,6 +13,10 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
 
         EditorGUI.BeginChangeCheck();
 
+        var terrainObjects = serializedObject.FindProperty("terrainObjects");
+        var spawnMode = serializedObject.FindProperty("spawnMode");
+        var numRandomSpawns = serializedObject.FindProperty("numRandomSpawns");
+
         var varyRadius = serializedObject.FindProperty("varyRadius");
         var radius = serializedObject.FindProperty("radius");
         var minRadius = serializedObject.FindProperty("minRadius");
@@ -52,6 +56,18 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
 
         position.y += EditorGUIUtility.singleLineHeight;
 
+        
+        float terrainObjectsHeight = EditorGUI.GetPropertyHeight(terrainObjects, true);
+        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, terrainObjectsHeight), terrainObjects, true);
+        position.y += terrainObjectsHeight;
+        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, terrainObjectsHeight), spawnMode, true);
+        position.y += EditorGUIUtility.singleLineHeight;
+        if (spawnMode.enumValueIndex == (int)TerrainObjectSettings.SpawnMode.Random) {
+            EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), numRandomSpawns, true);
+            position.y += EditorGUIUtility.singleLineHeight;
+        }
+        position.y += EditorGUIUtility.singleLineHeight;
+        
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Radius", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), varyRadius, true);
@@ -193,6 +209,14 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
         SerializedObject serializedObject = new SerializedObject(property.objectReferenceValue as TerrainObjectSettings);
 
         float height = 0;
+
+        var terrainObjects = serializedObject.FindProperty("terrainObjects");
+        var spawnMode = serializedObject.FindProperty("spawnMode");
+        height += EditorGUI.GetPropertyHeight(terrainObjects, true) + 2 * EditorGUIUtility.singleLineHeight;
+        if (spawnMode.enumValueIndex == (int)TerrainObjectSettings.SpawnMode.Random) {
+            height += EditorGUIUtility.singleLineHeight;
+        }
+
         var varyRadius = serializedObject.FindProperty("varyRadius");
         height += (varyRadius.boolValue) ? 6f * EditorGUIUtility.singleLineHeight : 4f * EditorGUIUtility.singleLineHeight;
 

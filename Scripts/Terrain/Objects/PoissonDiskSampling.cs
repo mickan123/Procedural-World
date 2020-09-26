@@ -4,27 +4,45 @@ using UnityEngine;
 
 public static class PoissonDiskSampling {
 
-	public static List<Vector2> GeneratePoints(TerrainObjectSettings settings, 
-												int mapSize, 
+	public static List<Vector3> GeneratePoints(TerrainObjectSettings settings, 
 												Vector2 sampleCentre, 
-												float[,] spawnNoiseMap, 
+												float[,] heightMap,
 												System.Random prng,
+												TerrainSettings terrainSettings,
+												int biome,
 												int numSamplesBeforeRejection = 20) {
 		
+		int mapSize = heightMap.GetLength(0);
+
+		float[,] spawnNoiseMap;
+		if (settings.varyRadius) {
+			spawnNoiseMap = Noise.GenerateNoiseMap(mapSize,
+													mapSize,
+													settings.noiseMapSettings.perlinNoiseSettings,
+													sampleCentre,
+													terrainSettings.biomeSettings[biome].heightMapSettings.noiseType,
+													settings.noiseMapSettings.seed);
+		} else {
+			spawnNoiseMap = null;
+		}
+		float spawnSize = mapSize - 1;
+
 		float maxRadius = settings.varyRadius ? settings.maxRadius : settings.radius;
 		float cellSize = maxRadius / Mathf.Sqrt(2);
 
-		List<int>[,] grid = new List<int>[Mathf.CeilToInt((float)mapSize / cellSize), Mathf.CeilToInt((float)mapSize / cellSize)];
+		// Initialize 2d grid of lists
+		List<int>[,] grid = new List<int>[Mathf.CeilToInt(spawnSize / cellSize), Mathf.CeilToInt(spawnSize / cellSize)];
 		for (int x = 0; x < grid.GetLength(0); x++) {
 			for (int y = 0; y < grid.GetLength(1); y++) {
 				grid[x, y] = new List<int>();
 			}
 		}
-		List<Vector2> points = new List<Vector2>();
+		
+		List<Vector2> points2d = new List<Vector2>();
 		List<Vector2> spawnPoints = new List<Vector2>();
 
 		int numPoints = 0;
-		spawnPoints.Add(new Vector2((float)mapSize / 2, (float)mapSize / 2));
+		spawnPoints.Add(new Vector2(spawnSize / 2, spawnSize / 2));
 		while (spawnPoints.Count > 0) {
 			numPoints++;
 			int spawnIndex = prng.Next(0, spawnPoints.Count);
@@ -43,10 +61,10 @@ public static class PoissonDiskSampling {
 				Vector2 dir = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle));
 				
 				Vector2 candidate = spawnCentre + dir * Common.NextFloat(prng, radius, 2 * radius);
-				if (IsValid(candidate, mapSize, cellSize, radius, points, grid)) {
-					points.Add(candidate);
+				if (IsValid(candidate, spawnSize, cellSize, radius, points2d, grid)) {
+					points2d.Add(candidate);
 					spawnPoints.Add(candidate);
-					grid[(int)(candidate.x / cellSize), (int)(candidate.y / cellSize)].Add(points.Count);
+					grid[(int)(candidate.x / cellSize), (int)(candidate.y / cellSize)].Add(points2d.Count);
 					candidateAccepted = true;
 					break;
 				}
@@ -56,18 +74,32 @@ public static class PoissonDiskSampling {
 			}
 		}
 
-		return points;
+		List<Vector3> points3d = new List<Vector3>(points2d.Count);
+		for (int point = 0; point < points2d.Count; point++) {
+			float height = Common.HeightFromFloatCoord(points2d[point].x, points2d[point].y, heightMap);
+			float offset = 1f; // Take into account offset due to extra points around edges
+
+			Vector3 adjustedPoint = new Vector3((points2d[point].x + sampleCentre.x) * terrainSettings.meshSettings.meshScale - offset, 
+										  Common.HeightFromFloatCoord(points2d[point].x, points2d[point].y, heightMap), 
+										  (points2d[point].y + sampleCentre.y) * terrainSettings.meshSettings.meshScale - offset);
+
+			if (adjustedPoint.x >= 0f && adjustedPoint.z >= 0f && adjustedPoint.x <= mapSize - 3 && adjustedPoint.z <= mapSize - 3) {
+				points3d.Add(adjustedPoint);
+			}
+		}
+		
+		return points3d;
 	}
 
 	static bool IsValid(Vector2 candidate, 
-						int mapSize, 
+						float spawnSize, 
 						float cellSize,
 						float radius, 
 						List<Vector2> points, 
 						List<int>[,] grid) {
 
 
-		if (candidate.x >= 0 && candidate.x < (float)mapSize && candidate.y >= 0 && candidate.y < (float)mapSize) {
+		if (candidate.x >= 0 && candidate.x < spawnSize && candidate.y >= 0 && candidate.y < spawnSize) {
 
 			int cellX = (int)(candidate.x / cellSize);
 			int cellY = (int)(candidate.y / cellSize);

@@ -15,7 +15,7 @@ public class RoadSettingsEditor : ScriptlessEditor
     private SerializedProperty stepSize;
     private SerializedProperty smoothness;
     private SerializedProperty blendFactor;
-    private Editor roadTextureEditor;
+    private TextureDataEditor roadTextureEditor;
 
     private void OnEnable() {
         myTarget = (RoadSettings)target;
@@ -35,7 +35,7 @@ public class RoadSettingsEditor : ScriptlessEditor
         soTarget.Update();
         EditorGUI.BeginChangeCheck();
 
-        Common.DisplayScriptableObjectEditor(roadTexture, myTarget.roadTexture, roadTextureEditor);
+        roadTextureEditor = (TextureDataEditor)Common.DisplayScriptableObjectEditor(roadTexture, myTarget.roadTexture, roadTextureEditor);
 
         EditorGUILayout.PropertyField(width);
         EditorGUILayout.PropertyField(roadMaterial);

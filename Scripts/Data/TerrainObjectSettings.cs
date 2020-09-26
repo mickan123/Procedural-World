@@ -6,6 +6,9 @@ using MyBox;
 public class TerrainObjectSettings : ScriptableObject {
 
 	public TerrainObject[] terrainObjects;
+	public enum SpawnMode { PoissonDiskSampling, Random };
+	public SpawnMode spawnMode;
+	public int numRandomSpawns = 1024;
 
 	// Spawn radius vars
 	public bool varyRadius = false;

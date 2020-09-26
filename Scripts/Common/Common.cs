@@ -65,4 +65,29 @@ public static class Common {
 
 		return targetEditor;
     }
+
+	public static float HeightFromFloatCoord(Vector2 coord, float[,] heightMap) {
+        return HeightFromFloatCoord(coord.x, coord.y, heightMap);
+    }
+
+    public static float HeightFromFloatCoord(float x, float y, float[,] heightMap) {
+        int maxIndex = heightMap.GetLength(0) - 1;
+        int indexX = Mathf.Clamp((int)x, 0, maxIndex);
+        int indexY = Mathf.Clamp((int)y, 0, maxIndex);
+        
+        x = x - indexX;
+        y = y - indexY;
+
+        float heightNW = heightMap[indexX, indexY];
+        float heightNE = heightMap[Mathf.Min(indexX + 1, maxIndex), indexY];
+        float heightSW = heightMap[indexX, Mathf.Min(indexY + 1, maxIndex)];
+        float heightSE = heightMap[Mathf.Min(indexX + 1, maxIndex), Mathf.Min(indexY + 1, maxIndex)];
+
+        float height = heightNW * (1 - x) * (1 - y) 
+                     + heightNE *  x      * (1 - y) 
+                     + heightSW * (1 - x) * y
+                     + heightSE *  x      * y;   
+        
+        return height;
+    }
 }
