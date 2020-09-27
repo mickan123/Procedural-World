@@ -56,7 +56,8 @@ public class TerrainSettings : ScriptableObject {
 	private TerrainChunk chunk;
 	
 	// Keep copy of this so that shader doesn't lose values 
-	private Texture2DArray texturesArray;
+	private Texture2DArray biomeTexturesArray;
+	private Texture2DArray roadTextureArray;
 
 	public float sqrTransitionDistance {
 		get {
@@ -89,15 +90,27 @@ public class TerrainSettings : ScriptableObject {
 	}
 
 	public void ApplyToMaterial(Material material) {
+		
+		// Biome texture settings
 		float[] layerCounts = new float[biomeSettings.Count];
-
 		Color[] baseColours = new Color[maxLayerCount * maxBiomeCount];
 		float[] baseStartHeights = new float[maxLayerCount * maxBiomeCount];
 		float[] baseBlends = new float[maxLayerCount * maxBiomeCount];
-		float[] baseColourStrength = new float[maxLayerCount * maxBiomeCount];
+		float[] baseColourStrengths = new float[maxLayerCount * maxBiomeCount];
 		float[] baseTextureScales = new float[maxLayerCount * maxBiomeCount];
-		this.texturesArray = new Texture2DArray(textureSize, textureSize, maxLayerCount * maxBiomeCount, textureFormat, true);
 
+		// Road texture settings
+		float roadLayerCount;
+		Color[] roadColours = new Color[maxLayerCount];
+		float[] roadStartHeights = new float[maxLayerCount];
+		float[] roadBlends = new float[maxLayerCount];
+		float[] roadColourStrengths = new float[maxLayerCount];
+		float[] roadTextureScales = new float[maxLayerCount];
+
+		this.biomeTexturesArray = new Texture2DArray(textureSize, textureSize, maxLayerCount * maxBiomeCount, textureFormat, true);
+		this.roadTextureArray = new Texture2DArray(textureSize, textureSize, maxLayerCount, textureFormat, true);
+
+		// Set biome texture settings
 		for (int i = 0; i < biomeSettings.Count; i++) {
 
 			layerCounts[i] = biomeSettings[i].textureData.textureLayers.Length;
@@ -108,30 +121,53 @@ public class TerrainSettings : ScriptableObject {
 				baseColours[i * maxLayerCount + j] = curLayer.tint;
 				baseStartHeights[i * maxLayerCount + j] = curLayer.startHeight;
 				baseBlends[i * maxLayerCount + j] = curLayer.blendStrength;
-				baseColourStrength[i * maxLayerCount + j] = curLayer.tintStrength;
+				baseColourStrengths[i * maxLayerCount + j] = curLayer.tintStrength;
 				baseTextureScales[i * maxLayerCount + j] = curLayer.textureScale;
 
 				if (curLayer.texture != null) {
-					this.texturesArray.SetPixels(curLayer.texture.GetPixels(0, 0, textureSize, textureSize), i * maxLayerCount + j);
-				}	
+					this.biomeTexturesArray.SetPixels(curLayer.texture.GetPixels(0, 0, textureSize, textureSize), i * maxLayerCount + j);
+				}
 			}
 		}
-		this.texturesArray.Apply();
+		this.biomeTexturesArray.Apply();
 
+		// Set road texture settings
+		roadLayerCount = roadSettings.roadTexture.textureLayers.Length;
+		for (int i = 0; i < roadSettings.roadTexture.textureLayers.Length; i++) {
+			TextureLayer curLayer = roadSettings.roadTexture.textureLayers[i];
+			roadColours[i] = curLayer.tint;
+			roadStartHeights[i] = curLayer.startHeight;
+			roadBlends[i] = curLayer.blendStrength;
+			roadColourStrengths[i] = curLayer.tintStrength;
+			roadTextureScales[i] = curLayer.textureScale;
+
+			if (curLayer.texture != null) {
+				this.roadTextureArray.SetPixels(curLayer.texture.GetPixels(0, 0, textureSize, textureSize), i);
+			}
+		}
+		this.roadTextureArray.Apply();
+
+		material.SetInt("chunkWidth", meshSettings.meshWorldSize);
+		material.SetFloat("minHeight", minHeight);
+		material.SetFloat("maxHeight", maxHeight);
+
+		// Apply biome texture settings
+		material.SetTexture("baseTextures", this.biomeTexturesArray);
 		material.SetFloatArray("layerCounts", layerCounts);
 		material.SetColorArray("baseColours", baseColours);
 		material.SetFloatArray("baseStartHeights", baseStartHeights);
 		material.SetFloatArray("baseBlends", baseBlends);
-		material.SetFloatArray("baseColourStrengths", baseColourStrength);
+		material.SetFloatArray("baseColourStrengths", baseColourStrengths);
 		material.SetFloatArray("baseTextureScales", baseTextureScales);
 		
-		material.SetTexture("baseTextures", this.texturesArray);
-		material.SetFloat("minHeight", minHeight);
-		material.SetFloat("maxHeight", maxHeight);
-		material.SetInt("chunkWidth", meshSettings.meshWorldSize);
-
-		material.SetTexture("roadTexture", roadSettings.roadTexture.textureLayers[0].texture);
-		material.SetFloat("roadTextureScale", roadSettings.roadTexture.textureLayers[0].textureScale);
+		// Apply road texture settings
+		material.SetTexture("roadTextures", this.roadTextureArray);
+		material.SetFloat("roadLayerCount", roadLayerCount);
+		material.SetColorArray("roadColours", roadColours);
+		material.SetFloatArray("roadStartHeights", roadStartHeights);
+		material.SetFloatArray("roadBlends", roadBlends);
+		material.SetFloatArray("roadColourStrengths", roadColourStrengths);
+		material.SetFloatArray("roadTextureScales", roadTextureScales);
 	}
 
 	public void DrawMapInEditor() {
