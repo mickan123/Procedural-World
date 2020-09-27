@@ -39,21 +39,24 @@ public class TerrainSettings : ScriptableObject {
 
 	// Preview objects
 	private Renderer previewTextureObject;
-	private MeshFilter previewMeshFilter;
 	private GameObject previewMeshObject;
-	private MeshCollider previewMeshCollider;
-	private MeshRenderer previewMeshRenderer;
 	public Material previewMaterial;
 
 	// Preview settings
 	public enum DrawMode { SingleBiomeMesh, BiomesMesh, NoiseMapTexture, FalloffMapTexture, BiomesTexture, HumidityMapTexture, TemperatureMapTexture };
 	public DrawMode drawMode;
 	public Vector2 centre;
+	public LODInfo[] detailLevels;
 	[Range(0, MeshSettings.numSupportedLODs - 1)] public int editorPreviewLOD;
 	public int singleBiomeIndex = 0;
 	public int noiseMapBiomeIndex = 0;
 
 	public Thread mainThread;
+
+	private TerrainChunk chunk;
+	
+	// Keep copy of this so that shader doesn't lose values 
+	private Texture2DArray texturesArray;
 
 	public float sqrTransitionDistance {
 		get {
@@ -86,7 +89,6 @@ public class TerrainSettings : ScriptableObject {
 	}
 
 	public void ApplyToMaterial(Material material) {
-
 		float[] layerCounts = new float[biomeSettings.Count];
 
 		Color[] baseColours = new Color[maxLayerCount * maxBiomeCount];
@@ -94,7 +96,7 @@ public class TerrainSettings : ScriptableObject {
 		float[] baseBlends = new float[maxLayerCount * maxBiomeCount];
 		float[] baseColourStrength = new float[maxLayerCount * maxBiomeCount];
 		float[] baseTextureScales = new float[maxLayerCount * maxBiomeCount];
-		Texture2DArray texturesArray = new Texture2DArray(textureSize, textureSize, maxLayerCount * maxBiomeCount, textureFormat, true);
+		this.texturesArray = new Texture2DArray(textureSize, textureSize, maxLayerCount * maxBiomeCount, textureFormat, true);
 
 		for (int i = 0; i < biomeSettings.Count; i++) {
 
@@ -110,11 +112,11 @@ public class TerrainSettings : ScriptableObject {
 				baseTextureScales[i * maxLayerCount + j] = curLayer.textureScale;
 
 				if (curLayer.texture != null) {
-					texturesArray.SetPixels(curLayer.texture.GetPixels(0, 0, textureSize, textureSize), i * maxLayerCount + j);
+					this.texturesArray.SetPixels(curLayer.texture.GetPixels(0, 0, textureSize, textureSize), i * maxLayerCount + j);
 				}	
 			}
 		}
-		texturesArray.Apply();
+		this.texturesArray.Apply();
 
 		material.SetFloatArray("layerCounts", layerCounts);
 		material.SetColorArray("baseColours", baseColours);
@@ -123,7 +125,7 @@ public class TerrainSettings : ScriptableObject {
 		material.SetFloatArray("baseColourStrengths", baseColourStrength);
 		material.SetFloatArray("baseTextureScales", baseTextureScales);
 		
-		material.SetTexture("baseTextures", texturesArray);
+		material.SetTexture("baseTextures", this.texturesArray);
 		material.SetFloat("minHeight", minHeight);
 		material.SetFloat("maxHeight", maxHeight);
 		material.SetInt("chunkWidth", meshSettings.meshWorldSize);
@@ -133,20 +135,11 @@ public class TerrainSettings : ScriptableObject {
 	}
 
 	public void DrawMapInEditor() {
-
 		this.ResetPreview();
 
-		this.ApplyToMaterial(this.previewMaterial);
 		this.Init();
 		
 		this.previewTextureObject = new Renderer();
-
-		this.previewMeshObject = new GameObject("Preview Object");
-		this.previewMeshObject.AddComponent<HideOnPlay>();
-		this.previewMeshRenderer  = this.previewMeshObject.AddComponent<MeshRenderer>();
-		this.previewMeshFilter = this.previewMeshObject.AddComponent<MeshFilter>();
-		this.previewMeshCollider = this.previewMeshObject.AddComponent<MeshCollider>();
-		this.previewMeshRenderer.material = this.previewMaterial;
 
 		int width = this.meshSettings.numVerticesPerLine;
 		int height = this.meshSettings.numVerticesPerLine;
@@ -199,7 +192,7 @@ public class TerrainSettings : ScriptableObject {
     }
 
 	private void ResetPreview() {
-		GameObject prevPreviewObject = GameObject.Find("Preview Object");
+		GameObject prevPreviewObject = GameObject.Find("Preview Chunk");
 		if (prevPreviewObject){
 			DestroyImmediate(prevPreviewObject.gameObject);
 		}
@@ -253,16 +246,20 @@ public class TerrainSettings : ScriptableObject {
         	startTime = Time.realtimeSinceStartup;
 		}
         #endif
-		ChunkData chunkData = ChunkDataGenerator.GenerateChunkData(this, centre, null);
 
-		MeshData meshData = MeshGenerator.GenerateTerrainMesh(chunkData.biomeData.heightNoiseMap, this.meshSettings, editorPreviewLOD);
-        DrawMesh(meshData);
-
-		TerrainChunk.UpdateMaterial(chunkData, this, new MaterialPropertyBlock(), previewMeshObject.GetComponents<MeshRenderer>()[0]);
-
-		for (int i = 0; i < chunkData.objects.Count; i++) {
-			chunkData.objects[i].Spawn(this.previewMeshObject.transform);
-		}
+		this.chunk = new TerrainChunk(
+			new ChunkCoord(0, 0),
+			this,
+			this.detailLevels,
+			0,
+			null,
+			this.previewMaterial,
+			null,
+			"Preview Chunk"
+		);
+		this.chunk.LoadInEditor();
+		this.chunk.SetVisible(true);
+		this.chunk.meshObject.AddComponent<HideOnPlay>();
 
 		#if (PROFILE && UNITY_EDITOR)
 		if (terrainSettings.IsMainThread()) {
@@ -293,10 +290,6 @@ public class TerrainSettings : ScriptableObject {
 	public void DrawTexture(Texture2D texture) {
 		this.previewTextureObject.sharedMaterial.mainTexture = texture;
 		this.previewTextureObject.transform.localScale = new Vector3(-96, 1, 96);
-	}
-
-	public void DrawMesh(MeshData meshData) {
-		this.previewMeshFilter.sharedMesh = meshData.CreateMesh();
 	}
 
 	public float minHeight {

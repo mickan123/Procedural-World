@@ -10,29 +10,35 @@ public class TerrainChunk {
 	public event System.Action<TerrainChunk, bool> onVisibilityChanged;
 	public ChunkCoord coord;
 
-	GameObject meshObject;
-	Vector2 sampleCentre;
-	Bounds bounds;
+	public GameObject meshObject;
+	private Vector2 sampleCentre;
+	private Bounds bounds;
 
-	MeshRenderer meshRenderer;
-	MeshFilter meshFilter;
-	MeshCollider meshCollider;
-	MaterialPropertyBlock matBlock;
+	private MeshRenderer meshRenderer;
+	private MeshFilter meshFilter;
+	private MeshCollider meshCollider;
+	private MaterialPropertyBlock matBlock;
+	private Material material;
 
-	LODInfo[] detailLevels;
-	LODMesh[] lodMeshes;
-	int colliderLODIndex;
+	private LODInfo[] detailLevels;
+	private LODMesh[] lodMeshes;
+	private int colliderLODIndex;
 
-	ChunkData chunkData;
-	float[,] heightMap;
-	bool heightMapReceived;
-	int previousLODIndex = -1;
-	bool hasSetCollider;
-	float maxViewDst;
+	public ChunkData chunkData;
+	private float[,] heightMap;
+	private bool heightMapReceived;
+	private int previousLODIndex = -1;
+	private bool hasSetCollider;
+	private float maxViewDst;
 
-	MeshSettings meshSettings;
-	TerrainSettings terrainSettings;
-	Transform viewer;
+	private MeshSettings meshSettings;
+	private TerrainSettings terrainSettings;
+	private Transform viewer;
+	
+	// Keep copy of these so that shader doesn't lose values 
+	private Texture2D biomeMapTex;
+	private Texture2D[] biomeStrengthTextures;
+	private Texture2DArray biomeStrengthTexArray;
 
 	public TerrainChunk(ChunkCoord coord, 
 						TerrainSettings terrainSettings,
@@ -40,12 +46,14 @@ public class TerrainChunk {
 						int colliderLODIndex, 
 						Transform parent, 
 						Material material,
-						Transform viewer) {
+						Transform viewer,
+						String name = "Terrain Chunk") {
 		this.coord = coord;
 		this.detailLevels = detailLevels;
 		this.colliderLODIndex = colliderLODIndex;
 		this.terrainSettings = terrainSettings;
 		this.meshSettings = terrainSettings.meshSettings;
+		this.material = material;
 		this.viewer = viewer;
 
 		sampleCentre = new Vector2(coord.x * meshSettings.meshWorldSize / meshSettings.meshScale, 
@@ -53,11 +61,11 @@ public class TerrainChunk {
 		Vector2 position = new Vector2(coord.x * meshSettings.meshWorldSize, coord.y * meshSettings.meshWorldSize); 
 		bounds = new Bounds(position, Vector2.one * meshSettings.meshWorldSize);
 		
-		meshObject = new GameObject("Terrain Chunk");
+		meshObject = new GameObject(name);
 		meshRenderer = meshObject.AddComponent<MeshRenderer>();
 		meshFilter = meshObject.AddComponent<MeshFilter>();
 		meshCollider = meshObject.AddComponent<MeshCollider>();
-		meshRenderer.material = material;
+		meshRenderer.material = this.material;
 		matBlock = new MaterialPropertyBlock();
 
 		meshObject.transform.position = new Vector3(position.x, 0, position.y);
@@ -80,38 +88,45 @@ public class TerrainChunk {
 		ThreadedDataRequester.RequestData(() => ChunkDataGenerator.GenerateChunkData(terrainSettings, sampleCentre, worldGenerator), OnChunkDataReceived);											
 	}
 
+	public void LoadInEditor() {
+		this.terrainSettings.ApplyToMaterial(this.material);
+		this.chunkData = ChunkDataGenerator.GenerateChunkData(this.terrainSettings, sampleCentre, null);
+		OnChunkDataReceived(this.chunkData);
+		
+		for (int i = 0; i < lodMeshes.GetLength(0); i++) {
+			this.lodMeshes[i].GenerateMeshEditor(this.heightMap, this.meshSettings);
+		}
+		this.LoadLODMesh(0);
+	}
+
 	void OnChunkDataReceived(object chunkData) {
 		this.chunkData = (ChunkData)chunkData;
-
 		this.heightMap = this.chunkData.biomeData.heightNoiseMap;
-		
 		heightMapReceived = true;
 		
-		UpdateMaterial(this.chunkData, terrainSettings, matBlock, meshRenderer);
-		UpdateTerrainChunk();
+		this.UpdateMaterial();
 
 		List<SpawnObject> spawnObjects = this.chunkData.objects;
-
 		for (int i = 0; i < spawnObjects.Count; i++) {
 			spawnObjects[i].Spawn(meshObject.transform);
 		}
 	}
 
-	public static void UpdateMaterial(ChunkData chunkData, TerrainSettings terrainSettings, MaterialPropertyBlock matBlock, MeshRenderer renderer) {
-		BiomeInfo info = chunkData.biomeData.biomeInfo;
+	public void UpdateMaterial() {
+		BiomeInfo info = this.chunkData.biomeData.biomeInfo;
 		int width = info.biomeMap.GetLength(0);
 
 		// Create texture to pass in biome maps and biome strengths
-		int numBiomes = terrainSettings.biomeSettings.Count;
-		Texture2D biomeMapTex = new Texture2D(width, width, TextureFormat.RGBA32, false, false);
+		int numBiomes = this.terrainSettings.biomeSettings.Count;
+		this.biomeMapTex = new Texture2D(width, width, TextureFormat.RGBA32, false, false);
 		
 		int finalTexWidth = 256;
 		int biomesPerTexture = 4;
-		Texture2D[] biomeStrengthTextures = new Texture2D[terrainSettings.maxBiomeCount / biomesPerTexture + 1];
+		this.biomeStrengthTextures = new Texture2D[terrainSettings.maxBiomeCount / biomesPerTexture + 1];
 		for (int i = 0; i < terrainSettings.maxBiomeCount / biomesPerTexture + 1; i++) {
 			biomeStrengthTextures[i] = new Texture2D(width, width, TextureFormat.RGBA32, false, false);
 		}
-		Texture2DArray biomeStrengthTexArray = new Texture2DArray(finalTexWidth,
+		this.biomeStrengthTexArray = new Texture2DArray(finalTexWidth,
 																finalTexWidth,
 																terrainSettings.maxBiomeCount,
 																TextureFormat.RGBA32,
@@ -149,7 +164,7 @@ public class TerrainChunk {
 		biomeMapTex.Apply();
 		matBlock.SetTexture("biomeMapTex", biomeMapTex);
 
-		renderer.SetPropertyBlock(matBlock);
+		this.meshRenderer.SetPropertyBlock(matBlock);
 	}
 
 	public static void SaveTextureAsPNG(Texture2D _texture, string _fullPath)
@@ -169,7 +184,7 @@ public class TerrainChunk {
 		if (heightMapReceived) {
 			float viewerDstFromNearestEdge = Mathf.Sqrt(bounds.SqrDistance(viewerPosition));
 
-			bool wasVisible = IsVisible ();
+			bool wasVisible = IsVisible();
 			bool visible = viewerDstFromNearestEdge <= maxViewDst;
 
 			if (visible) {
@@ -184,13 +199,7 @@ public class TerrainChunk {
 				}
 
 				if (lodIndex != previousLODIndex) {
-					LODMesh lodMesh = lodMeshes [lodIndex];
-					if (lodMesh.hasMesh) {
-						previousLODIndex = lodIndex;
-						meshFilter.mesh = lodMesh.mesh;
-					} else if (!lodMesh.hasRequestedMesh) {
-						lodMesh.RequestMesh(heightMap, meshSettings);
-					}
+					LoadLODMesh(lodIndex);
 				}
 			}
 
@@ -200,6 +209,16 @@ public class TerrainChunk {
 					onVisibilityChanged(this, visible);
 				}
 			}
+		}
+	}
+
+	public void LoadLODMesh(int lodIndex) {
+		LODMesh lodMesh = lodMeshes[lodIndex];
+		if (lodMesh.hasMesh) {
+			previousLODIndex = lodIndex;
+			meshFilter.mesh = lodMesh.mesh;
+		} else if (!lodMesh.hasRequestedMesh) {
+			lodMesh.RequestMesh(heightMap, meshSettings);
 		}
 	}
 
@@ -253,6 +272,12 @@ class LODMesh {
 	public void RequestMesh(float[,] heightMap, MeshSettings meshSettings) {
 		hasRequestedMesh = true;
 		ThreadedDataRequester.RequestData(() => MeshGenerator.GenerateTerrainMesh(heightMap, meshSettings, lod), OnMeshDataReceived);
+	}
+
+	public void GenerateMeshEditor(float[,] heightMap, MeshSettings meshSettings) {
+		MeshData meshData = MeshGenerator.GenerateTerrainMesh(heightMap, meshSettings, lod);
+		this.mesh = meshData.CreateMesh();
+		hasMesh = true;
 	}
 
 }
