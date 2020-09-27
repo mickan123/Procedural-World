@@ -90,4 +90,27 @@ public static class Common {
         
         return height;
     }
+
+    public static float CalculateSlope(float xIn, float yIn, float[,] heightMap) {
+        int coordX = (int) xIn;
+        int coordZ = (int) yIn;
+
+        int maxIndex = heightMap.GetLength(0) - 1;
+
+        // Calculate offset inside the cell (0,0) = at NW node, (1,1) = at SE node
+        float x = xIn - coordX;
+        float y = yIn - coordZ;
+
+        float heightNW = heightMap[coordX, coordZ];
+        float heightNE = heightMap[Mathf.Min(coordX + 1, maxIndex), coordZ];
+        float heightSW = heightMap[coordX, Mathf.Min(coordZ + 1, maxIndex)];
+        float heightSE = heightMap[Mathf.Min(coordX + 1, maxIndex), Mathf.Min(coordZ + 1, maxIndex)];
+
+        float gradientX = (heightNE - heightNW) * (1 - y) + (heightSE - heightSW) * y;
+        float gradientY = (heightSW - heightNW) * (1 - x) + (heightSE - heightNE) * x;
+
+        float slope = Mathf.Sqrt(gradientX * gradientX + gradientY * gradientY);
+
+        return slope;
+    }
 }

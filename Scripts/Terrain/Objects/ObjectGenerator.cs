@@ -115,24 +115,7 @@ public static class ObjectGenerator {
 
 	public static void FilterPointsBySlope(ref List<Vector3> points, float minSlope, float maxSlope, float[,] heightMap) {
 		for (int i = 0; i < points.Count; i++) {
-			
-			int coordX = (int) points[i].x;
-        	int coordZ = (int) points[i].z;
-
-			// Calculate offset inside the cell (0,0) = at NW node, (1,1) = at SE node
-			float x = points[i].x - coordX;
-			float y = points[i].y - coordZ;
-
-			float heightNW = heightMap[coordX, coordZ];
-			float heightNE = heightMap[coordX + 1, coordZ];
-			float heightSW = heightMap[coordX, coordZ + 1];
-			float heightSE = heightMap[coordX + 1, coordZ + 1];
-
-			float gradientX = (heightNE - heightNW) * (1 - y) + (heightSE - heightSW) * y;
-        	float gradientY = (heightSW - heightNW) * (1 - x) + (heightSE - heightNE) * x;
-
-			float slope = Mathf.Sqrt(gradientX * gradientX + gradientY * gradientY);
-
+			float slope = Common.CalculateSlope(points[i].x, points[i].z, heightMap);
 			if (slope > maxSlope || slope < minSlope) {
 				points.RemoveAt(i);
 				i--;

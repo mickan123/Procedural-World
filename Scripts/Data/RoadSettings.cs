@@ -11,6 +11,7 @@ public class RoadSettings : ScriptableObject
 	public int stepSize = 3;
 	public int smoothness = 1; // How much to smooth path
 	public float blendFactor = 0.2f; // How much to blend road with existing terrain
+	public float maxSlope = 1f; // Max allowed slope for road to be textured on
 
     #if UNITY_EDITOR
 

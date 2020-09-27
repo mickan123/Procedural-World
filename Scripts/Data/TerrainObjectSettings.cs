@@ -164,7 +164,7 @@ public class SpawnObject {
 					obj.transform.rotation = positions[i].rotation;
 					obj.transform.localScale = positions[i].scale;
 					obj.SetActive(!hide);
-					spawnedObjects.Add(obj);					
+					spawnedObjects.Add(obj);
 					break;
 				}
 			}

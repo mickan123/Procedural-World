@@ -265,32 +265,19 @@ public class Road
         int[,] closestPathIndexes = new int[mapSize, mapSize];
         FindClosestPathIndexes(closestPathIndexes, referenceHeightMap);
 
-        for (int i = 0; i < mapSize; i++) {
-            for (int j = 0; j < mapSize; j++) {
-                
-                Vector3 curPoint = new Vector3(i, referenceHeightMap[i, j], j);
-                Vector2 curPoint2d = new Vector2(curPoint.x, curPoint.z);
+        for (int x = 0; x < mapSize; x++) {
+            for (int y = 0; y < mapSize; y++) {
+                Vector3 closestPointOnLine = ClosestPointOnLine(x, y, referenceHeightMap, closestPathIndexes[x, y]);
+                Vector3 curPoint = new Vector3(x, referenceHeightMap[x, y], y);
+                CarvePoint(curPoint, closestPointOnLine, workingHeightMap, referenceHeightMap, x, y);
+            }
+        }
 
-                int closestPointIndex = closestPathIndexes[i, j];
-                Vector3 closestPoint = path[closestPointIndex]; 
-                
-                // Get distance of 2nd closest point so we can form a line
-                Vector3 secondClosestPoint;
-                if (closestPointIndex == path.Count - 1) {
-                    secondClosestPoint = path[closestPointIndex - 1];
-                }
-                else if (closestPointIndex == 0) {
-                    secondClosestPoint = path[closestPointIndex + 1];
-                }
-                else {
-                    float distPre = Vector2.Distance(new Vector2(path[closestPointIndex - 1].x, path[closestPointIndex - 1].z), curPoint2d);
-                    float distPost = Vector2.Distance(new Vector2(path[closestPointIndex + 1].x, path[closestPointIndex + 1].z), curPoint2d);
-                    secondClosestPoint = distPre < distPost ? path[closestPointIndex - 1] : path[closestPointIndex + 1];
-                }
-
-                // Get distance from point to line
-                Vector3 closestPointOnLine = ClosestPointOnLine(curPoint, closestPoint, secondClosestPoint - closestPoint);
-                CarvePoint(curPoint, closestPointOnLine, workingHeightMap, i, j);
+        // Road strength must be calculated after path carving since it affects slope etc.
+        for (int x = 0; x < mapSize; x++) {
+            for (int y = 0; y < mapSize; y++) {
+                Vector3 closestPointOnLine = ClosestPointOnLine(x, y, referenceHeightMap, closestPathIndexes[x, y]);
+                CalculateRoadStrength(closestPointOnLine, referenceHeightMap, workingHeightMap, x, y);
             }
         }
     }
@@ -306,7 +293,7 @@ public class Road
         }
     }
 
-     // Finds index of closest point on the path
+    // Finds index of closest point on the path
     private int FindClosestPathIndex(Vector3 curPoint) {
         
         float minDist = float.MaxValue;
@@ -323,8 +310,30 @@ public class Road
         return closestPointIndex;
     }
 
-    // Finds the closest point on a line of origin and direction from 'point'
-    private Vector3 ClosestPointOnLine(Vector3 point, Vector3 origin, Vector3 direction) {
+    private Vector3 ClosestPointOnLine(int x, int y, float[,] referenceHeightMap, int closestPointIndex) {
+        Vector3 curPoint = new Vector3(x, referenceHeightMap[x, y], y);
+        Vector2 curPoint2d = new Vector2(curPoint.x, curPoint.z);
+
+        Vector3 closestPointOnPath = path[closestPointIndex]; 
+        
+        // Get distance of 2nd closest point so we can form a line
+        Vector3 secondClosestPoint;
+        if (closestPointIndex == path.Count - 1) {
+            secondClosestPoint = path[closestPointIndex - 1];
+        }
+        else if (closestPointIndex == 0) {
+            secondClosestPoint = path[closestPointIndex + 1];
+        }
+        else {
+            float distPre = Vector2.Distance(new Vector2(path[closestPointIndex - 1].x, path[closestPointIndex - 1].z), curPoint2d);
+            float distPost = Vector2.Distance(new Vector2(path[closestPointIndex + 1].x, path[closestPointIndex + 1].z), curPoint2d);
+            secondClosestPoint = distPre < distPost ? path[closestPointIndex - 1] : path[closestPointIndex + 1];
+        }
+
+        Vector3 direction = secondClosestPoint - closestPointOnPath;
+        Vector3 origin = closestPointOnPath;
+        Vector3 point = curPoint;
+
         direction.Normalize();
         Vector3 lhs = point - origin;
         float dotP = Vector3.Dot(lhs, direction);
@@ -340,10 +349,12 @@ public class Road
     }
 
     // Carves out height map at x and y based on curPoint in path and closestPointOnLine of path
-    private void CarvePoint(Vector3 curPoint, Vector3 closestPointOnLine, float[,] workingHeightMap, int x, int y) {
+    private void CarvePoint(Vector3 curPoint, Vector3 closestPointOnLine, float[,] workingHeightMap, float[,] referenceHeightMap, int x, int y) {
         int mapSize = workingHeightMap.GetLength(0);
 
         float distance = Vector2.Distance(new Vector2(closestPointOnLine.x, closestPointOnLine.z), new Vector2(curPoint.x, curPoint.z));
+
+        float heightAtClosestPointOnLine = Common.HeightFromFloatCoord(closestPointOnLine.x, closestPointOnLine.z, referenceHeightMap);
 
         // Calculate roadMultiplier dependent on which biomes have roads enabled
         float biomeRoadMultiplier = 0f;
@@ -370,7 +381,6 @@ public class Road
             float newValue = (1f - roadMultiplier) * closestPointOnLine.y + roadMultiplier * curPoint.y;
             
             workingHeightMap[x, y] = finalValueMultiplier * newValue + (1 - finalValueMultiplier) * workingHeightMap[x, y];
-            roadStrengthMap[x, y] = Mathf.Max(roadStrengthMap[x, y], 1f * biomeRoadMultiplier);
         }
         else if (distance < roadSettings.width) {
             float percentage = (distance - halfRoadWidth) / halfRoadWidth;
@@ -378,7 +388,35 @@ public class Road
             float newValue = roadMultiplier * curPoint.y + (1f - roadMultiplier) * closestPointOnLine.y;
 
             workingHeightMap[x, y] = finalValueMultiplier * newValue + (1 - finalValueMultiplier) * workingHeightMap[x, y];
-            roadStrengthMap[x, y] = Mathf.Max(roadStrengthMap[x, y], (1f - percentage) * biomeRoadMultiplier);
+        }
+    }
+
+    private void CalculateRoadStrength(Vector3 closestPointOnLine, float[,] referenceHeightMap, float[,] workingHeightMap, int x, int y) {
+        int mapSize = workingHeightMap.GetLength(0);
+
+        float distance = Vector2.Distance(new Vector2(closestPointOnLine.x, closestPointOnLine.z), new Vector2((float)x, (float)y));
+
+        float heightAtClosestPointOnLine = Common.HeightFromFloatCoord(closestPointOnLine.x, closestPointOnLine.z, referenceHeightMap);
+
+        // Calculate roadMultiplier dependent on which biomes have roads enabled
+        float biomeRoadMultiplier = 0f;
+        for (int w = 0; w < terrainSettings.biomeSettings.Count; w++) {
+            if (terrainSettings.biomeSettings[w].allowRoads) {
+                biomeRoadMultiplier += biomeInfo.biomeStrengths[x, y, w];
+            }
+        }
+        
+        // Calculate slope multiplier
+        float slope = Common.CalculateSlope(x, y, workingHeightMap);
+        float slopeMultiplier = Mathf.Max(0f, 1f - (slope / this.roadSettings.maxSlope));
+        
+        float halfRoadWidth = roadSettings.width / 2f;
+        if (distance < halfRoadWidth) {
+            roadStrengthMap[x, y] = Mathf.Max(roadStrengthMap[x, y], slopeMultiplier * biomeRoadMultiplier);
+        }
+        else if (distance < roadSettings.width) {
+            float percentage = (distance - halfRoadWidth) / halfRoadWidth;
+            roadStrengthMap[x, y] = Mathf.Max(roadStrengthMap[x, y], slopeMultiplier * (1f - percentage) * biomeRoadMultiplier);
         }
     }
 
