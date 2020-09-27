@@ -15,7 +15,7 @@ public static class RandomPoints
             float offset = 1f;
             float y = Common.HeightFromFloatCoord(x + offset, z + offset, heightMap);
 
-            if (x >= 0f && y >= 0f && x <= mapSize - 3 && y <= mapSize - 3) {
+            if (x >= 0f && z >= 0f && x <= mapSize - 3 && z <= mapSize - 3) {
 				points.Add(new Vector3(x, y, z));
 			}
         }
