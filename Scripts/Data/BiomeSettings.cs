@@ -6,6 +6,9 @@ using UnityEngine;
 public class BiomeSettings : ScriptableObject {
 	
 	public TextureData textureData;
+	public TextureData slopeTextureData;
+	public float slopeThreshold = 0.8f;
+	public float slopeBlendRange = 0.5f;
 	public NoiseMapSettings heightMapSettings;
 
 	public List<TerrainObjectSettings> terrainObjectSettings = new List<TerrainObjectSettings>();

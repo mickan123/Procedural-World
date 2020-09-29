@@ -11,11 +11,15 @@ public class BiomeSettingsEditor : ScriptlessEditor
     private SerializedObject soTarget;
 
     private SerializedProperty textureData;
+    private SerializedProperty slopeTextureData;
+    private SerializedProperty slopeThreshold;
+    private SerializedProperty slopeBlendRange;
     private SerializedProperty heightMapSettings;
     private SerializedProperty terrainObjectSettings; 
     private ReorderableList textureDataList;
     private ReorderableList terrainObjectSettingsList;
     private TextureDataEditor textureDataEditor;
+    private TextureDataEditor slopeTextureDataEditor;
     private Dictionary<TerrainObjectSettings, TerrainObjectSettingsEditor> terrainObjectSettingsEditors;
 
     private SerializedProperty hydraulicErosion;
@@ -32,8 +36,12 @@ public class BiomeSettingsEditor : ScriptlessEditor
         soTarget = new SerializedObject(target);
 
         textureData = soTarget.FindProperty("textureData");
+        slopeTextureData = soTarget.FindProperty("slopeTextureData");
+        slopeThreshold = soTarget.FindProperty("slopeThreshold");
+        slopeBlendRange = soTarget.FindProperty("slopeBlendRange");
         heightMapSettings = soTarget.FindProperty("heightMapSettings");
         textureDataEditor = null;
+        slopeTextureDataEditor = null;
         terrainObjectSettingsEditors = new Dictionary<TerrainObjectSettings, TerrainObjectSettingsEditor>();
         CreateTerrainObjectSettingsList();
 
@@ -108,6 +116,10 @@ public class BiomeSettingsEditor : ScriptlessEditor
         EditorGUILayout.Space();
 
         textureDataEditor = (TextureDataEditor)Common.DisplayScriptableObjectEditor(textureData, myTarget.textureData, textureDataEditor);
+        slopeTextureDataEditor = (TextureDataEditor)Common.DisplayScriptableObjectEditor(slopeTextureData, myTarget.slopeTextureData, slopeTextureDataEditor);
+        EditorGUILayout.PropertyField(slopeThreshold, true);
+        EditorGUILayout.PropertyField(slopeBlendRange, true);
+        EditorGUILayout.Space();
 
         heightMapSettings.isExpanded = EditorGUILayout.Foldout(heightMapSettings.isExpanded, "Height Map Settings", true, EditorStyles.foldout);
         if (heightMapSettings.isExpanded) {

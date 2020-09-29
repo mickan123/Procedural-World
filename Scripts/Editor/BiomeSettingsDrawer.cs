@@ -12,6 +12,9 @@ public class BiomeSettingsDrawer : PropertyDrawer
         SerializedObject serializedObject = new SerializedObject(property.objectReferenceValue as BiomeSettings);
 
         var textureData = serializedObject.FindProperty("textureData");
+        var slopeTextureData = serializedObject.FindProperty("slopeTextureData");
+        var slopeThreshold = serializedObject.FindProperty("slopeThreshold");
+        var slopeBlendRange = serializedObject.FindProperty("slopeBlendRange");
         var heightMapSettings = serializedObject.FindProperty("heightMapSettings");
 
         var hydraulicErosion = serializedObject.FindProperty("hydraulicErosion");
@@ -43,6 +46,14 @@ public class BiomeSettingsDrawer : PropertyDrawer
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, textureDataHeight), textureData, true);
         position.y += textureDataHeight;
 
+        float slopeTextureDataHeight = EditorGUI.GetPropertyHeight(slopeTextureData, true);
+        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, slopeTextureDataHeight), slopeTextureData, true);
+        position.y += slopeTextureDataHeight;
+        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), slopeThreshold, true);
+        position.y += EditorGUIUtility.singleLineHeight;
+        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), slopeBlendRange, true);
+        position.y += EditorGUIUtility.singleLineHeight;
+
         float heightMapSettingsHeight = EditorGUI.GetPropertyHeight(textureData, true);
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, heightMapSettingsHeight), heightMapSettings, true);
         position.y += heightMapSettingsHeight;
@@ -60,9 +71,11 @@ public class BiomeSettingsDrawer : PropertyDrawer
         float height = 9 * EditorGUIUtility.singleLineHeight;
 
         var textureData = serializedObject.FindProperty("textureData");
+        var slopeTextureData = serializedObject.FindProperty("slopeTextureData");
         var heightMapSettings = serializedObject.FindProperty("heightMapSettings");
         
         height += EditorGUI.GetPropertyHeight(textureData, true);
+        height += EditorGUI.GetPropertyHeight(slopeTextureData, true);
         height += EditorGUI.GetPropertyHeight(heightMapSettings, true);
 
         return height;

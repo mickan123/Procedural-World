@@ -136,9 +136,17 @@ public class TerrainChunk {
 		biomeMapTex.filterMode = FilterMode.Trilinear; 
 		biomeStrengthTexArray.filterMode = FilterMode.Point; // TODO: Should this be bilinear
 
+		float[,] heightMap = this.chunkData.biomeData.heightNoiseMap;
+
 		for (int x = 0; x < width; x ++) {
 			for (int y = 0; y < width; y ++) {				 
-				biomeMapTex.SetPixel(x, y, new Color(chunkData.road.roadStrengthMap[x, y], 0f, 0f, 0f));
+
+				float roadStrength = chunkData.road.roadStrengthMap[x, y];
+				float slope = Common.CalculateSlope(x, y, heightMap);
+				biomeMapTex.SetPixel(x, y, new Color(chunkData.road.roadStrengthMap[x, y], 
+													 slope, 
+													 0f, 
+													 0f));
 
 				for (int w = 0; w < terrainSettings.maxBiomeCount; w += biomesPerTexture) {
 					int texIndex = w / biomesPerTexture; 

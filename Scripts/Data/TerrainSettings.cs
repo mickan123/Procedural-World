@@ -33,7 +33,6 @@ public class TerrainSettings : ScriptableObject {
 	// Constants
 	private const TextureFormat textureFormat = TextureFormat.RGB565;
 	private const int textureSize = 512;
-	private const int biomeStrengthTextureWidth = 256;
 	public readonly int maxLayerCount = 8;
 	public readonly int maxBiomeCount = 8;
 
@@ -50,13 +49,13 @@ public class TerrainSettings : ScriptableObject {
 	[Range(0, MeshSettings.numSupportedLODs - 1)] public int editorPreviewLOD;
 	public int singleBiomeIndex = 0;
 	public int noiseMapBiomeIndex = 0;
-
-	public Thread mainThread;
-
-	private TerrainChunk chunk;
 	
-	// Keep copy of this so that shader doesn't lose values 
-	private Texture2DArray biomeTexturesArray;
+	public Thread mainThread;
+	
+	// Keep reference of to these textures so that shader doesn't lose values 
+	private TerrainChunk chunk;
+	private Texture2DArray biomeBaseTexturesArray;
+	private Texture2DArray biomeSlopeTexturesArray;
 	private Texture2DArray roadTextureArray;
 
 	public float sqrTransitionDistance {
@@ -92,12 +91,22 @@ public class TerrainSettings : ScriptableObject {
 	public void ApplyToMaterial(Material material) {
 		
 		// Biome texture settings
-		float[] layerCounts = new float[biomeSettings.Count];
+		float[] baseLayerCounts = new float[biomeSettings.Count];
 		Color[] baseColours = new Color[maxLayerCount * maxBiomeCount];
 		float[] baseStartHeights = new float[maxLayerCount * maxBiomeCount];
 		float[] baseBlends = new float[maxLayerCount * maxBiomeCount];
 		float[] baseColourStrengths = new float[maxLayerCount * maxBiomeCount];
 		float[] baseTextureScales = new float[maxLayerCount * maxBiomeCount];
+
+		// Slope texture settings
+		float[] slopeLayerCounts = new float[biomeSettings.Count];
+		float[] slopeThresholds = new float[biomeSettings.Count];
+		float[] slopeBlendRanges = new float[biomeSettings.Count];
+		Color[] slopeColours = new Color[maxLayerCount * maxBiomeCount];
+		float[] slopeStartHeights = new float[maxLayerCount * maxBiomeCount];
+		float[] slopeBlends = new float[maxLayerCount * maxBiomeCount];
+		float[] slopeColourStrengths = new float[maxLayerCount * maxBiomeCount];
+		float[] slopeTextureScales = new float[maxLayerCount * maxBiomeCount];
 
 		// Road texture settings
 		float roadLayerCount;
@@ -107,16 +116,14 @@ public class TerrainSettings : ScriptableObject {
 		float[] roadColourStrengths = new float[maxLayerCount];
 		float[] roadTextureScales = new float[maxLayerCount];
 
-		this.biomeTexturesArray = new Texture2DArray(textureSize, textureSize, maxLayerCount * maxBiomeCount, textureFormat, true);
+		this.biomeBaseTexturesArray = new Texture2DArray(textureSize, textureSize, maxLayerCount * maxBiomeCount, textureFormat, true);
+		this.biomeSlopeTexturesArray = new Texture2DArray(textureSize, textureSize, maxLayerCount * maxBiomeCount, textureFormat, true);
 		this.roadTextureArray = new Texture2DArray(textureSize, textureSize, maxLayerCount, textureFormat, true);
 
 		// Set biome texture settings
 		for (int i = 0; i < biomeSettings.Count; i++) {
-
-			layerCounts[i] = biomeSettings[i].textureData.textureLayers.Length;
-
+			baseLayerCounts[i] = biomeSettings[i].textureData.textureLayers.Length;
 			for (int j = 0; j < biomeSettings[i].textureData.textureLayers.Length; j++) {
-
 				TextureLayer curLayer = biomeSettings[i].textureData.textureLayers[j];
 				baseColours[i * maxLayerCount + j] = curLayer.tint;
 				baseStartHeights[i * maxLayerCount + j] = curLayer.startHeight;
@@ -125,11 +132,31 @@ public class TerrainSettings : ScriptableObject {
 				baseTextureScales[i * maxLayerCount + j] = curLayer.textureScale;
 
 				if (curLayer.texture != null) {
-					this.biomeTexturesArray.SetPixels(curLayer.texture.GetPixels(0, 0, textureSize, textureSize), i * maxLayerCount + j);
+					this.biomeBaseTexturesArray.SetPixels(curLayer.texture.GetPixels(0, 0, textureSize, textureSize), i * maxLayerCount + j);
 				}
 			}
 		}
-		this.biomeTexturesArray.Apply();
+		this.biomeBaseTexturesArray.Apply();
+
+		// Set slope texture settings
+		for (int i = 0; i < biomeSettings.Count; i++) {
+			slopeLayerCounts[i] = biomeSettings[i].slopeTextureData.textureLayers.Length;
+			slopeThresholds[i] = biomeSettings[i].slopeThreshold;
+			slopeBlendRanges[i] = biomeSettings[i].slopeBlendRange;
+			for (int j = 0; j < biomeSettings[i].slopeTextureData.textureLayers.Length; j++) {
+				TextureLayer curLayer = biomeSettings[i].slopeTextureData.textureLayers[j];
+				slopeColours[i * maxLayerCount + j] = curLayer.tint;
+				slopeStartHeights[i * maxLayerCount + j] = curLayer.startHeight;
+				slopeBlends[i * maxLayerCount + j] = curLayer.blendStrength;
+				slopeColourStrengths[i * maxLayerCount + j] = curLayer.tintStrength;
+				slopeTextureScales[i * maxLayerCount + j] = curLayer.textureScale;
+
+				if (curLayer.texture != null) {
+					this.biomeSlopeTexturesArray.SetPixels(curLayer.texture.GetPixels(0, 0, textureSize, textureSize), i * maxLayerCount + j);
+				}
+			}
+		}
+		this.biomeSlopeTexturesArray.Apply();
 
 		// Set road texture settings
 		roadLayerCount = roadSettings.roadTexture.textureLayers.Length;
@@ -151,14 +178,25 @@ public class TerrainSettings : ScriptableObject {
 		material.SetFloat("minHeight", minHeight);
 		material.SetFloat("maxHeight", maxHeight);
 
-		// Apply biome texture settings
-		material.SetTexture("baseTextures", this.biomeTexturesArray);
-		material.SetFloatArray("layerCounts", layerCounts);
+		// Apply base biome texture settings
+		material.SetTexture("baseTextures", this.biomeBaseTexturesArray);
+		material.SetFloatArray("baseLayerCounts", baseLayerCounts);
 		material.SetColorArray("baseColours", baseColours);
 		material.SetFloatArray("baseStartHeights", baseStartHeights);
 		material.SetFloatArray("baseBlends", baseBlends);
 		material.SetFloatArray("baseColourStrengths", baseColourStrengths);
 		material.SetFloatArray("baseTextureScales", baseTextureScales);
+
+		// Apply biome slope texture settings
+		material.SetTexture("slopeTextures", this.biomeSlopeTexturesArray);
+		material.SetFloatArray("slopeLayerCounts", slopeLayerCounts);
+		material.SetFloatArray("slopeThresholds", slopeThresholds);
+		material.SetFloatArray("slopeBlendRanges", slopeBlendRanges);
+		material.SetColorArray("slopeColours", slopeColours);
+		material.SetFloatArray("slopeStartHeights", slopeStartHeights);
+		material.SetFloatArray("slopeBlends", slopeBlends);
+		material.SetFloatArray("slopeColourStrengths", slopeColourStrengths);
+		material.SetFloatArray("slopeTextureScales", slopeTextureScales);
 		
 		// Apply road texture settings
 		material.SetTexture("roadTextures", this.roadTextureArray);
