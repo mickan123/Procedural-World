@@ -54,8 +54,6 @@ public class TerrainChunk {
 		this.terrainSettings = terrainSettings;
 		this.meshSettings = terrainSettings.meshSettings;
 		this.material = material;
-		this.viewer = viewer;
-
 		sampleCentre = new Vector2(coord.x * meshSettings.meshWorldSize / meshSettings.meshScale, 
 								   coord.y * meshSettings.meshWorldSize / meshSettings.meshScale);
 		Vector2 position = new Vector2(coord.x * meshSettings.meshWorldSize, coord.y * meshSettings.meshWorldSize); 
@@ -68,6 +66,8 @@ public class TerrainChunk {
 		meshRenderer.material = this.material;
 		matBlock = new MaterialPropertyBlock();
 
+		this.viewer = (viewer == null) ? meshObject.transform : viewer;
+		
 		meshObject.transform.position = new Vector3(position.x, 0, position.y);
 		meshObject.transform.parent = parent;
 		SetVisible(false);
@@ -91,19 +91,19 @@ public class TerrainChunk {
 	public void LoadInEditor() {
 		this.terrainSettings.ApplyToMaterial(this.material);
 		this.chunkData = ChunkDataGenerator.GenerateChunkData(this.terrainSettings, sampleCentre, null);
-		OnChunkDataReceived(this.chunkData);
-		
+
 		for (int i = 0; i < lodMeshes.GetLength(0); i++) {
-			this.lodMeshes[i].GenerateMeshEditor(this.heightMap, this.meshSettings);
+			this.lodMeshes[i].GenerateMeshEditor(this.chunkData.biomeData.heightNoiseMap, this.meshSettings);
 		}
-		this.LoadLODMesh(0);
+		OnChunkDataReceived(this.chunkData);
 	}
 
 	void OnChunkDataReceived(object chunkData) {
+		
 		this.chunkData = (ChunkData)chunkData;
 		this.heightMap = this.chunkData.biomeData.heightNoiseMap;
 		heightMapReceived = true;
-		
+		UpdateTerrainChunk();
 		this.UpdateMaterial();
 
 		List<SpawnObject> spawnObjects = this.chunkData.objects;
