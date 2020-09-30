@@ -10,7 +10,7 @@ public static class PoissonDiskSampling {
 												System.Random prng,
 												TerrainSettings terrainSettings,
 												int biome,
-												int numSamplesBeforeRejection = 20) {
+												int numSamplesBeforeRejection = 35) {
 		
 		int mapSize = heightMap.GetLength(0);
 
@@ -79,11 +79,10 @@ public static class PoissonDiskSampling {
 			float height = Common.HeightFromFloatCoord(points2d[point].x, points2d[point].y, heightMap);
 			float offset = 1f; // Take into account offset due to extra points around edges
 
-			Vector3 adjustedPoint = new Vector3((points2d[point].x + sampleCentre.x) * terrainSettings.meshSettings.meshScale - offset, 
-										  Common.HeightFromFloatCoord(points2d[point].x, points2d[point].y, heightMap), 
-										  (points2d[point].y + sampleCentre.y) * terrainSettings.meshSettings.meshScale - offset);
-
-			if (adjustedPoint.x >= 0f && adjustedPoint.z >= 0f && adjustedPoint.x <= mapSize - 3 && adjustedPoint.z <= mapSize - 3) {
+			Vector3 adjustedPoint = new Vector3((points2d[point].x) * terrainSettings.meshSettings.meshScale - offset, 
+												Common.HeightFromFloatCoord(points2d[point].x, points2d[point].y, heightMap), 
+												(points2d[point].y) * terrainSettings.meshSettings.meshScale - offset);
+			if (adjustedPoint.x >= 0f && adjustedPoint.y >= 0f && adjustedPoint.x <= mapSize - 3 && adjustedPoint.y <= mapSize - 3) {
 				points3d.Add(adjustedPoint);
 			}
 		}

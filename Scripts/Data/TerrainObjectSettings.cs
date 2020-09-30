@@ -160,7 +160,7 @@ public class SpawnObject {
 				if (rand < terrainObjects[j].probability) {
 					GameObject obj = UnityEngine.Object.Instantiate(terrainObjects[j].gameObject);
 					obj.transform.parent = parent;
-					obj.transform.position = positions[i].position;
+					obj.transform.localPosition = positions[i].position;
 					obj.transform.rotation = positions[i].rotation;
 					obj.transform.localScale = positions[i].scale;
 					obj.SetActive(!hide);
