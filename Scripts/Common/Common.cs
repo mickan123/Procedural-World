@@ -44,28 +44,6 @@ public static class Common {
 		return value;
 	}
 
-	public static Editor DisplayScriptableObjectEditor(SerializedProperty property, Object targetObject, Editor targetEditor) {
-        EditorGUILayout.PropertyField(property, true, GUILayout.Height(-2));
-
-        if (property.objectReferenceValue != null) {
-            property.isExpanded = EditorGUILayout.Foldout(property.isExpanded, GUIContent.none, true, EditorStyles.foldout);
-        }
-
-        if (property.isExpanded) {
-            if (targetEditor == null) {
-                targetEditor = Editor.CreateEditor(targetObject);
-            }
-            EditorGUI.indentLevel++;
-
-            targetEditor.OnInspectorGUI();
-            EditorGUI.indentLevel--;
-        }
-        EditorGUILayout.Space();
-        EditorGUILayout.Space();
-
-		return targetEditor;
-    }
-
 	public static float HeightFromFloatCoord(Vector2 coord, float[,] heightMap) {
         return HeightFromFloatCoord(coord.x, coord.y, heightMap);
     }
@@ -113,4 +91,30 @@ public static class Common {
 
         return slope;
     }
+
+    #if UNITY_EDITOR
+
+	public static Editor DisplayScriptableObjectEditor(SerializedProperty property, Object targetObject, Editor targetEditor) {
+        EditorGUILayout.PropertyField(property, true, GUILayout.Height(-2));
+
+        if (property.objectReferenceValue != null) {
+            property.isExpanded = EditorGUILayout.Foldout(property.isExpanded, GUIContent.none, true, EditorStyles.foldout);
+        }
+
+        if (property.isExpanded) {
+            if (targetEditor == null) {
+                targetEditor = Editor.CreateEditor(targetObject);
+            }
+            EditorGUI.indentLevel++;
+
+            targetEditor.OnInspectorGUI();
+            EditorGUI.indentLevel--;
+        }
+        EditorGUILayout.Space();
+        EditorGUILayout.Space();
+
+		return targetEditor;
+    }
+
+    #endif
 }
