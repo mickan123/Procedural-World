@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using MyBox;
 
 [CreateAssetMenu(), System.Serializable()]
 public class TerrainObjectSettings : ScriptableObject {

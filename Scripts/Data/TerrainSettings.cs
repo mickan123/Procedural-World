@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
 using System.Threading;
-using MyBox;
 using System.Collections.Generic;
 
 [CreateAssetMenu(), System.Serializable]

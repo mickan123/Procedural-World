@@ -12,7 +12,6 @@ public class Controller : MonoBehaviour
         public float runMultiplier = 2.0f; 
         public KeyCode runKey = KeyCode.LeftShift;
 
-        private bool running = false;
 
         public void UpdateDesiredTargetSpeed(Vector2 input) {
 
@@ -36,11 +35,6 @@ public class Controller : MonoBehaviour
             if (Input.GetKey(runKey))
             {
                 currentTargetSpeed *= runMultiplier;
-                running = true;
-            }
-            else
-            {
-                running = false;
             }
         }
     }   
