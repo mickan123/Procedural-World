@@ -139,19 +139,22 @@ public class TerrainSettings : ScriptableObject {
 
 		// Set slope texture settings
 		for (int i = 0; i < biomeSettings.Count; i++) {
-			slopeLayerCounts[i] = biomeSettings[i].slopeTextureData.textureLayers.Length;
-			slopeThresholds[i] = biomeSettings[i].slopeThreshold;
-			slopeBlendRanges[i] = biomeSettings[i].slopeBlendRange;
-			for (int j = 0; j < biomeSettings[i].slopeTextureData.textureLayers.Length; j++) {
-				TextureLayer curLayer = biomeSettings[i].slopeTextureData.textureLayers[j];
-				slopeColours[i * maxLayerCount + j] = curLayer.tint;
-				slopeStartHeights[i * maxLayerCount + j] = curLayer.startHeight;
-				slopeBlends[i * maxLayerCount + j] = curLayer.blendStrength;
-				slopeColourStrengths[i * maxLayerCount + j] = curLayer.tintStrength;
-				slopeTextureScales[i * maxLayerCount + j] = curLayer.textureScale;
 
-				if (curLayer.texture != null) {
-					this.biomeSlopeTexturesArray.SetPixels(curLayer.texture.GetPixels(0, 0, textureSize, textureSize), i * maxLayerCount + j);
+			if (biomeSettings[i].slopeTextureData != null) {
+				slopeLayerCounts[i] = biomeSettings[i].slopeTextureData.textureLayers.Length;
+				slopeThresholds[i] = biomeSettings[i].slopeThreshold;
+				slopeBlendRanges[i] = biomeSettings[i].slopeBlendRange;
+				for (int j = 0; j < biomeSettings[i].slopeTextureData.textureLayers.Length; j++) {
+					TextureLayer curLayer = biomeSettings[i].slopeTextureData.textureLayers[j];
+					slopeColours[i * maxLayerCount + j] = curLayer.tint;
+					slopeStartHeights[i * maxLayerCount + j] = curLayer.startHeight;
+					slopeBlends[i * maxLayerCount + j] = curLayer.blendStrength;
+					slopeColourStrengths[i * maxLayerCount + j] = curLayer.tintStrength;
+					slopeTextureScales[i * maxLayerCount + j] = curLayer.textureScale;
+
+					if (curLayer.texture != null) {
+						this.biomeSlopeTexturesArray.SetPixels(curLayer.texture.GetPixels(0, 0, textureSize, textureSize), i * maxLayerCount + j);
+					}
 				}
 			}
 		}

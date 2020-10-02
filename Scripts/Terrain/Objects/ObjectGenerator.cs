@@ -14,14 +14,16 @@ public static class ObjectGenerator {
 			
 			if (HeightMapContainesBiome(info, biome)) {
 				for (int objectSetting = 0; objectSetting < settings.biomeSettings[biome].terrainObjectSettings.Count; objectSetting++) {
-					biomeObjects.Add(GenerateTerrainObject(settings.biomeSettings[biome].terrainObjectSettings[objectSetting], 
-															biome,
-															heightMap,
-															road.roadStrengthMap, 
-															info, 
-															settings, 
-															sampleCentre,
-															prng));    
+					if (settings.biomeSettings[biome].terrainObjectSettings[objectSetting] != null) {
+						biomeObjects.Add(GenerateTerrainObject(settings.biomeSettings[biome].terrainObjectSettings[objectSetting], 
+																biome,
+																heightMap,
+																road.roadStrengthMap, 
+																info, 
+																settings, 
+																sampleCentre,
+																prng));
+					}
 				}
 			}
 		}
