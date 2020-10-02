@@ -112,6 +112,7 @@ public static class Common {
         }
         EditorGUILayout.Space();
         EditorGUILayout.Space();
+        EditorGUILayout.Space();
 
 		return targetEditor;
     }

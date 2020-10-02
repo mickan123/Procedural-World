@@ -409,5 +409,36 @@ public class TerrainSettings : ScriptableObject {
 		}
 	}
 
+	public void ValidateBiomeSpawnCriteria() {
+		for (int i = 1; i < biomeSettings.Count; i++) {
+			for (int j = 0; j < i; j++) {
+				CompareBiomeSettingSpawnCriteria(biomeSettings[j], biomeSettings[i]);
+			}
+		}
+	}
+
+	public void CompareBiomeSettingSpawnCriteria(BiomeSettings a, BiomeSettings b) {
+		// Placeholder
+	}
+
+	private bool Overlaps(float startA, float endA, float startB, float endB) {
+		Debug.Log(startA + " " + endA);
+		Debug.Log(startB + " " + endB);
+
+		if (startB < startA && endB > startA) {
+			return true;
+		}
+		if (startB < endA && endB > endA) {
+			return true;
+		}
+		if (startA <= startB && endA >= endB) {
+			return true;
+		}
+		if (startA >= startB && endA <= endB) {
+			return true;
+		}
+		return false;
+	}
+
 	#endif
 }

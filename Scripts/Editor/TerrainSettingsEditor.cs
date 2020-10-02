@@ -205,11 +205,10 @@ public class TerrainSettingsEditor : Editor
     }
 
     private void BiomesTab() {
-        
         EditorGUILayout.PropertyField(transitionDistance);
         EditorGUILayout.Space();
-        EditorGUILayout.Space();
-        
+
+        EditorGUILayout.LabelField("Biome Spawn Settings", EditorStyles.boldLabel);
         humidityMapSettings.isExpanded = EditorGUILayout.Foldout(humidityMapSettings.isExpanded, "Humidity Map Settings", true, EditorStyles.foldout);
         if (humidityMapSettings.isExpanded) {
             EditorGUI.indentLevel++;
@@ -217,8 +216,6 @@ public class TerrainSettingsEditor : Editor
             EditorGUILayout.PropertyField(humidityMapSettings, true);
             EditorGUI.indentLevel--;
         }
-        EditorGUILayout.Space();
-        EditorGUILayout.Space();
 
         temperatureMapSettings.isExpanded = EditorGUILayout.Foldout(temperatureMapSettings.isExpanded, "Temperature Map Settings", true, EditorStyles.foldout);
         if (temperatureMapSettings.isExpanded) {
@@ -228,9 +225,21 @@ public class TerrainSettingsEditor : Editor
             EditorGUI.indentLevel--;
         }
         EditorGUILayout.Space();
-        EditorGUILayout.Space();
+
+        for (int i = 0 ; i < biomeSettings.arraySize; i++) {
+            SerializedProperty prop = biomeSettings.GetArrayElementAtIndex(i);
+            BiomeSettings settings = prop.objectReferenceValue as BiomeSettings;
+            if (settings != null) {
+                EditorGUILayout.ObjectField(prop);
+                EditorGUILayout.MinMaxSlider(ref settings.startTemperature, ref settings.endTemperature, 0f, 1f);
+                EditorGUILayout.MinMaxSlider(ref settings.startHumidity, ref settings.endHumidity, 0f, 1f);
+                EditorGUILayout.Space();
+            }
+        }
+        myTarget.ValidateBiomeSpawnCriteria();
 
         EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Biome Configuration Settings", EditorStyles.boldLabel);
         biomeSettingsList.DoLayoutList();
     }
 
