@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(), System.Serializable]
+[System.Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/ErosionSettings")]
 public class ErosionSettings : ScriptableObject {
     public ComputeShader erosionShader;
     public float gravity = 4;

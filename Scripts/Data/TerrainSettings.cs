@@ -4,7 +4,7 @@ using System.Threading;
 using System.Collections.Generic;
 using XNode;
 
-[CreateAssetMenu(), System.Serializable]
+[System.Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/TerrainSettings")]
 public class TerrainSettings : ScriptableObject {
 
 	// Custom editor toolbar tabs settings

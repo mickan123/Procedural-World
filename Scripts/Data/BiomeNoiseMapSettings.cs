@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Noise map specifically for temperature and humidity
-[CreateAssetMenu()]
+[CreateAssetMenu(menuName = "Procedural Generation Settings/BiomeNoiseMapSettings")]
 public class BiomeNoiseMapSettings : NoiseMapSettings {
 
 	#if UNITY_EDITOR

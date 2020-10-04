@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(), System.Serializable()]
+[System.Serializable(), CreateAssetMenu(menuName = "Procedural Generation Settings/TerrainObjectSettings")]
 public class TerrainObjectSettings : ScriptableObject {
 
 	public TerrainObject[] terrainObjects;

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(), System.Serializable]
+[System.Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/MeshSettings")]
 public class MeshSettings : ScriptableObject {
 
 	public const int numSupportedLODs = 5;

@@ -3,7 +3,7 @@ using XNode;
 using System;
 using System.Collections.Generic;
 
-[Serializable, CreateAssetMenu(fileName = "New Height Map Graph")]
+[Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/HeightMapNodeGraph")]
 public class HeightMapNodeGraph : NodeGraph
 {   
     public TerrainSettings terrainSettings;

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable, CreateAssetMenu()]
+[System.Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/BiomeSettings")]
 public class BiomeSettings : ScriptableObject {
 	
 	public TextureData textureData;

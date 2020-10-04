@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
-[System.Serializable, CreateAssetMenu()]
+[System.Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/TextureData")]
 public class TextureData : ScriptableObject {
 
 	public TextureLayer[] textureLayers;

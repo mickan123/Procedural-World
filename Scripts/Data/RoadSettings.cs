@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(), System.Serializable]
+[System.Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/RoadSettings")]
 public class RoadSettings : ScriptableObject
 {
 	public TextureData roadTexture;
