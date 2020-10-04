@@ -119,3 +119,13 @@ public static class Common {
 
     #endif
 }
+
+// Need this struct as 2d arrays aren't serializable on their own
+[System.Serializable]
+public struct HeightMapWrapper {
+    public float[,] heightMap;
+
+    public HeightMapWrapper(float[,] heightMap) {
+        this.heightMap = heightMap;
+    }
+}

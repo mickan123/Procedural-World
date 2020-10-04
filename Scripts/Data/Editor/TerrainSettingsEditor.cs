@@ -20,7 +20,6 @@ public class TerrainSettingsEditor : Editor
 
     // Erosion settings
     private SerializedProperty erosionSettings;
-    private Editor erosionSettingsEditor;
 
     // Mesh settings
     private SerializedProperty meshSettings;
@@ -55,7 +54,6 @@ public class TerrainSettingsEditor : Editor
         
         // Erosion settings
         erosionSettings = soTarget.FindProperty("erosionSettings");
-        erosionSettingsEditor = null;
 
         // Mesh settings
         meshSettings = soTarget.FindProperty("meshSettings");
@@ -244,7 +242,7 @@ public class TerrainSettingsEditor : Editor
     }
 
     private void ErosionTab() {
-        Common.DisplayScriptableObjectEditor(erosionSettings, myTarget.erosionSettings, erosionSettingsEditor);
+        EditorGUILayout.PropertyField(erosionSettings, true);
     }
 
     private void MeshTab() {

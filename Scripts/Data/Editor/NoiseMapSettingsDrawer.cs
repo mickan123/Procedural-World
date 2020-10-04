@@ -10,14 +10,14 @@ public class NoiseMapSettingsDrawer : PropertyDrawer
         }
         SerializedObject serializedObject = new SerializedObject(property.objectReferenceValue as NoiseMapSettings);
 
-        EditorGUI.BeginChangeCheck();
-
         var noiseType = serializedObject.FindProperty("noiseType");
         var perlinNoiseSettings = serializedObject.FindProperty("perlinNoiseSettings");
         var simplexNoiseSettings = serializedObject.FindProperty("simplexNoiseSettings");
         var sandDuneSettings = serializedObject.FindProperty("sandDuneSettings");
         var heightMultiplier = serializedObject.FindProperty("heightMultiplier");
         var heightCurve = serializedObject.FindProperty("heightCurve");
+
+        EditorGUI.BeginChangeCheck();
 
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), noiseType, true);
         position.y += EditorGUIUtility.singleLineHeight;

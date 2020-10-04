@@ -26,6 +26,8 @@ public class BiomeSettingsDrawer : PropertyDrawer
         var startTemperature = serializedObject.FindProperty("startTemperature");
         var endTemperature = serializedObject.FindProperty("endTemperature");
 
+        EditorGUI.BeginChangeCheck();
+
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), startHumidity, true);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), endHumidity, true);
@@ -58,8 +60,9 @@ public class BiomeSettingsDrawer : PropertyDrawer
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, heightMapSettingsHeight), heightMapSettings, true);
         position.y += heightMapSettingsHeight;
 
-        EditorGUI.BeginChangeCheck();
-
+        if (EditorGUI.EndChangeCheck()) {
+            serializedObject.ApplyModifiedProperties();
+        }
     }
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {

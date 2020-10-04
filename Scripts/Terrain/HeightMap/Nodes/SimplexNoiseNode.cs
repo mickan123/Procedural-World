@@ -33,12 +33,3 @@ public class SimplexNoiseNode : Node
         return new HeightMapWrapper(heightMap);
     }
 }
-
-[System.Serializable]
-public struct HeightMapWrapper {
-    public float[,] heightMap;
-
-    public HeightMapWrapper(float[,] heightMap) {
-        this.heightMap = heightMap;
-    }
-}

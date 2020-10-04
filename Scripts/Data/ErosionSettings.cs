@@ -7,11 +7,9 @@ public class ErosionSettings : ScriptableObject {
     public ComputeShader erosionShader;
     public float gravity = 4;
 
-    [Header("Smoothing Settings")]
     public int smoothFilterWidth = 3; // Size of smoothing filter
     public int smoothWidth = 25; // Number of units from edge to smooth
 	
-    [Header("Hydraulic Erosion Settings")]
 	public int numHydraulicErosionIterations = 50000;
     [Range(2, 10)]
     public int erosionBrushRadius = 3;
@@ -31,7 +29,6 @@ public class ErosionSettings : ScriptableObject {
     [Range(0, 1)]
     public float inertia = 0.5f;
 
-    [Header("Thermal Erosion Settings")]
     public int numThermalErosionIterations = 10;
     public float talusAngle = 1;
     public float thermalErosionRate = 1;
