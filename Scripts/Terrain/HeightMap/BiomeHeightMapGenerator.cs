@@ -6,7 +6,7 @@ using System.Linq;
 public static class BiomeHeightMapGenerator {
 
 	private static readonly int[,] neighBouroffsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1} };
-	public static BiomeData GenerateBiomeNoiseMaps(int width, int height, TerrainSettings terrainSettings, Vector2 chunkCentre, WorldManager worldGenerator) {
+	public static BiomeData GenerateBiomeNoiseMaps(int width, int height, TerrainSettings terrainSettings, Vector2 chunkCentre, WorldManager worldManager) {
 		
 		int padding = terrainSettings.erosionSettings.maxLifetime;
 		int paddedWidth = width + 2 * padding;
@@ -78,7 +78,7 @@ public static class BiomeHeightMapGenerator {
 		}
         #endif
 
-		ApplyErosion(heightNoiseMap, biomeInfo, terrainSettings, chunkCentre, worldGenerator);
+		ApplyErosion(heightNoiseMap, biomeInfo, terrainSettings, chunkCentre, worldManager);
 
 		#if (PROFILE && UNITY_EDITOR)
 		if (terrainSettings.IsMainThread()) {
@@ -185,13 +185,14 @@ public static class BiomeHeightMapGenerator {
 		int numBiomes = terrainSettings.biomeSettings.Count;
 		List<float[,]> biomeNoiseMaps = new List<float[,]>();
 		for (int i = 0; i < numBiomes; i++) {
-			biomeNoiseMaps.Add(HeightMapGenerator.GenerateHeightMap(width, 
-								height, 
-								terrainSettings.biomeSettings[i].heightMapSettings, 
-								terrainSettings,
-								sampleCentre, 
-								HeightMapGenerator.NormalizeMode.GlobalBiome,
-								terrainSettings.biomeSettings[i].heightMapSettings.seed));
+			biomeNoiseMaps.Add(
+				terrainSettings.biomeSettings[i].heightMapGraph.GetHeightMap(
+					terrainSettings, 
+					sampleCentre, 
+					width, 
+					height
+				)
+			);
 		}
 
 		// Calculate final noise map values by blending where near another biome
@@ -270,7 +271,18 @@ public static class BiomeHeightMapGenerator {
 			}
 		}
 
-		// Calculate main Biome by summing strength at every location
+		return new BiomeInfo(
+			biomeMap, 
+			biomeStrengths, 
+			CalculateMainBiomeIndex(biomeStrengths)
+		);
+	}
+
+	private static int CalculateMainBiomeIndex(float[,,] biomeStrengths) {
+		int width = biomeStrengths.GetLength(0);
+		int height = biomeStrengths.GetLength(1);
+		int numBiomes = biomeStrengths.GetLength(2);
+
 		float[] totalBiomeStrenths = new float[numBiomes];
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
@@ -288,7 +300,7 @@ public static class BiomeHeightMapGenerator {
 			}
 		}
 
-		return new BiomeInfo(biomeMap, biomeStrengths, maxIndex);
+		return maxIndex;
 	}
 }
 

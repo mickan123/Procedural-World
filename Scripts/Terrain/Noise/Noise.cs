@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using XNode;
 
 public static class Noise {
 
@@ -61,25 +62,13 @@ public static class Noise {
 
 	public static float[,] normalizeGlobalBiomeValues(float[,] input, TerrainSettings terrainSettings) {
 		
-		// Get noiseSetting values that result in max possible height
-		int maxNumOctaves = 1;
-		float maxPersistance = 0;
-		PerlinNoiseSettings[] noiseSettingArray = terrainSettings.biomeSettings.Select(x => x.heightMapSettings.perlinNoiseSettings).ToArray();
-		for (int i = 0; i < noiseSettingArray.Length; i++) {
-			if (noiseSettingArray[i].octaves > maxNumOctaves) {
-				maxNumOctaves = noiseSettingArray[i].octaves;
-			}
-			if (noiseSettingArray[i].persistance > maxPersistance) {
-				maxPersistance = noiseSettingArray[i].persistance;
-			}
-		}
+		float maxPossibleHeight = float.MinValue;
 
-		// Calculate max possible height
-		float maxPossibleHeight = 0;
-		float amplitude = 1;
-		for (int i = 0; i < maxNumOctaves; i++) {
-			maxPossibleHeight += amplitude; 
-			amplitude *= maxPersistance;
+		for (int i = 0; i < terrainSettings.biomeSettings.Count; i++) {
+			float height = terrainSettings.biomeSettings[i].heightMapGraph.GetMaxPossibleHeight();
+			if (height > maxPossibleHeight) {
+				maxPossibleHeight = height;
+			}
 		}
 
 		// Normalize by max possible height

@@ -48,6 +48,6 @@ public class RoadSettingsEditor : ScriptlessEditor
 
         if (EditorGUI.EndChangeCheck()) {
             soTarget.ApplyModifiedProperties();
-        }   
+        }
     }
 }

@@ -16,12 +16,14 @@ public static class PoissonDiskSampling {
 
 		float[,] spawnNoiseMap;
 		if (settings.varyRadius) {
-			spawnNoiseMap = Noise.GenerateNoiseMap(mapSize,
-													mapSize,
-													settings.noiseMapSettings.perlinNoiseSettings,
-													sampleCentre,
-													terrainSettings.biomeSettings[biome].heightMapSettings.noiseType,
-													settings.noiseMapSettings.seed);
+			spawnNoiseMap = Noise.GenerateNoiseMap(
+				mapSize,
+				mapSize,
+				settings.noiseMapSettings.perlinNoiseSettings,
+				sampleCentre,
+				settings.noiseMapSettings.noiseType,
+				settings.noiseMapSettings.seed
+			);
 		} else {
 			spawnNoiseMap = null;
 		}

@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
 
 public static class HeightMapGenerator {
 
@@ -17,30 +16,22 @@ public static class HeightMapGenerator {
 												
 		float[,] heightMap;
 		if (noiseSettings.noiseType == NoiseMapSettings.NoiseType.Perlin) {
-			heightMap = GenerateDefaultPerlinHeightMap(width, height, noiseSettings, terrainSettings, sampleCentre, normalizeMode, seed);
+			heightMap = GeneratePerlinHeightMap(width, height, noiseSettings, terrainSettings, sampleCentre, normalizeMode, seed);
 		} 
 		else if (noiseSettings.noiseType == NoiseMapSettings.NoiseType.Simplex) {
-			heightMap = GenerateDefaultSimplexHeightMap(width, height, noiseSettings, terrainSettings, sampleCentre, normalizeMode, seed);
+			heightMap = GenerateSimplexHeightMap(width, height, noiseSettings, terrainSettings, sampleCentre, normalizeMode, seed);
 		}
 		else if (noiseSettings.noiseType == NoiseMapSettings.NoiseType.SandDune) {
 			heightMap = GenerateSandDuneHeightMap(width, height, noiseSettings, terrainSettings.meshSettings, sampleCentre, seed);
 		}
 		else {
-			heightMap = GenerateDefaultPerlinHeightMap(width, height, noiseSettings, terrainSettings, sampleCentre, normalizeMode, seed);
+			heightMap = GeneratePerlinHeightMap(width, height, noiseSettings, terrainSettings, sampleCentre, normalizeMode, seed);
 		}
 		
-		AnimationCurve heightCurve_threadsafe = new AnimationCurve(noiseSettings.heightCurve.keys);
-
-		for (int i = 0; i < width; i++) {
-			for (int j = 0; j < height; j++) {
-				heightMap[i, j] *= heightCurve_threadsafe.Evaluate(heightMap[i, j]) * noiseSettings.heightMultiplier;
-			}
-		}
-
 		return heightMap;
 	}
 
-	public static float[,] GenerateDefaultPerlinHeightMap(int width, 
+	public static float[,] GeneratePerlinHeightMap(int width, 
 											int height, 
 											NoiseMapSettings noiseSettings, 
 											TerrainSettings terrainSettings,
@@ -64,10 +55,18 @@ public static class HeightMapGenerator {
 			}
 		}
 
+		AnimationCurve heightCurve_threadsafe = new AnimationCurve(noiseSettings.heightCurve.keys);
+
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				values[i, j] *= heightCurve_threadsafe.Evaluate(values[i, j]) * noiseSettings.heightMultiplier;
+			}
+		}
+
 		return values;
 	}
 
-		public static float[,] GenerateDefaultSimplexHeightMap(int width, 
+		public static float[,] GenerateSimplexHeightMap(int width, 
 											int height, 
 											NoiseMapSettings noiseSettings, 
 											TerrainSettings terrainSettings,
@@ -88,6 +87,14 @@ public static class HeightMapGenerator {
 				for (int j = 0; j < height; j++) {
 					values[i, j] = (values[i, j] + 1) / 2;
 				}
+			}
+		}
+
+		AnimationCurve heightCurve_threadsafe = new AnimationCurve(noiseSettings.heightCurve.keys);
+
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				values[i, j] *= heightCurve_threadsafe.Evaluate(values[i, j]) * noiseSettings.heightMultiplier;
 			}
 		}
 

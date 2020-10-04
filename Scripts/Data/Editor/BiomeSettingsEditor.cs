@@ -15,6 +15,7 @@ public class BiomeSettingsEditor : ScriptlessEditor
     private SerializedProperty slopeThreshold;
     private SerializedProperty slopeBlendRange;
     private SerializedProperty heightMapSettings;
+    private SerializedProperty heightMapGraph;
     private SerializedProperty terrainObjectSettings; 
     private ReorderableList textureDataList;
     private ReorderableList terrainObjectSettingsList;
@@ -40,6 +41,7 @@ public class BiomeSettingsEditor : ScriptlessEditor
         slopeThreshold = soTarget.FindProperty("slopeThreshold");
         slopeBlendRange = soTarget.FindProperty("slopeBlendRange");
         heightMapSettings = soTarget.FindProperty("heightMapSettings");
+        heightMapGraph = soTarget.FindProperty("heightMapGraph");
         textureDataEditor = null;
         slopeTextureDataEditor = null;
         terrainObjectSettingsEditors = new Dictionary<TerrainObjectSettings, TerrainObjectSettingsEditor>();
@@ -116,17 +118,9 @@ public class BiomeSettingsEditor : ScriptlessEditor
         EditorGUILayout.PropertyField(slopeBlendRange, true);
         EditorGUILayout.Space();
 
-        heightMapSettings.isExpanded = EditorGUILayout.Foldout(heightMapSettings.isExpanded, "Height Map Settings", true, EditorStyles.foldout);
-        if (heightMapSettings.isExpanded) {
-            EditorGUI.indentLevel++;
-            EditorGUILayout.ObjectField(heightMapSettings);
-            EditorGUILayout.PropertyField(heightMapSettings, true);
-            EditorGUI.indentLevel--;
-        }
+        EditorGUILayout.PropertyField(heightMapGraph, true);
         EditorGUILayout.Space();
         EditorGUILayout.Space();
-
-        
 
         terrainObjectSettingsList.DoLayoutList();
 

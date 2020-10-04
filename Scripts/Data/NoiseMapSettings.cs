@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(), System.Serializable]
+[CreateAssetMenu, System.Serializable()]
 public class NoiseMapSettings : ScriptableObject {
 
 	public enum NoiseType { Perlin, Simplex, SandDune }
@@ -25,7 +25,6 @@ public class NoiseMapSettings : ScriptableObject {
 		get {
 			return heightMultiplier * heightCurve.Evaluate(1);
 		}
-		
 	}
 
 	#if UNITY_EDITOR
