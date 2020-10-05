@@ -55,14 +55,6 @@ public static class HeightMapGenerator {
 			}
 		}
 
-		AnimationCurve heightCurve_threadsafe = new AnimationCurve(noiseSettings.heightCurve.keys);
-
-		for (int i = 0; i < width; i++) {
-			for (int j = 0; j < height; j++) {
-				values[i, j] *= heightCurve_threadsafe.Evaluate(values[i, j]) * noiseSettings.heightMultiplier;
-			}
-		}
-
 		return values;
 	}
 
@@ -87,14 +79,6 @@ public static class HeightMapGenerator {
 				for (int j = 0; j < height; j++) {
 					values[i, j] = (values[i, j] + 1) / 2;
 				}
-			}
-		}
-
-		AnimationCurve heightCurve_threadsafe = new AnimationCurve(noiseSettings.heightCurve.keys);
-
-		for (int i = 0; i < width; i++) {
-			for (int j = 0; j < height; j++) {
-				values[i, j] *= heightCurve_threadsafe.Evaluate(values[i, j]) * noiseSettings.heightMultiplier;
 			}
 		}
 

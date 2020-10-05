@@ -13,8 +13,9 @@ public class TerrainSettings : ScriptableObject {
 	[HideInInspector] public string currentTab;
 	
 	// Biome settings
-	public NoiseMapSettings humidityMapSettings;
-	public NoiseMapSettings temperatureMapSettings;
+	public HeightMapNodeGraph humidityMapGraph;
+	public HeightMapNodeGraph temperatureMapGraph;
+
 	[Range(0,1)] public float transitionDistance;
 	public List<BiomeSettings> biomeSettings = new List<BiomeSettings>();
 
@@ -73,8 +74,6 @@ public class TerrainSettings : ScriptableObject {
 	public void InitSeeds() {
 		System.Random prng = new System.Random(seed);
 		
-		temperatureMapSettings.seed = prng.Next(-100000, 100000);
-		humidityMapSettings.seed = prng.Next(-100000, 100000);
 		erosionSettings.seed = prng.Next(-100000, 100000);
 
 		for (int i = 0; i < biomeSettings.Count; i++) {
@@ -105,22 +104,20 @@ public class TerrainSettings : ScriptableObject {
 		int width = this.meshSettings.numVerticesPerLine;
 		int height = this.meshSettings.numVerticesPerLine;
 
-		float[,] humidityMap = HeightMapGenerator.GenerateHeightMap(width,
-                                                            height,
-                                                            this.humidityMapSettings,
-                                                            this,
-                                                            centre,
-															HeightMapGenerator.NormalizeMode.Global,
-                                                            this.humidityMapSettings.seed);
-		float[,] temperatureMap = HeightMapGenerator.GenerateHeightMap(width,
-                                                               height,
-                                                               this.temperatureMapSettings,
-                                                               this,
-                                                               centre,
-															   HeightMapGenerator.NormalizeMode.Global,
-                                                               this.temperatureMapSettings.seed);
-		
+		float[,] humidityMap = this.humidityMapGraph.GetHeightMap(
+			this, 
+			centre,
+			width,
+			height
+		);
 
+		float[,] temperatureMap = this.temperatureMapGraph.GetHeightMap(
+			this, 
+			centre,
+			width,
+			height
+		);
+		
 		if (drawMode == DrawMode.NoiseMapTexture) {
 			float[,] heightMap = this.biomeSettings[noiseMapBiomeIndex].heightMapGraph.GetHeightMap(
 				this,
@@ -376,14 +373,7 @@ public class TerrainSettings : ScriptableObject {
 
 	public float minHeight {
 		get {
-			float minHeight = float.MaxValue;
-			for (int i = 0; i< biomeSettings.Count; i++) {
-				float height = biomeSettings[i].heightMapGraph.GetMinHeight();
-				if (height < minHeight) {
-					minHeight = height;
-				}
-			}
-			return minHeight;
+			return 0f;
 		}
 	}
 
@@ -408,8 +398,6 @@ public class TerrainSettings : ScriptableObject {
 
 	public void OnValidate() {
 		// TODO ensure no overlapping biome values
-		humidityMapSettings.OnValidate();
-		temperatureMapSettings.OnValidate();
 		erosionSettings.OnValidate();
 		meshSettings.OnValidate();
 

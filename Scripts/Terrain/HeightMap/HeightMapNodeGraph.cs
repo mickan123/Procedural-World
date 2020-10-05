@@ -54,9 +54,9 @@ public class HeightMapNodeGraph : NodeGraph
     public float GetMinHeight() {
         float minHeight = float.MaxValue;
         foreach (Node node in this.nodes) {
-            if (node is SimplexNoiseNode) {
-                var typedNode = node as SimplexNoiseNode;
-                float height = typedNode.noiseMapSettings.minHeight;
+            if (node is HeightMapScaleNode) {
+                var typedNode = node as HeightMapScaleNode;
+                float height = typedNode.scale * typedNode.heightCurve.Evaluate(0);;
 
                 if (height < minHeight) {
                     minHeight = height;
@@ -69,9 +69,9 @@ public class HeightMapNodeGraph : NodeGraph
     public float GetMaxHeight() {
         float maxHeight = float.MinValue;
         foreach (Node node in this.nodes) {
-            if (node is SimplexNoiseNode) {
-                var typedNode = node as SimplexNoiseNode;
-                float height = typedNode.noiseMapSettings.maxHeight;
+            if (node is HeightMapScaleNode) {
+                var typedNode = node as HeightMapScaleNode;
+                float height = typedNode.scale * typedNode.heightCurve.Evaluate(1);
 
                 if (height > maxHeight) {
                     maxHeight = height;

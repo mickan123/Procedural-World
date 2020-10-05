@@ -14,8 +14,6 @@ public class NoiseMapSettingsDrawer : PropertyDrawer
         var perlinNoiseSettings = serializedObject.FindProperty("perlinNoiseSettings");
         var simplexNoiseSettings = serializedObject.FindProperty("simplexNoiseSettings");
         var sandDuneSettings = serializedObject.FindProperty("sandDuneSettings");
-        var heightMultiplier = serializedObject.FindProperty("heightMultiplier");
-        var heightCurve = serializedObject.FindProperty("heightCurve");
 
         EditorGUI.BeginChangeCheck();
 
@@ -34,11 +32,6 @@ public class NoiseMapSettingsDrawer : PropertyDrawer
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), sandDuneSettings, true);
             position.y += EditorGUI.GetPropertyHeight(sandDuneSettings, true);
         }
-
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), heightMultiplier, true);
-        position.y += EditorGUIUtility.singleLineHeight;
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), heightCurve, true);
-        position.y += EditorGUI.GetPropertyHeight(heightCurve, true);
 
         if (EditorGUI.EndChangeCheck()) {
             serializedObject.ApplyModifiedProperties();
@@ -68,8 +61,7 @@ public class NoiseMapSettingsDrawer : PropertyDrawer
         else if (noiseType.enumValueIndex == (int)NoiseMapSettings.NoiseType.SandDune) {
             height += EditorGUI.GetPropertyHeight(sandDuneSettings, true);
         }
-        height += EditorGUI.GetPropertyHeight(heightCurve, true);
-        height += 2 * EditorGUIUtility.singleLineHeight;
+        height += EditorGUIUtility.singleLineHeight;
 
         return height;
     }

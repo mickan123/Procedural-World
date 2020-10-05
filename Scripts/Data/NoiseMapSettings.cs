@@ -10,23 +10,9 @@ public class NoiseMapSettings : ScriptableObject {
 	public PerlinNoiseSettings perlinNoiseSettings;
 	public PerlinNoiseSettings simplexNoiseSettings;
 	public SandDuneSettings sandDuneSettings;
-	public float heightMultiplier;
-	public AnimationCurve heightCurve;
 	
 	[HideInInspector] public int seed; // Set by global seed
 	
-	public float minHeight {
-		get {
-			return heightMultiplier * heightCurve.Evaluate(0);
-		}
-	}
-
-	public float maxHeight {
-		get {
-			return heightMultiplier * heightCurve.Evaluate(1);
-		}
-	}
-
 	#if UNITY_EDITOR
 
 	public virtual void OnValidate() {

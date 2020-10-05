@@ -13,20 +13,19 @@ public static class BiomeHeightMapGenerator {
 		int paddedHeight = height + 2 * padding;
 		Vector2 paddedChunkCentre = new Vector2(chunkCentre.x - padding, chunkCentre.y - padding);
 
-		float[,] humidityNoiseMap = HeightMapGenerator.GenerateHeightMap(paddedWidth,
-																	paddedHeight,
-																	terrainSettings.humidityMapSettings,
-																	terrainSettings,
-																	paddedChunkCentre,
-																	HeightMapGenerator.NormalizeMode.Global,
-																	terrainSettings.humidityMapSettings.seed);
-		float[,] temperatureNoiseMap = HeightMapGenerator.GenerateHeightMap(paddedWidth,
-																		paddedHeight,
-																		terrainSettings.temperatureMapSettings,
-																		terrainSettings,
-																		paddedChunkCentre,
-																		HeightMapGenerator.NormalizeMode.Global,
-																		terrainSettings.temperatureMapSettings.seed);
+		float[,] humidityNoiseMap = terrainSettings.humidityMapGraph.GetHeightMap(
+			terrainSettings, 
+			paddedChunkCentre,
+			paddedWidth,
+			paddedHeight
+		);
+
+		float[,] temperatureNoiseMap = terrainSettings.temperatureMapGraph.GetHeightMap(
+			terrainSettings, 
+			paddedChunkCentre,
+			paddedWidth,
+			paddedHeight
+		);
 
 		#if (PROFILE && UNITY_EDITOR)
 		float biomeInfoStartTime = 0f;

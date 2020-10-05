@@ -11,8 +11,8 @@ public class TerrainSettingsEditor : Editor
     private SerializedObject soTarget;
     
     // Biomes settings
-    private SerializedProperty humidityMapSettings;
-    private SerializedProperty temperatureMapSettings;
+    private SerializedProperty humidityMapGraph;
+    private SerializedProperty temperatureMapGraph;
     private SerializedProperty transitionDistance;
     private SerializedProperty biomeSettings;
     private ReorderableList biomeSettingsList;
@@ -46,8 +46,8 @@ public class TerrainSettingsEditor : Editor
         soTarget = new SerializedObject(target);
 
         // Biomes settings
-        humidityMapSettings = soTarget.FindProperty("humidityMapSettings");
-        temperatureMapSettings = soTarget.FindProperty("temperatureMapSettings");
+        humidityMapGraph = soTarget.FindProperty("humidityMapGraph");
+        temperatureMapGraph = soTarget.FindProperty("temperatureMapGraph");
         transitionDistance = soTarget.FindProperty("transitionDistance");
         biomeSettingsEditors = new Dictionary<BiomeSettings, BiomeSettingsEditor>();
         CreateBiomeSettingsList();
@@ -207,21 +207,8 @@ public class TerrainSettingsEditor : Editor
         EditorGUILayout.Space();
 
         EditorGUILayout.LabelField("Biome Spawn Settings", EditorStyles.boldLabel);
-        humidityMapSettings.isExpanded = EditorGUILayout.Foldout(humidityMapSettings.isExpanded, "Humidity Map Settings", true, EditorStyles.foldout);
-        if (humidityMapSettings.isExpanded) {
-            EditorGUI.indentLevel++;
-            EditorGUILayout.ObjectField(humidityMapSettings);
-            EditorGUILayout.PropertyField(humidityMapSettings, true);
-            EditorGUI.indentLevel--;
-        }
-
-        temperatureMapSettings.isExpanded = EditorGUILayout.Foldout(temperatureMapSettings.isExpanded, "Temperature Map Settings", true, EditorStyles.foldout);
-        if (temperatureMapSettings.isExpanded) {
-            EditorGUI.indentLevel++;
-            EditorGUILayout.ObjectField(temperatureMapSettings);
-            EditorGUILayout.PropertyField(temperatureMapSettings, true);
-            EditorGUI.indentLevel--;
-        }
+        EditorGUILayout.PropertyField(humidityMapGraph, true);
+        EditorGUILayout.PropertyField(temperatureMapGraph, true);
         EditorGUILayout.Space();
 
         for (int i = 0 ; i < biomeSettings.arraySize; i++) {
