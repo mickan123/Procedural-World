@@ -14,9 +14,6 @@ public class NoiseMapSettingsEditor : ScriptlessEditor
     private SerializedProperty simplexNoiseSettings;
     private SerializedProperty sandDuneSettings;
 
-    private SerializedProperty heightMultiplier;
-    private SerializedProperty heightCurve;
-
     private void OnEnable() {
         myTarget = (NoiseMapSettings)target;
         soTarget = new SerializedObject(target);
@@ -25,9 +22,6 @@ public class NoiseMapSettingsEditor : ScriptlessEditor
         perlinNoiseSettings = soTarget.FindProperty("perlinNoiseSettings");
         simplexNoiseSettings = soTarget.FindProperty("simplexNoiseSettings");
         sandDuneSettings = soTarget.FindProperty("sandDuneSettings");
-
-        heightMultiplier = soTarget.FindProperty("heightMultiplier");
-        heightCurve = soTarget.FindProperty("heightCurve");
     }
 
     public override void OnInspectorGUI() {
@@ -45,9 +39,6 @@ public class NoiseMapSettingsEditor : ScriptlessEditor
             EditorGUILayout.PropertyField(sandDuneSettings);
         }
         EditorGUILayout.Space();
-
-        EditorGUILayout.PropertyField(heightMultiplier);
-        EditorGUILayout.PropertyField(heightCurve);
 
         if (EditorGUI.EndChangeCheck()) {
             soTarget.ApplyModifiedProperties();

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/MeshSettings")]
+[System.Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/NoiseMapSettings")]
 public class NoiseMapSettings : ScriptableObject {
 
 	public enum NoiseType { Perlin, Simplex, SandDune }
