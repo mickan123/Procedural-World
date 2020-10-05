@@ -58,38 +58,6 @@ public static class HeightMapGenerator {
 		return values;
 	}
 
-	public static float[,] GenerateTerracedNoiseMap(
-		int width,
-		int height,
-		NoiseMapSettings noiseMapSettings,
-		TerrainSettings terrainSettings,
-		Vector2 sampleCentre,
-		NormalizeMode normalizeMode,
-		int numTerraces,
-		int seed
-	) {
-		float[,] heightMap = HeightMapGenerator.GenerateHeightMap(
-            width,
-            height,
-            noiseMapSettings,
-            terrainSettings,
-            sampleCentre,
-            normalizeMode,
-            noiseMapSettings.seed
-        );
-
-		float terraceInterval = 1f / (float)numTerraces;
-
-		for (int x = 0; x < heightMap.GetLength(0); x++) {
-			for (int y = 0; y < heightMap.GetLength(1); y++) {
-				// heightMap[x, y] *= (float)numTerraces;
-				heightMap[x, y] = Mathf.Floor(heightMap[x, y] / terraceInterval) * terraceInterval;
-			}
-		}
-
-		return heightMap;
-	}
-
 	public static float[,] GenerateSimplexHeightMap(
 		int width, 
 		int height, 
@@ -119,6 +87,65 @@ public static class HeightMapGenerator {
 		return values;
 	}
 
+	public static float[,] GenerateTerracedNoiseMap(
+		int width,
+		int height,
+		NoiseMapSettings noiseMapSettings,
+		TerrainSettings terrainSettings,
+		Vector2 sampleCentre,
+		NormalizeMode normalizeMode,
+		int numTerraces,
+		int seed
+	) {
+		float[,] heightMap = HeightMapGenerator.GenerateHeightMap(
+            width,
+            height,
+            noiseMapSettings,
+            terrainSettings,
+            sampleCentre,
+            normalizeMode,
+            noiseMapSettings.seed
+        );
+
+		float terraceInterval = 1f / (float)numTerraces;
+
+		for (int x = 0; x < heightMap.GetLength(0); x++) {
+			for (int y = 0; y < heightMap.GetLength(1); y++) {
+				heightMap[x, y] = Mathf.Floor(heightMap[x, y] / terraceInterval) * terraceInterval;
+			}
+		}
+
+		return heightMap;
+	}
+
+	public static float[,] GenerateRidgedTurbulenceMap(
+		int width, 
+		int height, 
+		NoiseMapSettings noiseSettings, 
+		TerrainSettings terrainSettings,
+		Vector2 sampleCentre, 
+		NormalizeMode normalizeMode,
+		int seed
+	) {
+		float[,] heightMap = HeightMapGenerator.GenerateHeightMap(
+            width,
+            height,
+            noiseSettings,
+            terrainSettings,
+            sampleCentre,
+            normalizeMode,
+            noiseSettings.seed
+        );
+
+		for (int x = 0; x < heightMap.GetLength(0); x++) {
+			for (int y = 0; y < heightMap.GetLength(1); y++) {
+				heightMap[x, y] = (heightMap[x, y] * 2f) - 1; // Convert to range [-1, 1]
+				heightMap[x, y] = Mathf.Abs(heightMap[x, y]);
+			}
+		}
+
+		return heightMap;
+	}
 
 	public static float[,] GenerateSandDuneHeightMap(
 		int width, 
