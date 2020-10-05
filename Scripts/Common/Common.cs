@@ -101,7 +101,7 @@ public static class Common {
             property.isExpanded = EditorGUILayout.Foldout(property.isExpanded, GUIContent.none, true, EditorStyles.foldout);
         }
 
-        if (property.isExpanded) {
+        if (property.isExpanded && targetObject != null) {
             if (targetEditor == null) {
                 targetEditor = Editor.CreateEditor(targetObject);
             }

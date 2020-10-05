@@ -111,7 +111,7 @@ public class BiomeSettingsEditor : ScriptlessEditor
         EditorGUILayout.PropertyField(thermalErosion, true);
         EditorGUILayout.PropertyField(allowRoads, true);
         EditorGUILayout.Space();
-
+        
         textureDataEditor = (TextureDataEditor)Common.DisplayScriptableObjectEditor(textureData, myTarget.textureData, textureDataEditor);
         slopeTextureDataEditor = (TextureDataEditor)Common.DisplayScriptableObjectEditor(slopeTextureData, myTarget.slopeTextureData, slopeTextureDataEditor);
         EditorGUILayout.PropertyField(slopeThreshold, true);
