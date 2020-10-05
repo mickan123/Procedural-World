@@ -5,23 +5,22 @@ using XNode;
 
 public class HeightMapMathNode : Node
 {
-    [Input] public HeightMapWrapper heightMapInA;
-    [Input] public HeightMapWrapper heightMapInB;
-    [Output] public HeightMapWrapper heightMapOut;
+    [Input] public float[,] heightMapInA;
+    [Input] public float[,] heightMapInB;
+    [Output] public float[,] heightMapOut;
 
     public enum MathType { Add, Subtract, Multiply }
     public MathType mathType = MathType.Add;
 
     public override object GetValue(NodePort port) {
 
-        HeightMapWrapper heightMapInA = GetInputValue<HeightMapWrapper>("heightMapInA", this.heightMapInA);
-        HeightMapWrapper heightMapInB = GetInputValue<HeightMapWrapper>("heightMapInB", this.heightMapInB);
+        float[,] heightMapInA = GetInputValue<float[,]>("heightMapInA", this.heightMapInA);
+        float[,] heightMapInB = GetInputValue<float[,]>("heightMapInB", this.heightMapInB);
 
-        int width = heightMapInA.heightMap.GetLength(0);
-        int height = heightMapInA.heightMap.GetLength(1);
+        int width = heightMapInA.GetLength(0);
+        int height = heightMapInA.GetLength(1);
 
-        float[,] heightMap = new float[width, height];
-        HeightMapWrapper result = new HeightMapWrapper(heightMap);
+        float[,] result = new float[width, height];
 
         if (port.fieldName == "heightMapOut") {
             switch (mathType) {
@@ -41,35 +40,35 @@ public class HeightMapMathNode : Node
         return result;
     }
 
-    public void AddHeightMaps(HeightMapWrapper a, HeightMapWrapper b, ref HeightMapWrapper result) {
-        int width = a.heightMap.GetLength(0);
-        int height = a.heightMap.GetLength(1);
+    public void AddHeightMaps(float[,] a, float[,] b, ref float[,] result) {
+        int width = a.GetLength(0);
+        int height = a.GetLength(1);
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                result.heightMap[x, y] = a.heightMap[x, y] + b.heightMap[x, y];
+                result[x, y] = a[x, y] + b[x, y];
             }
         }
     }
 
-    public void SubHeightMaps(HeightMapWrapper a, HeightMapWrapper b, ref HeightMapWrapper result) {
-        int width = a.heightMap.GetLength(0);
-        int height = a.heightMap.GetLength(1);
+    public void SubHeightMaps(float[,] a, float[,] b, ref float[,] result) {
+        int width = a.GetLength(0);
+        int height = a.GetLength(1);
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                result.heightMap[x, y] = a.heightMap[x, y] - b.heightMap[x, y];
+                result[x, y] = a[x, y] - b[x, y];
             }
         }
     }
 
-    public void MulHeightMaps(HeightMapWrapper a, HeightMapWrapper b, ref HeightMapWrapper result) {
-        int width = a.heightMap.GetLength(0);
-        int height = a.heightMap.GetLength(1);
+    public void MulHeightMaps(float[,] a, float[,] b, ref float[,] result) {
+        int width = a.GetLength(0);
+        int height = a.GetLength(1);
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                result.heightMap[x, y] = a.heightMap[x, y] * b.heightMap[x, y];
+                result[x, y] = a[x, y] * b[x, y];
             }
         }
     }

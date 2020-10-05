@@ -5,10 +5,9 @@ using XNode;
 
 public class HeightMapOutputNode : Node
 {
-    [Input(ShowBackingValue.Never, ConnectionType.Override)] public HeightMapWrapper heightMap;
+    [Input(ShowBackingValue.Never, ConnectionType.Override)] public float[,] heightMap;
     
     public float[,] GetValue() {
-        HeightMapWrapper heightMapWrapper = GetInputValue<HeightMapWrapper>("heightMap");
-        return heightMapWrapper.heightMap;
+        return GetInputValue<float[,]>("heightMap");
     }
 }

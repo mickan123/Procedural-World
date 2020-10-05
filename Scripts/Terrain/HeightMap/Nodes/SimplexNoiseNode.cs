@@ -8,7 +8,7 @@ public class SimplexNoiseNode : Node
     public NoiseMapSettings noiseMapSettings;
     public HeightMapGenerator.NormalizeMode normalizeMode;
 
-    [Output] public HeightMapWrapper heightMap;
+    [Output] public float[,] heightMap;
     
     public override object GetValue(NodePort port) {
         if (port.fieldName == "heightMap") {
@@ -20,7 +20,7 @@ public class SimplexNoiseNode : Node
         }
     }
 
-    public HeightMapWrapper GetHeightMap() {
+    public float[,] GetHeightMap() {
         var heightMapGraph = this.graph as HeightMapNodeGraph;
         float[,] heightMap =  HeightMapGenerator.GenerateHeightMap(
             heightMapGraph.width,
@@ -31,6 +31,6 @@ public class SimplexNoiseNode : Node
             normalizeMode,
             this.noiseMapSettings.seed
         );
-        return new HeightMapWrapper(heightMap);
+        return heightMap;
     }
 }

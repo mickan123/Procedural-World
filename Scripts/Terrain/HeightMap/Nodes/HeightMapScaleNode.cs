@@ -5,21 +5,20 @@ using XNode;
 
 public class HeightMapScaleNode : Node
 {
-    [Input] public HeightMapWrapper heightMapIn;
-    [Output] public HeightMapWrapper heightMapOut;
+    [Input] public float[,] heightMapIn;
+    [Output] public float[,] heightMapOut;
 
     public float scale;
     public AnimationCurve heightCurve;
 
     public override object GetValue(NodePort port) {
 
-        HeightMapWrapper heightMapIn = GetInputValue<HeightMapWrapper>("heightMapIn", this.heightMapIn);
+        float[,] heightMapIn = GetInputValue<float[,]>("heightMapIn", this.heightMapIn);
 
-        int width = heightMapIn.heightMap.GetLength(0);
-        int height = heightMapIn.heightMap.GetLength(1);
+        int width = heightMapIn.GetLength(0);
+        int height = heightMapIn.GetLength(1);
 
-        float[,] heightMap = new float[width, height];
-        HeightMapWrapper result = new HeightMapWrapper(heightMap);
+        float[,] result = new float[width, height];
 
         if (port.fieldName == "heightMapOut") {
             ScaleHeightMap(heightMapIn, ref result);
@@ -28,15 +27,15 @@ public class HeightMapScaleNode : Node
         return result;
     }
 
-    public void ScaleHeightMap(HeightMapWrapper heightMap, ref HeightMapWrapper result) {
-        int width = heightMap.heightMap.GetLength(0);
-        int height = heightMap.heightMap.GetLength(1);
+    public void ScaleHeightMap(float[,] heightMap, ref float[,] result) {
+        int width = heightMap.GetLength(0);
+        int height = heightMap.GetLength(1);
 
         AnimationCurve heightCurve_threadsafe = new AnimationCurve(this.heightCurve.keys);
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                result.heightMap[x, y] = scale * heightCurve_threadsafe.Evaluate(heightMap.heightMap[x, y]) * heightMap.heightMap[x, y];
+                result[x, y] = scale * heightCurve_threadsafe.Evaluate(heightMap[x, y]) * heightMap[x, y];
             }
         }
     }

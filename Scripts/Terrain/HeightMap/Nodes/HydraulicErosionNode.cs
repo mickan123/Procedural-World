@@ -7,8 +7,8 @@ public class HydraulicErosionNode : Node
 {
     public ErosionSettings erosionSettings;
 
-    [Input] public HeightMapWrapper heightMapIn;
-    [Output] public HeightMapWrapper heightMapOut;
+    [Input] public float[,] heightMapIn;
+    [Output] public float[,] heightMapOut;
 
     public override object GetValue(NodePort port) {
         if (port.fieldName == "heightMapOut") {
@@ -20,9 +20,9 @@ public class HydraulicErosionNode : Node
         }
     }
 
-    public HeightMapWrapper ErodeHeightMap() {
-        HeightMapWrapper heightMapIn = GetInputValue<HeightMapWrapper>("heightMapIn", this.heightMapIn);
+    public float[,] ErodeHeightMap() {
+        float[,] heightMapIn = GetInputValue<float[,]>("heightMapIn", this.heightMapIn);
         var heightMapGraph = this.graph as HeightMapNodeGraph;
-        return new HeightMapWrapper(null);
+        return null;
     }
 }
