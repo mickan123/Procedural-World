@@ -6,6 +6,7 @@ using XNode;
 public class SimplexNoiseNode : Node
 {
     public NoiseMapSettings noiseMapSettings;
+    public HeightMapGenerator.NormalizeMode normalizeMode;
 
     [Output] public HeightMapWrapper heightMap;
     
@@ -27,7 +28,7 @@ public class SimplexNoiseNode : Node
             this.noiseMapSettings,
             heightMapGraph.terrainSettings,
             heightMapGraph.sampleCentre,
-            HeightMapGenerator.NormalizeMode.GlobalBiome,
+            normalizeMode,
             this.noiseMapSettings.seed
         );
         return new HeightMapWrapper(heightMap);

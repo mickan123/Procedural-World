@@ -12,6 +12,9 @@ public class SimplexNoiseNodeEditor : NodeEditor {
         }
         serializedObject.Update();
         
+        SerializedProperty normalizeMode = serializedObject.FindProperty("normalizeMode");
+        NodeEditorGUILayout.PropertyField(normalizeMode, true);
+        
         SerializedProperty noiseMapSettings = serializedObject.FindProperty("noiseMapSettings");
         noiseMapSettings.isExpanded = EditorGUILayout.Foldout(noiseMapSettings.isExpanded, "Height Map Settings", true, EditorStyles.foldout);
         if (noiseMapSettings.isExpanded) {
