@@ -420,13 +420,6 @@ public class Road
         }
     }
 
-    // Finds the distance of a point from a line of origin and direction
-    private float DistanceFromLine(Vector3 point, Vector3 origin, Vector3 direction) {
-        Ray ray = new Ray(origin, direction);
-        float distance = Vector3.Cross(ray.direction, point - ray.origin).magnitude;
-        return distance;
-    }
-
     private class Node : IHeapItem<Node> {
         public int x;
         public int y;

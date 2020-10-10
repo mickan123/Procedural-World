@@ -84,6 +84,18 @@ public class TerrainSettings : ScriptableObject {
 					SimplexNoiseNode typedNode = node as SimplexNoiseNode;
 					typedNode.noiseMapSettings.seed = prng.Next(-100000, 100000);
 				}
+				else if (node is RidgedTurbulenceNode) {
+					RidgedTurbulenceNode typedNode = node as RidgedTurbulenceNode;
+					typedNode.noiseMapSettings.seed = prng.Next(-100000, 100000);
+				}
+				else if (node is VoronoiNoiseNode) {
+					VoronoiNoiseNode typedNode = node as VoronoiNoiseNode;
+					typedNode.seed = prng.Next(-100000, 100000);
+				}
+				else if (node is TerracedNoiseNode) {
+					TerracedNoiseNode typedNode = node as TerracedNoiseNode;
+					typedNode.noiseMapSettings.seed = prng.Next(-100000, 100000);
+				}
 			}
 
 			for (int j = 0; j < biomeSettings[i].terrainObjectSettings.Count; j++) {

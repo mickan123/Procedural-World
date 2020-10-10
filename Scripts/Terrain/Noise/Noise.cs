@@ -101,5 +101,28 @@ public static class Noise {
 
 		return input;
 	}
+
+	public static float[,] normalizeLocal(float[,] input) {
+		float maxHeight = float.MinValue;
+		float minHeight = float.MaxValue;
+		for (int i = 0; i < input.GetLength(0); i++) {
+			for (int j = 0 ; j < input.GetLength(1); j++) {
+				if (input[i, j] > maxHeight) {
+					maxHeight = input[i, j];
+				}
+				if (input[i, j] < minHeight) {
+					minHeight = input[i, j];
+				}
+			}
+		}
+		
+		for (int i = 0; i < input.GetLength(0); i++) {
+			for (int j = 0 ; j < input.GetLength(1); j++) {
+				input[i, j] = (input[i, j] - minHeight) / (maxHeight - minHeight);
+			}
+		}
+
+		return input;
+	}
 }
 

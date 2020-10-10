@@ -92,6 +92,63 @@ public static class Common {
         return slope;
     }
 
+    public static float DistanceFromLine(Vector2 point, Vector2 origin, Vector2 direction) {
+        return DistanceFromLine(
+            new Vector3(point.x, 0f, point.y),
+            new Vector3(origin.x, 0f, origin.y),
+            new Vector3(direction.x, 0f, direction.y)
+        );
+    }
+
+    // Finds the distance of a point from a line of origin and direction
+    public static float DistanceFromLine(Vector3 point, Vector3 origin, Vector3 direction) {
+        Ray ray = new Ray(origin, direction);
+        float distance = Vector3.Cross(ray.direction, point - ray.origin).magnitude;
+        return distance;
+    }
+
+    public static Vector2 GetClosestPoint(List<Vector2> points, Vector2 pos) {
+        float minDist = float.MaxValue;
+        Vector2 closestPoint = new Vector2(0f, 0f);
+
+        for (int i = 0; i < points.Count; i++) {
+            float dist = Vector2.Distance(points[i], pos);
+            if (dist < minDist) {
+                minDist = dist;
+                closestPoint = points[i];
+            }
+        }
+
+        return closestPoint;
+    }
+
+    public static Vector2 GetSecondClosestPoint(List<Vector2> points, Vector2 pos) {
+        float minDist = float.MaxValue;
+        float secondMinDist = float.MaxValue;
+        Vector2 closestPoint = new Vector2(0f, 0f);
+        Vector2 secondClosestPoint = new Vector2(0f, 0f);
+        
+        for (int i = 0; i < points.Count; i++) {
+            float dist = Vector2.Distance(points[i], pos);
+            if (dist < minDist) {
+                secondMinDist = dist;
+                minDist = dist;
+                secondClosestPoint = closestPoint;
+                closestPoint = points[i];
+            }
+        }
+
+        return secondClosestPoint;
+    }
+
+    public static Vector2 GetCentreOfPoints(List<Vector2> points) {
+        Vector2 centre = new Vector2(0f, 0f);
+        for (int i = 0; i < points.Count; i++) {
+            centre += points[i];
+        }
+        return centre /= points.Count;
+    }
+
     #if UNITY_EDITOR
 
 	public static Editor DisplayScriptableObjectEditor(SerializedProperty property, Object targetObject, Editor targetEditor) {

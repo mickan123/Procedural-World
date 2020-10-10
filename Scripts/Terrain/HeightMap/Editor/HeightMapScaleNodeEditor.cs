@@ -14,10 +14,8 @@ public class HeightMapScaleNodeEditor : NodeEditor {
 
         NodeEditorGUILayout.PortField(node.GetPort("heightMapIn"));
 
-        SerializedProperty scale = serializedObject.FindProperty("scale");
-        NodeEditorGUILayout.PropertyField(scale, true);
-        SerializedProperty heightCurve = serializedObject.FindProperty("heightCurve");
-        NodeEditorGUILayout.PropertyField(heightCurve, true);
+        NodeEditorGUILayout.PropertyField(serializedObject.FindProperty("scale"), true);
+        NodeEditorGUILayout.PropertyField(serializedObject.FindProperty("heightCurve"), true);
 
         NodeEditorGUILayout.PortField(node.GetPort("heightMapOut"));
 

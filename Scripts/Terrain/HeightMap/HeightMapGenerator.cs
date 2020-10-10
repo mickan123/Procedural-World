@@ -1,18 +1,22 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using csDelaunay;
 
 public static class HeightMapGenerator {
 
-	public enum NormalizeMode { GlobalBiome, Global, Percentage };
+	public enum NormalizeMode { GlobalBiome, Global, Local };
+	public enum VoronoiMode { RandomFlat, ConvexPolygons, ClosestPoint, Cracks };
 	
-	public static float[,] GenerateHeightMap(int width, 
-											int height, 
-											NoiseMapSettings noiseSettings, 
-											TerrainSettings terrainSettings,
-											Vector2 sampleCentre, 
-											NormalizeMode normalizeMode,
-											int seed) {
+	public static float[,] GenerateHeightMap(
+		int width, 
+		int height, 
+		NoiseMapSettings noiseSettings, 
+		TerrainSettings terrainSettings,
+		Vector2 sampleCentre, 
+		NormalizeMode normalizeMode,
+		int seed
+	) {
 												
 		float[,] heightMap;
 		if (noiseSettings.noiseType == NoiseMapSettings.NoiseType.Perlin) {
@@ -31,13 +35,15 @@ public static class HeightMapGenerator {
 		return heightMap;
 	}
 
-	public static float[,] GeneratePerlinHeightMap(int width, 
-											int height, 
-											NoiseMapSettings noiseSettings, 
-											TerrainSettings terrainSettings,
-											Vector2 sampleCentre, 
-											NormalizeMode normalizeMode,
-											int seed) {
+	public static float[,] GeneratePerlinHeightMap(
+		int width, 
+		int height, 
+		NoiseMapSettings noiseSettings, 
+		TerrainSettings terrainSettings,
+		Vector2 sampleCentre, 
+		NormalizeMode normalizeMode,
+		int seed
+	) {
 		
 		float[,] values = Noise.GenerateNoiseMap(width, height, noiseSettings.perlinNoiseSettings, sampleCentre, noiseSettings.noiseType, seed);
 
@@ -47,12 +53,8 @@ public static class HeightMapGenerator {
 		else if (normalizeMode == NormalizeMode.Global) {
 			values = Noise.normalizeGlobalValues(values, noiseSettings.perlinNoiseSettings);
 		}
-		else if (normalizeMode == NormalizeMode.Percentage) {
-			for (int i = 0; i < width; i++) {
-				for (int j = 0; j < height; j++) {
-					values[i, j] = (values[i, j] + 1) / 2;
-				}
-			}
+		else if (normalizeMode == NormalizeMode.Local) {
+			values = Noise.normalizeLocal(values);
 		}
 
 		return values;
@@ -76,12 +78,8 @@ public static class HeightMapGenerator {
 		else if (normalizeMode == NormalizeMode.Global) {
 			values = Noise.normalizeGlobalValues(values, noiseSettings.simplexNoiseSettings);
 		}
-		else if (normalizeMode == NormalizeMode.Percentage) {
-			for (int i = 0; i < width; i++) {
-				for (int j = 0; j < height; j++) {
-					values[i, j] = (values[i, j] + 1) / 2;
-				}
-			}
+		else if (normalizeMode == NormalizeMode.Local) {
+			values = Noise.normalizeLocal(values);
 		}
 
 		return values;
@@ -146,6 +144,115 @@ public static class HeightMapGenerator {
 
 		return heightMap;
 	}
+
+	public static float[,] GenerateVeronoiMap(
+		int width, 
+		int height, 
+		TerrainSettings terrainSettings,
+		Vector2 sampleCentre, 
+		NormalizeMode normalizeMode,
+		VoronoiMode voronoiMode,
+		int numPolygons,
+		int numLloydsIterations,
+		float voronoiCrackWidth,
+		int seed
+	) {
+		List<Vector2> randomPoints = new List<Vector2>();
+		System.Random prng = new System.Random(seed);
+
+		for (int i = 0; i < numPolygons; i++) {
+			float x = Common.NextFloat(prng, 0, width);
+			float y = Common.NextFloat(prng, 0, height);
+			randomPoints.Add(new Vector2(x, y));
+		}
+
+		Rect bounds = new Rect(0, 0, width, height);
+		Voronoi voronoi = new Voronoi(randomPoints, bounds, numLloydsIterations);
+		
+		float[,] heightMap = new float[width, height];
+		if (voronoiMode == VoronoiMode.RandomFlat) {
+			FlatVoronoiHeightMap(ref heightMap, voronoi, prng);
+		} 
+		else if (voronoiMode == VoronoiMode.ConvexPolygons) {
+			ConvexPoloygonsVoronoiHeightMap(ref heightMap, voronoi);
+		}
+		else if (voronoiMode == VoronoiMode.ClosestPoint) {
+			ClosestPointVoronoiHeightMap(ref heightMap, voronoi);
+		}
+		else if (voronoiMode == VoronoiMode.Cracks) {
+			CracksVoronoiHeightMap(ref heightMap, voronoi, voronoiCrackWidth);
+		}
+
+		return heightMap;
+	}
+
+	private static void FlatVoronoiHeightMap(ref float[,] heightMap, Voronoi voronoi, System.Random prng) {
+		int numPolygons = voronoi.SiteCoords().Count;
+		float[] randomHeights = new float[numPolygons];
+		for (int i = 0; i < numPolygons; i++) {
+			randomHeights[i] = Common.NextFloat(prng, 0, 1);
+		}
+
+		for (int x = 0; x < heightMap.GetLength(0); x++) {
+			for (int y = 0; y < heightMap.GetLength(1); y++) {
+				Site closestSite = voronoi.ClosestSiteAtPoint(new Vector2(x, y));
+				heightMap[x, y] = randomHeights[closestSite.SiteIndex];
+			}
+		}
+	}
+
+	private static void ConvexPoloygonsVoronoiHeightMap(ref float[,] heightMap, Voronoi voronoi) {
+		for (int x = 0; x < heightMap.GetLength(0); x++) {
+			for (int y = 0; y < heightMap.GetLength(1); y++) {
+
+				Vector2 pos = new Vector2(x, y);
+				
+				Site closestSite = voronoi.ClosestSiteAtPoint(pos);
+				Edge closestEdge = closestSite.ClosestEdgeAtPoint(pos);
+
+				float distToEdge = Common.DistanceFromLine(
+					pos, 
+					closestEdge.ClippedEnds[LR.LEFT],
+					closestEdge.ClippedEnds[LR.LEFT] - closestEdge.ClippedEnds[LR.RIGHT]
+				);
+				float distToSite = Vector2.Distance(closestSite.Coord, pos);
+
+				heightMap[x, y] = distToEdge;
+			}
+		}
+	}
+
+	private static void ClosestPointVoronoiHeightMap(ref float[,] heightMap, Voronoi voronoi) {
+		for (int x = 0; x < heightMap.GetLength(0); x++) {
+			for (int y = 0; y < heightMap.GetLength(1); y++) {
+				Vector2 pos = new Vector2(x, y);
+				Site closestSite = voronoi.ClosestSiteAtPoint(pos);
+
+				float dist = Vector2.Distance(closestSite.Coord, pos);
+
+				heightMap[x, y] = dist;
+			}
+		}
+	}
+
+	private static void CracksVoronoiHeightMap(ref float[,] heightMap, Voronoi voronoi, float voronoiCrackWidth) {
+		for (int x = 0; x < heightMap.GetLength(0); x++) {
+			for (int y = 0; y < heightMap.GetLength(1); y++) {
+
+				Vector2 pos = new Vector2(x, y);
+				Site closestSite = voronoi.ClosestSiteAtPoint(pos);
+				Site secondClosestSite = voronoi.SecondClosestSiteAtPoint(pos);
+
+				float dist = Vector2.Distance(closestSite.Coord, pos);
+				float maxDist = Vector2.Distance(secondClosestSite.Coord, pos); 
+				
+				// Use half crack width as its calculated half from either side
+				float halfCrackWidth = voronoiCrackWidth / 2f;
+				heightMap[x, y] = (maxDist - dist > halfCrackWidth) ? 1f : 0f;
+			}	
+		}
+	}
+
 
 	public static float[,] GenerateSandDuneHeightMap(
 		int width, 
