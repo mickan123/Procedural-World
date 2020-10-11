@@ -141,8 +141,6 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
             position.y += EditorGUIUtility.singleLineHeight;
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), maxScaleUniform, true);
             position.y += EditorGUIUtility.singleLineHeight;
-            EditorGUILayout.PropertyField(minScaleUniform, true);
-            EditorGUILayout.PropertyField(maxScaleUniform, true);
         }
         else if (!uniformScale.boolValue && randomScale.boolValue) {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), minScaleNonUniform, true);

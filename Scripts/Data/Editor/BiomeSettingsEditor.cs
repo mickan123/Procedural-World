@@ -55,7 +55,6 @@ public class BiomeSettingsEditor : ScriptlessEditor
         endHumidity = soTarget.FindProperty("endHumidity");
         startTemperature = soTarget.FindProperty("startTemperature");
         endTemperature = soTarget.FindProperty("endTemperature");
-        
     }
 
     private void CreateTerrainObjectSettingsList() {
@@ -78,7 +77,14 @@ public class BiomeSettingsEditor : ScriptlessEditor
             SerializedProperty property = terrainObjectSettingsList.serializedProperty.GetArrayElementAtIndex(index);
             EditorGUI.indentLevel++;
             EditorGUI.ObjectField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property);
-            property.isExpanded = EditorGUI.Foldout(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property.isExpanded, GUIContent.none, true, EditorStyles.foldout);
+            rect.y += EditorGUIUtility.singleLineHeight;
+            property.isExpanded = EditorGUI.Foldout(
+                new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), 
+                property.isExpanded, 
+                GUIContent.none, 
+                true, 
+                EditorStyles.foldout
+            );
             rect.y += EditorGUIUtility.singleLineHeight;
             if (property.isExpanded) {
                 EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property, true);

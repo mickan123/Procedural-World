@@ -152,8 +152,7 @@ public static class Common {
     #if UNITY_EDITOR
 
 	public static Editor DisplayScriptableObjectEditor(SerializedProperty property, Object targetObject, Editor targetEditor) {
-        EditorGUILayout.PropertyField(property, true, GUILayout.Height(-2));
-
+        EditorGUILayout.PropertyField(property, true);
         if (property.objectReferenceValue != null) {
             property.isExpanded = EditorGUILayout.Foldout(property.isExpanded, GUIContent.none, true, EditorStyles.foldout);
         }
@@ -167,8 +166,6 @@ public static class Common {
             targetEditor.OnInspectorGUI();
             EditorGUI.indentLevel--;
         }
-        EditorGUILayout.Space();
-        EditorGUILayout.Space();
         EditorGUILayout.Space();
 
 		return targetEditor;

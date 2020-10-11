@@ -95,17 +95,12 @@ public class TerrainSettingsEditor : Editor
         biomeSettingsList.drawElementCallback = (Rect rect, int index, bool active, bool focused) => {
             SerializedProperty property = biomeSettingsList.serializedProperty.GetArrayElementAtIndex(index);
             EditorGUI.ObjectField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property);
-            
-            if (active) {
-                if (property.objectReferenceValue != null) {
-                    BiomeSettings settings = property.objectReferenceValue as BiomeSettings;
-                    if (!biomeSettingsEditors.ContainsKey(settings)) {
-                        biomeSettingsEditors[settings] = CreateEditor(property.objectReferenceValue) as BiomeSettingsEditor;
-                    }
-                    
-                    biomeSettingsEditors[settings].OnInspectorGUI();
-                }
-            }
+        };
+
+        biomeSettingsList.onSelectCallback = (ReorderableList list) => {
+            SerializedProperty property = biomeSettingsList.serializedProperty.GetArrayElementAtIndex(list.index);
+            BiomeSettingsWindow window = BiomeSettingsWindow.Open(property.objectReferenceValue as BiomeSettings);
+            window.Show();
         };
 
         biomeSettingsList.elementHeightCallback = (int index) => {
