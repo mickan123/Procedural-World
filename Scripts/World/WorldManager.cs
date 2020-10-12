@@ -116,7 +116,7 @@ public class WorldManager {
 		if (curChunkCoord.y < adjacentChunkCoord.y) {
 			for (int i = 0; i < mapSize; i++) {
 				for (int j = 0; j < 2 * padding; j++) {
-					heightMap[i, mapSize - (2 * padding) + j] = adjacentHeightMap[i, j + 3]; // Fuck knows why its I have to add 3
+					heightMap[i, mapSize - (2 * padding) + j] = adjacentHeightMap[i, j + 3]; // Fuck knows why I have to add 3
 					mask[i, mapSize - (2 * padding) + j] = 1;
 				}
 			}

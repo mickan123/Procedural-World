@@ -7,6 +7,8 @@ public static class HeightMapGenerator {
 
 	public enum NormalizeMode { GlobalBiome, Global, Local };
 	public enum VoronoiMode { RandomFlat, ConvexPolygons, ClosestPoint, Cracks };
+
+	private static readonly object VoronoiLock = new object();
 	
 	public static float[,] GenerateHeightMap(
 		int width, 
@@ -167,7 +169,11 @@ public static class HeightMapGenerator {
 		}
 
 		Rect bounds = new Rect(0, 0, width, height);
-		Voronoi voronoi = new Voronoi(randomPoints, bounds, numLloydsIterations);
+
+		Voronoi voronoi;
+		lock (VoronoiLock) {
+			voronoi = new Voronoi(randomPoints, bounds, numLloydsIterations);
+		}
 		
 		float[,] heightMap = new float[width, height];
 		if (voronoiMode == VoronoiMode.RandomFlat) {
