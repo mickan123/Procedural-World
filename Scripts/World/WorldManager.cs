@@ -70,20 +70,26 @@ public class WorldManager {
 					if (terrainChunkDictionary.ContainsKey(viewedChunkCoord)) {
 						terrainChunkDictionary[viewedChunkCoord].terrainChunk.UpdateTerrainChunk();
 					} else {
-						TerrainChunk newChunk = new TerrainChunk(viewedChunkCoord, 
-																 this.terrainSettings,
-																 this.detailLevels, 
-																 this.colliderLODIndex, 
-																 this.parent, 
-																 mapMaterial,
-																 viewer);
-						terrainChunkDictionary.Add(viewedChunkCoord, new TerrainChunkData(newChunk));
-						newChunk.onVisibilityChanged += OnTerrainChunkVisibilityChanged;
-						newChunk.Load(this);
+						GenerateChunk(viewedChunkCoord);
 					}
 				}
 			}
 		}
+	}
+
+	private void GenerateChunk(ChunkCoord coord) {
+		TerrainChunk newChunk = new TerrainChunk(
+			coord, 
+			this.terrainSettings,
+			this.detailLevels, 
+			this.colliderLODIndex, 
+			this.parent, 
+			mapMaterial,
+			viewer
+		);
+		terrainChunkDictionary.Add(coord, new TerrainChunkData(newChunk));
+		newChunk.onVisibilityChanged += OnTerrainChunkVisibilityChanged;
+		newChunk.Load(this);
 	}
 
 	void OnTerrainChunkVisibilityChanged(TerrainChunk chunk, bool isVisible) {
@@ -106,7 +112,7 @@ public class WorldManager {
 	public void UpdateChunkBorder(ChunkCoord curChunkCoord, ChunkCoord adjacentChunkCoord, float[,] heightMap, float[,] mask) {
 		while (!terrainChunkDictionary.ContainsKey(adjacentChunkCoord) 
 			|| !terrainChunkDictionary[adjacentChunkCoord].doneStage1Erosion) {
-			System.Threading.Thread.Sleep(500);
+			System.Threading.Thread.Sleep(100);
 		}	
 
 		int padding = terrainSettings.erosionSettings.maxLifetime;
@@ -148,56 +154,10 @@ public class WorldManager {
 	}
 }
 
-public struct ChunkCoord : IEquatable<ChunkCoord> {
-	public int x;
-	public int y;
-
-	public ChunkCoord(int x, int y) {
-		this.x = x;
-		this.y = y;
-	}
-
-	public bool Equals(ChunkCoord other)
-    {
-        return Equals(other, this);
-    }
-
-	public override bool Equals(object obj) {
-		if (obj == null || GetType() != obj.GetType())
-        {
-            return false;
-        }
-
-		var other = (ChunkCoord) obj;
-
-        return this.x == other.x && this.y == other.y;
-    }
-
-	public override int GetHashCode()
-    {
-        var calculation = x + y;
-        return calculation.GetHashCode();
-    }
-
-	public override string ToString() {
-		return this.x + "," + this.y;
-	}
-
-
-	public static bool operator == (ChunkCoord coord1, ChunkCoord coord2) {
-		return coord1.Equals(coord2);
-	}
-
-	public static bool operator != (ChunkCoord coord1, ChunkCoord coord2) {
-		return !coord1.Equals(coord2);
-	}
-}
-
 
 public struct TerrainChunkData {
 
 	public TerrainChunk terrainChunk;
-	public Dictionary<ChunkCoord, List<Drop>> drops;
 
 	public bool doneStage1Erosion;
 
@@ -205,7 +165,6 @@ public struct TerrainChunkData {
 
 	public TerrainChunkData(TerrainChunk terrainChunk) {
 		this.terrainChunk = terrainChunk;
-		drops = new Dictionary<ChunkCoord, List<Drop>>();
 		doneStage1Erosion = false;
 		heightMap = null;
 	}
