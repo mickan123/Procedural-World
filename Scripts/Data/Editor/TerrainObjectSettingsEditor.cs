@@ -64,14 +64,15 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
     private SerializedProperty spawnOnRoad;
     private SerializedProperty hide;
 
-    private void OnEnable() {
+    private void OnEnable()
+    {
         myTarget = (TerrainObjectSettings)target;
         soTarget = new SerializedObject(target);
-        
+
         terrainObjects = soTarget.FindProperty("terrainObjects");
         spawnMode = soTarget.FindProperty("spawnMode");
         numRandomSpawns = soTarget.FindProperty("numRandomSpawns");
-        
+
         isDetail = soTarget.FindProperty("isDetail");
         detailMode = soTarget.FindProperty("detailMode");
         detailViewDistance = soTarget.FindProperty("detailViewDistance");
@@ -115,25 +116,30 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
         spawnOnRoad = soTarget.FindProperty("spawnOnRoad");
     }
 
-    public override void OnInspectorGUI() {
+    public override void OnInspectorGUI()
+    {
         EditorGUI.BeginChangeCheck();
 
         EditorGUILayout.PropertyField(isDetail, true);
         EditorGUILayout.Space();
 
-        if (myTarget.isDetail) {
+        if (myTarget.isDetail)
+        {
             DetailObjectSettings();
         }
-        else {
+        else
+        {
             MeshObjectSettings();
         }
 
-        if (EditorGUI.EndChangeCheck()) {
+        if (EditorGUI.EndChangeCheck())
+        {
             soTarget.ApplyModifiedProperties();
         }
     }
 
-    public void MeshObjectSettings() {
+    public void MeshObjectSettings()
+    {
         this.GameObjectSettings();
         this.SpawnRadiusSettings();
         this.HeightSettings();
@@ -144,7 +150,8 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
         this.OtherSettings();
     }
 
-    public void DetailObjectSettings() {
+    public void DetailObjectSettings()
+    {
         EditorGUILayout.LabelField("Detail Texture", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(detailTexture, true);
         EditorGUILayout.PropertyField(detailMode, true);
@@ -156,27 +163,33 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
         this.OtherSettings();
     }
 
-    public void GameObjectSettings() {
+    public void GameObjectSettings()
+    {
         EditorGUILayout.LabelField("Game Objects", EditorStyles.boldLabel);
-        if (!myTarget.isDetail) {
+        if (!myTarget.isDetail)
+        {
             EditorGUILayout.PropertyField(terrainObjects, true);
-        }  
+        }
         EditorGUILayout.PropertyField(spawnMode, true);
-        if (spawnMode.enumValueIndex == (int)TerrainObjectSettings.SpawnMode.Random) {
+        if (spawnMode.enumValueIndex == (int)TerrainObjectSettings.SpawnMode.Random)
+        {
             EditorGUILayout.PropertyField(numRandomSpawns, true);
         }
         EditorGUILayout.Space();
     }
 
-    public void SpawnRadiusSettings() {
+    public void SpawnRadiusSettings()
+    {
         EditorGUILayout.LabelField("Radius", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(varyRadius, true);
-        if (myTarget.varyRadius) {
+        if (myTarget.varyRadius)
+        {
             EditorGUILayout.PropertyField(minRadius, true);
             EditorGUILayout.PropertyField(maxRadius, true);
 
             noiseMapSettings.isExpanded = EditorGUILayout.Foldout(noiseMapSettings.isExpanded, "Noise Map Settings", true, EditorStyles.foldout);
-            if (noiseMapSettings.isExpanded) {
+            if (noiseMapSettings.isExpanded)
+            {
                 EditorGUI.indentLevel++;
                 EditorGUILayout.ObjectField(noiseMapSettings);
                 EditorGUILayout.PropertyField(noiseMapSettings, true);
@@ -185,16 +198,19 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
             EditorGUILayout.Space();
             EditorGUILayout.Space();
         }
-        else {
+        else
+        {
             EditorGUILayout.PropertyField(radius, true);
             EditorGUILayout.Space();
         }
     }
 
-    public void HeightSettings() {
+    public void HeightSettings()
+    {
         EditorGUILayout.LabelField("Height", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(constrainHeight, true);
-        if (myTarget.constrainHeight) {
+        if (myTarget.constrainHeight)
+        {
             EditorGUILayout.PropertyField(minHeight, true);
             EditorGUILayout.PropertyField(maxHeight, true);
             EditorGUILayout.PropertyField(heightProbabilityCurve, true);
@@ -202,64 +218,78 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
         EditorGUILayout.Space();
     }
 
-    public void SlopeSettings() {
+    public void SlopeSettings()
+    {
         EditorGUILayout.LabelField("Slope", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(constrainSlope, true);
-        if (myTarget.constrainSlope) {
+        if (myTarget.constrainSlope)
+        {
             EditorGUILayout.PropertyField(minSlope, true);
             EditorGUILayout.PropertyField(maxSlope, true);
         }
         EditorGUILayout.Space();
     }
 
-    public void ScaleSettings() {
+    public void ScaleSettings()
+    {
         EditorGUILayout.LabelField("Scale", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(uniformScale, true);
         EditorGUILayout.PropertyField(randomScale, true);
-        if (myTarget.uniformScale && !myTarget.randomScale) {
+        if (myTarget.uniformScale && !myTarget.randomScale)
+        {
             EditorGUILayout.PropertyField(scale, true);
         }
-        else if (myTarget.uniformScale && myTarget.randomScale) {
+        else if (myTarget.uniformScale && myTarget.randomScale)
+        {
             EditorGUILayout.PropertyField(minScaleUniform, true);
             EditorGUILayout.PropertyField(maxScaleUniform, true);
         }
-        else if (!myTarget.uniformScale && myTarget.randomScale) {
+        else if (!myTarget.uniformScale && myTarget.randomScale)
+        {
             EditorGUILayout.PropertyField(minScaleNonUniform, true);
             EditorGUILayout.PropertyField(maxScaleNonUniform, true);
         }
-        else if (!myTarget.uniformScale && !myTarget.randomScale) {
+        else if (!myTarget.uniformScale && !myTarget.randomScale)
+        {
             EditorGUILayout.PropertyField(nonUniformScale, true);
         }
         EditorGUILayout.Space();
     }
 
-    public void TranslationSettings() {
+    public void TranslationSettings()
+    {
         EditorGUILayout.LabelField("Translation", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(randomTranslation, true);
-        if (myTarget.randomTranslation) {
+        if (myTarget.randomTranslation)
+        {
             EditorGUILayout.PropertyField(minTranslation, true);
             EditorGUILayout.PropertyField(maxTranslation, true);
         }
-        else {
+        else
+        {
             EditorGUILayout.PropertyField(translation, true);
         }
         EditorGUILayout.Space();
     }
-    
-    public void RotationSettings() {
+
+    public void RotationSettings()
+    {
         EditorGUILayout.LabelField("Rotation", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(randomRotation, true);
-        if (myTarget.randomRotation) {
+        if (myTarget.randomRotation)
+        {
             EditorGUILayout.PropertyField(minRotation, true);
             EditorGUILayout.PropertyField(maxRotation, true);
         }
-        else {
+        else
+        {
             EditorGUILayout.PropertyField(rotation, true);
         }
         EditorGUILayout.Space();
     }
 
-    public void OtherSettings() {
+    public void OtherSettings()
+    {
         EditorGUILayout.LabelField("Other", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(hide, true);
         EditorGUILayout.PropertyField(spawnOnRoad, true);

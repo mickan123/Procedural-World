@@ -3,11 +3,14 @@ using UnityEditor;
 using XNodeEditor;
 
 [CustomNodeEditor(typeof(HeightMapScaleNode))]
-public class HeightMapScaleNodeEditor : NodeEditor {
+public class HeightMapScaleNodeEditor : NodeEditor
+{
     private HeightMapScaleNode node;
 
-    public override void OnBodyGUI() {
-        if (node == null) {
+    public override void OnBodyGUI()
+    {
+        if (node == null)
+        {
             node = target as HeightMapScaleNode;
         }
         serializedObject.Update();
@@ -21,4 +24,4 @@ public class HeightMapScaleNodeEditor : NodeEditor {
 
         serializedObject.ApplyModifiedProperties();
     }
-} 
+}

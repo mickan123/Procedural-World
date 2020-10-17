@@ -70,14 +70,11 @@ public class WorldManager
         int currentChunkCoordX = Mathf.RoundToInt(viewerPosition.x / meshWorldSize);
         int currentChunkCoordY = Mathf.RoundToInt(viewerPosition.y / meshWorldSize);
 
-        Debug.Log("MAX: " + maxChunkViewDist);
-        Debug.Log("POS: " + currentChunkCoordX + ", " + currentChunkCoordY);
         for (int yOffset = -maxChunkViewDist; yOffset <= maxChunkViewDist; yOffset++)
         {
             for (int xOffset = -maxChunkViewDist; xOffset <= maxChunkViewDist; xOffset++)
             {
                 ChunkCoord viewedChunkCoord = new ChunkCoord(currentChunkCoordX + xOffset, currentChunkCoordY + yOffset);
-                Debug.Log(viewedChunkCoord);
                 if (!alreadyUpdatedChunkCoords.Contains(viewedChunkCoord))
                 {
                     if (terrainChunkDictionary.ContainsKey(viewedChunkCoord))

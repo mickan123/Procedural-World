@@ -59,11 +59,12 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
     private SerializedProperty hide;
 
 
-    private void InitVars(SerializedObject soTarget) {
+    private void InitVars(SerializedObject soTarget)
+    {
         terrainObjects = soTarget.FindProperty("terrainObjects");
         spawnMode = soTarget.FindProperty("spawnMode");
         numRandomSpawns = soTarget.FindProperty("numRandomSpawns");
-        
+
         isDetail = soTarget.FindProperty("isDetail");
         detailMode = soTarget.FindProperty("detailMode");
         detailViewDistance = soTarget.FindProperty("detailViewDistance");
@@ -107,8 +108,10 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
         spawnOnRoad = soTarget.FindProperty("spawnOnRoad");
     }
 
-    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
-        if (property.objectReferenceValue == null) {
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    {
+        if (property.objectReferenceValue == null)
+        {
             return;
         }
         TerrainObjectSettings terainObjectSettings = property.objectReferenceValue as TerrainObjectSettings;
@@ -121,19 +124,23 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), isDetail, true);
         position.y += 2 * EditorGUIUtility.singleLineHeight;
 
-        if (terainObjectSettings.isDetail) {
+        if (terainObjectSettings.isDetail)
+        {
             DetailObjectSettings(ref position);
-        }       
-        else {
+        }
+        else
+        {
             MeshObjectSettings(ref position);
         }
-        
-        if (EditorGUI.EndChangeCheck()) {
+
+        if (EditorGUI.EndChangeCheck())
+        {
             serializedObject.ApplyModifiedProperties();
         }
     }
 
-    private void MeshObjectSettings(ref Rect position) {
+    private void MeshObjectSettings(ref Rect position)
+    {
         this.GameObjectSettings(ref position);
         this.SpawnRadiusSettings(ref position);
         this.HeightSettings(ref position);
@@ -144,7 +151,8 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
         this.OtherSettings(ref position);
     }
 
-    private void DetailObjectSettings(ref Rect position) {
+    private void DetailObjectSettings(ref Rect position)
+    {
         this.DetailOnlySettings(ref position);
         this.GameObjectSettings(ref position);
         this.HeightSettings(ref position);
@@ -153,7 +161,8 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
         this.OtherSettings(ref position);
     }
 
-    private void DetailOnlySettings(ref Rect position) {
+    private void DetailOnlySettings(ref Rect position)
+    {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Detail Settings", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         float detailTextureHeight = EditorGUI.GetPropertyHeight(detailTexture, true);
@@ -163,7 +172,8 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
         position.y += 2 * EditorGUIUtility.singleLineHeight;
     }
 
-    private void GameObjectSettings(ref Rect position) {
+    private void GameObjectSettings(ref Rect position)
+    {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Object Settings", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         float terrainObjectsHeight = EditorGUI.GetPropertyHeight(terrainObjects, true);
@@ -171,53 +181,60 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
         position.y += terrainObjectsHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), spawnMode, true);
         position.y += EditorGUIUtility.singleLineHeight;
-        if (spawnMode.enumValueIndex == (int)TerrainObjectSettings.SpawnMode.Random) {
+        if (spawnMode.enumValueIndex == (int)TerrainObjectSettings.SpawnMode.Random)
+        {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), numRandomSpawns, true);
             position.y += EditorGUIUtility.singleLineHeight;
         }
         position.y += EditorGUIUtility.singleLineHeight;
     }
 
-    private void SpawnRadiusSettings(ref Rect position) {
+    private void SpawnRadiusSettings(ref Rect position)
+    {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Radius", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), varyRadius, true);
         position.y += EditorGUIUtility.singleLineHeight;
-        if (varyRadius.boolValue) {
+        if (varyRadius.boolValue)
+        {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), minRadius, true);
             position.y += EditorGUIUtility.singleLineHeight;
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), maxRadius, true);
             position.y += EditorGUIUtility.singleLineHeight;
-            
+
             EditorGUI.ObjectField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), noiseMapSettings);
-            noiseMapSettings.isExpanded = EditorGUI.Foldout(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), 
-                                                            noiseMapSettings.isExpanded, 
-                                                            GUIContent.none, 
-                                                            true, 
+            noiseMapSettings.isExpanded = EditorGUI.Foldout(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight),
+                                                            noiseMapSettings.isExpanded,
+                                                            GUIContent.none,
+                                                            true,
                                                             EditorStyles.foldout);
             position.y += EditorGUIUtility.singleLineHeight;
-            if (noiseMapSettings.isExpanded) {
+            if (noiseMapSettings.isExpanded)
+            {
                 EditorGUI.indentLevel++;
-                
+
                 float noiseMapHeight = EditorGUI.GetPropertyHeight(noiseMapSettings, true);
                 EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, noiseMapHeight), noiseMapSettings, true);
                 position.y += noiseMapHeight;
                 EditorGUI.indentLevel--;
             }
         }
-        else {
+        else
+        {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), radius, true);
             position.y += EditorGUIUtility.singleLineHeight;
         }
         position.y += EditorGUIUtility.singleLineHeight;
     }
 
-    private void HeightSettings(ref Rect position) {
+    private void HeightSettings(ref Rect position)
+    {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Height", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), constrainHeight, true);
         position.y += EditorGUIUtility.singleLineHeight;
-        if (constrainHeight.boolValue) {
+        if (constrainHeight.boolValue)
+        {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), minHeight, true);
             position.y += EditorGUIUtility.singleLineHeight;
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), maxHeight, true);
@@ -228,12 +245,14 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
         position.y += EditorGUIUtility.singleLineHeight;
     }
 
-    private void SlopeSettings(ref Rect position) {
+    private void SlopeSettings(ref Rect position)
+    {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Slope", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), constrainSlope, true);
         position.y += EditorGUIUtility.singleLineHeight;
-        if (constrainSlope.boolValue) {
+        if (constrainSlope.boolValue)
+        {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), minSlope, true);
             position.y += EditorGUIUtility.singleLineHeight;
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), maxSlope, true);
@@ -242,73 +261,85 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
         position.y += EditorGUIUtility.singleLineHeight;
     }
 
-    private void ScaleSettings(ref Rect position) {
+    private void ScaleSettings(ref Rect position)
+    {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Scale", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), uniformScale, true);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), randomScale, true);
         position.y += EditorGUIUtility.singleLineHeight;
-        if (uniformScale.boolValue && !randomScale.boolValue) {
+        if (uniformScale.boolValue && !randomScale.boolValue)
+        {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), scale, true);
             position.y += EditorGUIUtility.singleLineHeight;
         }
-        else if (uniformScale.boolValue && randomScale.boolValue) {
+        else if (uniformScale.boolValue && randomScale.boolValue)
+        {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), minScaleUniform, true);
             position.y += EditorGUIUtility.singleLineHeight;
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), maxScaleUniform, true);
             position.y += EditorGUIUtility.singleLineHeight;
         }
-        else if (!uniformScale.boolValue && randomScale.boolValue) {
+        else if (!uniformScale.boolValue && randomScale.boolValue)
+        {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), minScaleNonUniform, true);
             position.y += EditorGUIUtility.singleLineHeight;
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), maxScaleNonUniform, true);
             position.y += EditorGUIUtility.singleLineHeight;
         }
-        else if (!uniformScale.boolValue && !randomScale.boolValue) {
+        else if (!uniformScale.boolValue && !randomScale.boolValue)
+        {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), nonUniformScale, true);
             position.y += EditorGUIUtility.singleLineHeight;
         }
         position.y += EditorGUIUtility.singleLineHeight;
     }
 
-    private void TranslationSettings(ref Rect position) {
+    private void TranslationSettings(ref Rect position)
+    {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Translation", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), randomTranslation, true);
         position.y += EditorGUIUtility.singleLineHeight;
-        if (randomTranslation.boolValue) {
+        if (randomTranslation.boolValue)
+        {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), minTranslation, true);
             position.y += EditorGUIUtility.singleLineHeight;
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), maxTranslation, true);
             position.y += EditorGUIUtility.singleLineHeight;
         }
-        else {
+        else
+        {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), translation, true);
             position.y += EditorGUIUtility.singleLineHeight;
         }
         position.y += 2 * EditorGUIUtility.singleLineHeight;
     }
 
-    private void RotationSettings(ref Rect position) {
+    private void RotationSettings(ref Rect position)
+    {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Rotation", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), randomRotation, true);
         position.y += EditorGUIUtility.singleLineHeight;
-        if (randomRotation.boolValue) {
+        if (randomRotation.boolValue)
+        {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), minRotation, true);
             position.y += EditorGUIUtility.singleLineHeight;
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), maxRotation, true);
             position.y += EditorGUIUtility.singleLineHeight;
         }
-        else {
+        else
+        {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), rotation, true);
             position.y += EditorGUIUtility.singleLineHeight;
         }
         position.y += 2 * EditorGUIUtility.singleLineHeight;
     }
 
-    private void OtherSettings(ref Rect position) {
+    private void OtherSettings(ref Rect position)
+    {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Other", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), hide, true);
@@ -317,11 +348,13 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
         position.y += 2 * EditorGUIUtility.singleLineHeight;
     }
 
-    public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {
-        if (property.objectReferenceValue == null) {
+    public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+    {
+        if (property.objectReferenceValue == null)
+        {
             return EditorGUIUtility.singleLineHeight;
         }
-        
+
         SerializedObject serializedObject = new SerializedObject(property.objectReferenceValue as TerrainObjectSettings);
         TerrainObjectSettings terrainObjectSettings = property.objectReferenceValue as TerrainObjectSettings;
 
@@ -342,9 +375,10 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
 
         var spawnMode = serializedObject.FindProperty("spawnMode");
         float spawnModeSettingsHeight = 0f;
-        if (spawnMode.enumValueIndex == (int)TerrainObjectSettings.SpawnMode.Random) {
+        if (spawnMode.enumValueIndex == (int)TerrainObjectSettings.SpawnMode.Random)
+        {
             spawnModeSettingsHeight += EditorGUIUtility.singleLineHeight;
-        }   
+        }
 
         float height = 2 * EditorGUIUtility.singleLineHeight;
         if (terrainObjectSettings.isDetail)
@@ -358,7 +392,7 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
         }
         else
         {
-            height += varyRadiusSettingsHeight 
+            height += varyRadiusSettingsHeight
                    + constrainHeightSettingsHeight
                    + constrainSlopeSettingsHeight
                    + scaleSettingsHeight
@@ -369,7 +403,7 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
                    + noiseMapSettingsHeight
                    + spawnModeSettingsHeight;
         }
-        
+
         return height;
     }
-}   
+}

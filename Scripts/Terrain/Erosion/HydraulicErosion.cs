@@ -4,19 +4,22 @@ using UnityEngine;
 using System.Threading;
 using System;
 
-public static class HydraulicErosion {
+public static class HydraulicErosion
+{
     public static BrushValues brushValues;
 
-    public class BrushValues {
+    public class BrushValues
+    {
         public int[][] erosionBrushIndices;
         public float[][] erosionBrushWeights;
 
         public List<int> brushIndexOffsets;
         public List<float> brushWeights;
 
-        ErosionSettings  settings;
+        ErosionSettings settings;
 
-        public BrushValues(ErosionSettings settings, int mapSize) {
+        public BrushValues(ErosionSettings settings, int mapSize)
+        {
             this.settings = settings;
             mapSize += 2 * settings.maxLifetime;
             erosionBrushIndices = new int[mapSize * mapSize][];
@@ -24,61 +27,73 @@ public static class HydraulicErosion {
 
             int radius = settings.erosionBrushRadius;
 
-            brushIndexOffsets = new List<int> ();
-            brushWeights = new List<float> ();
+            brushIndexOffsets = new List<int>();
+            brushWeights = new List<float>();
 
             float weightSum = 0;
-            for (int brushY = -radius; brushY <= radius; brushY++) {
-                for (int brushX = -radius; brushX <= radius; brushX++) {
+            for (int brushY = -radius; brushY <= radius; brushY++)
+            {
+                for (int brushX = -radius; brushX <= radius; brushX++)
+                {
                     float sqrDst = brushX * brushX + brushY * brushY;
-                    if (sqrDst < radius * radius) {
-                        brushIndexOffsets.Add (brushY * mapSize + brushX);
-                        float brushWeight = 1 - Mathf.Sqrt (sqrDst) / radius;
+                    if (sqrDst < radius * radius)
+                    {
+                        brushIndexOffsets.Add(brushY * mapSize + brushX);
+                        float brushWeight = 1 - Mathf.Sqrt(sqrDst) / radius;
                         weightSum += brushWeight;
-                        brushWeights.Add (brushWeight);
+                        brushWeights.Add(brushWeight);
                     }
                 }
             }
-            for (int i = 0; i < brushWeights.Count; i++) {
+            for (int i = 0; i < brushWeights.Count; i++)
+            {
                 brushWeights[i] /= weightSum;
             }
-        }   
+        }
     }
 
-    public static void Init(TerrainSettings settings) {
+    public static void Init(TerrainSettings settings)
+    {
         ErosionSettings erosionSettings = settings.erosionSettings;
         brushValues = new BrushValues(erosionSettings, settings.meshSettings.numVerticesPerLine);
     }
 
-    public static float[,] Erode(float[,] values, float[,] mask, TerrainSettings terrainSettings, BiomeInfo info, WorldManager worldGenerator, Vector2 chunkCentre) {
-        
-        #if (PROFILE && UNITY_EDITOR)
+    public static float[,] Erode(float[,] values, float[,] mask, TerrainSettings terrainSettings, BiomeInfo info, WorldManager worldGenerator, Vector2 chunkCentre)
+    {
+
+#if (PROFILE && UNITY_EDITOR)
         float erosionStartTime = 0f;
         if (terrainSettings.IsMainThread()) {
             erosionStartTime = Time.realtimeSinceStartup;
         }
-        #endif
+#endif
 
         int mapSize = values.GetLength(0);
         int numBiomes = terrainSettings.biomeSettings.Count;
 
         // Check if we actually perform any erosion
-        bool performErosion = false;    
-        for (int i = 0; i < mapSize; i++) {
-            for (int j = 0; j < mapSize; j++) {
-                for (int w = 0; w < numBiomes; w++) {
-                    if (info.biomeStrengths[i, j, w] != 0f && terrainSettings.biomeSettings[w].hydraulicErosion) {
+        bool performErosion = false;
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                for (int w = 0; w < numBiomes; w++)
+                {
+                    if (info.biomeStrengths[i, j, w] != 0f && terrainSettings.biomeSettings[w].hydraulicErosion)
+                    {
                         performErosion = true;
                     }
-                } 
+                }
             }
         }
 
-        if (performErosion) {
-            
+        if (performErosion)
+        {
             float[] map = new float[mapSize * mapSize];
-            for (int i = 0; i < mapSize; i++) {
-                for (int j = 0; j < mapSize; j++) {
+            for (int i = 0; i < mapSize; i++)
+            {
+                for (int j = 0; j < mapSize; j++)
+                {
                     map[i * mapSize + j] = values[i, j];
                 }
             }
@@ -87,32 +102,41 @@ public static class HydraulicErosion {
             ErosionSettings settings = terrainSettings.erosionSettings;
             int[] randomIndices = new int[settings.numHydraulicErosionIterations];
             System.Random prng = new System.Random(settings.seed);
-            for (int i = 0; i < settings.numHydraulicErosionIterations; i++) {
+            for (int i = 0; i < settings.numHydraulicErosionIterations; i++)
+            {
                 int randomX = prng.Next(settings.erosionBrushRadius, mapSize + settings.erosionBrushRadius);
                 int randomY = prng.Next(settings.erosionBrushRadius, mapSize + settings.erosionBrushRadius);
                 randomIndices[i] = randomY * mapSize + randomX;
             }
-            
-            bool gpuDone = false; 
+
+            bool gpuDone = false;
             if (terrainSettings.IsMainThread())
-            {   
+            {
                 GPUErosion(settings, mapSize, map, randomIndices, ref gpuDone);
             }
-            else {
-                Dispatcher.RunOnMainThread(() => GPUErosion(settings, mapSize, map, randomIndices, ref gpuDone)); 
+            else
+            {
+                Dispatcher.RunOnMainThread(() => GPUErosion(settings, mapSize, map, randomIndices, ref gpuDone));
             }
-            while (!gpuDone) {
+            while (!gpuDone)
+            {
                 Thread.Sleep(1);
             }
 
             // Weight erosion by biome strengths and whether erosion is enabled
-            for (int i = 0; i < mapSize; i++) {
-                for (int j = 0; j < mapSize; j++) {
+            for (int i = 0; i < mapSize; i++)
+            {
+                for (int j = 0; j < mapSize; j++)
+                {
                     float val = 0;
-                    for (int w = 0; w < numBiomes; w++) {
-                        if (terrainSettings.biomeSettings[w].hydraulicErosion) {
+                    for (int w = 0; w < numBiomes; w++)
+                    {
+                        if (terrainSettings.biomeSettings[w].hydraulicErosion)
+                        {
                             val += info.biomeStrengths[i, j, w] * map[i * mapSize + j];
-                        } else {
+                        }
+                        else
+                        {
                             val += info.biomeStrengths[i, j, w] * values[i, j];
                         }
                     }
@@ -122,28 +146,29 @@ public static class HydraulicErosion {
                 }
             }
         }
-        
-        #if (PROFILE && UNITY_EDITOR)
+
+#if (PROFILE && UNITY_EDITOR)
         if (terrainSettings.IsMainThread()) {
             float erosionEndTime = Time.realtimeSinceStartup;
             float erosionTimeTaken = erosionEndTime - erosionStartTime;
             Debug.Log("Erosion time taken: " + erosionTimeTaken + "s");
         }
-        #endif
-        
+#endif
+
         return values;
     }
 
-    public static void GPUErosion(ErosionSettings settings, int mapSize, float[] map, int[] randomIndices, ref bool gpuDone) {
+    public static void GPUErosion(ErosionSettings settings, int mapSize, float[] map, int[] randomIndices, ref bool gpuDone)
+    {
 
         // Send brush data to compute shader
         ComputeBuffer brushIndexBuffer = new ComputeBuffer(brushValues.brushIndexOffsets.Count, sizeof(int));
-        ComputeBuffer brushWeightBuffer = new ComputeBuffer (brushValues.brushWeights.Count, sizeof(int));
+        ComputeBuffer brushWeightBuffer = new ComputeBuffer(brushValues.brushWeights.Count, sizeof(int));
         brushIndexBuffer.SetData(brushValues.brushIndexOffsets);
         brushWeightBuffer.SetData(brushValues.brushWeights);
-        settings.erosionShader.SetBuffer (0, "brushIndices", brushIndexBuffer);
-        settings.erosionShader.SetBuffer (0, "brushWeights", brushWeightBuffer);
-        
+        settings.erosionShader.SetBuffer(0, "brushIndices", brushIndexBuffer);
+        settings.erosionShader.SetBuffer(0, "brushWeights", brushWeightBuffer);
+
         // Heightmap buffer
         ComputeBuffer mapBuffer = new ComputeBuffer(mapSize * mapSize, sizeof(float));
         mapBuffer.SetData(map);
@@ -151,7 +176,7 @@ public static class HydraulicErosion {
 
         // Send random indices to compute shader
         ComputeBuffer randomIndexBuffer = new ComputeBuffer(randomIndices.Length, sizeof(int));
-        randomIndexBuffer.SetData (randomIndices);
+        randomIndexBuffer.SetData(randomIndices);
         settings.erosionShader.SetBuffer(0, "randomIndices", randomIndexBuffer);
 
         settings.erosionShader.SetInt("borderSize", settings.erosionBrushRadius);
@@ -160,14 +185,14 @@ public static class HydraulicErosion {
         settings.erosionShader.SetInt("maxLifetime", settings.maxLifetime);
         settings.erosionShader.SetFloat("inertia", settings.inertia);
         settings.erosionShader.SetFloat("sedimentCapacityFactor", settings.sedimentCapacityFactor);
-        settings.erosionShader.SetFloat("minSedimentCapacity",settings.minSedimentCapacity);
+        settings.erosionShader.SetFloat("minSedimentCapacity", settings.minSedimentCapacity);
         settings.erosionShader.SetFloat("depositSpeed", settings.depositSpeed);
         settings.erosionShader.SetFloat("erodeSpeed", settings.erodeSpeed);
         settings.erosionShader.SetFloat("evaporateSpeed", settings.evaporateSpeed);
         settings.erosionShader.SetFloat("gravity", settings.gravity);
         settings.erosionShader.SetFloat("startSpeed", settings.startSpeed);
         settings.erosionShader.SetFloat("startWater", settings.startWater);
-        settings.erosionShader.Dispatch(0, mapSize, 1, 1); 
+        settings.erosionShader.Dispatch(0, mapSize, 1, 1);
         mapBuffer.GetData(map);
 
         gpuDone = true;
@@ -178,13 +203,15 @@ public static class HydraulicErosion {
         randomIndexBuffer.Release();
     }
 
-    
-    public static void ErodeDrop(Drop drop, TerrainSettings terrainSettings, float[,] map, int mapSize, WorldManager worldGenerator) {
+
+    public static void ErodeDrop(Drop drop, TerrainSettings terrainSettings, float[,] map, int mapSize, WorldManager worldGenerator)
+    {
         ErosionSettings settings = terrainSettings.erosionSettings;
 
-        for (int lifetime = drop.lifetime; lifetime < settings.maxLifetime; lifetime ++) {
-            int nodeX = (int) drop.posX;
-            int nodeY = (int) drop.posY;
+        for (int lifetime = drop.lifetime; lifetime < settings.maxLifetime; lifetime++)
+        {
+            int nodeX = (int)drop.posX;
+            int nodeY = (int)drop.posY;
             int dropletIndex = nodeY * mapSize + nodeX;
 
             // Calculate droplet's offset inside the cell (0,0) = at NW node, (1,1) = at SE node
@@ -200,20 +227,23 @@ public static class HydraulicErosion {
 
             // Normalize direction
             float len = Mathf.Sqrt(drop.dirX * drop.dirX + drop.dirY * drop.dirY);
-            if (len != 0) {
+            if (len != 0)
+            {
                 drop.dirX /= len;
                 drop.dirY /= len;
             }
             drop.posX += drop.dirX;
             drop.posY += drop.dirY;
-            
+
             // Out of map check
-            if (drop.posX < 0 || drop.posX >= mapSize - 1 || drop.posY < 0 || drop.posY >= mapSize - 1) {
+            if (drop.posX < 0 || drop.posX >= mapSize - 1 || drop.posY < 0 || drop.posY >= mapSize - 1)
+            {
                 break;
             }
 
             // Stopped moving check
-            if (drop.dirX == 0 && drop.dirY == 0) {
+            if (drop.dirX == 0 && drop.dirY == 0)
+            {
                 break;
             }
 
@@ -223,9 +253,10 @@ public static class HydraulicErosion {
 
             // Calculate the droplet's sediment capacity (higher when moving fast down a slope and contains lots of water)
             float sedimentCapacity = Mathf.Max(-deltaHeight * drop.speed * drop.water * settings.sedimentCapacityFactor, settings.minSedimentCapacity);
-            
+
             // If carrying more sediment than capacity, or if flowing uphill:
-            if (drop.sediment > sedimentCapacity || deltaHeight > 0) {
+            if (drop.sediment > sedimentCapacity || deltaHeight > 0)
+            {
                 // If moving uphill (deltaHeight > 0) try fill up to the current height, otherwise deposit a fraction of the excess sediment
                 float amountToDeposit = (deltaHeight > 0) ? Mathf.Min(deltaHeight, drop.sediment) : (drop.sediment - sedimentCapacity) * settings.depositSpeed;
                 drop.sediment -= amountToDeposit;
@@ -237,12 +268,14 @@ public static class HydraulicErosion {
                 map[nodeY + 1, nodeX] += amountToDeposit * (1 - cellOffsetX) * cellOffsetY;
                 map[nodeY + 1, nodeX + 1] += amountToDeposit * cellOffsetX * cellOffsetY;
             }
-            else {
+            else
+            {
                 // Erode a fraction of the droplet's current carry capacity.
                 // Clamp the erosion to the change in height so that it doesn't dig a hole in the terrain behind the droplet
                 float amountToErode = Mathf.Min((sedimentCapacity - drop.sediment) * settings.erodeSpeed, -deltaHeight);
-                
-                for (int brushIndex = 0; brushIndex < brushValues.erosionBrushIndices[dropletIndex].Length; brushIndex++) {
+
+                for (int brushIndex = 0; brushIndex < brushValues.erosionBrushIndices[dropletIndex].Length; brushIndex++)
+                {
                     int nodeIndex = brushValues.erosionBrushIndices[dropletIndex][brushIndex];
                     int brushX = nodeIndex % mapSize;
                     int brushY = nodeIndex / mapSize;
@@ -260,15 +293,17 @@ public static class HydraulicErosion {
         }
     }
 
-    struct HeightAndGradient {
+    struct HeightAndGradient
+    {
         public float height;
         public float gradientX;
         public float gradientY;
     }
 
-    private static HeightAndGradient CalculateHeightAndGradient(float[,] map, int mapSize, float posX, float posY) {
-        int coordX = (int) posX;
-        int coordY = (int) posY;
+    private static HeightAndGradient CalculateHeightAndGradient(float[,] map, int mapSize, float posX, float posY)
+    {
+        int coordX = (int)posX;
+        int coordY = (int)posY;
 
         // Calculate droplet's offset inside the cell (0,0) = at NW node, (1,1) = at SE node
         float x = posX - coordX;
@@ -288,11 +323,12 @@ public static class HydraulicErosion {
         // Calculate height with bilinear interpolation of the heights of the nodes of the cell
         float height = heightNW * (1 - x) * (1 - y) + heightNE * x * (1 - y) + heightSW * (1 - x) * y + heightSE * x * y;
 
-        return new HeightAndGradient () { height = height, gradientX = gradientX, gradientY = gradientY };
+        return new HeightAndGradient() { height = height, gradientX = gradientX, gradientY = gradientY };
     }
 }
 
-public struct Drop {
+public struct Drop
+{
     public float dirX;
     public float dirY;
     public float posX;
@@ -302,7 +338,8 @@ public struct Drop {
     public float sediment;
     public int lifetime;
 
-    public Drop(ErosionSettings settings, int lifetime, float posX, float posY) {
+    public Drop(ErosionSettings settings, int lifetime, float posX, float posY)
+    {
         dirX = 0;
         dirY = 0;
 
@@ -315,7 +352,8 @@ public struct Drop {
         this.posY = posY;
     }
 
-    public Drop(Drop otherDrop) {
+    public Drop(Drop otherDrop)
+    {
         this.dirX = otherDrop.dirX;
         this.dirY = otherDrop.dirY;
 

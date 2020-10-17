@@ -2,31 +2,35 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class TerrainGenerator : MonoBehaviour {
-	public Transform viewer;
-	public Material mapMaterial;
+public class TerrainGenerator : MonoBehaviour
+{
+    public Transform viewer;
+    public Material mapMaterial;
 
-	public LODInfo[] detailLevels;
+    public LODInfo[] detailLevels;
 
-	public int colliderLODIndex;
+    public int colliderLODIndex;
 
-	public TerrainSettings terrainSettings;
-	
-	private WorldManager generator;
+    public TerrainSettings terrainSettings;
 
-	void Start() {
-		terrainSettings.ApplyToMaterial(mapMaterial);
-		terrainSettings.Init();
+    private WorldManager generator;
 
-		generator = new WorldManager(detailLevels, colliderLODIndex, terrainSettings, viewer, this.transform, mapMaterial);
-		generator.UpdateVisibleChunks();
-	}
+    void Start()
+    {
+        terrainSettings.ApplyToMaterial(mapMaterial);
+        terrainSettings.Init();
 
-	void Update() {
-		generator.Update();
-	}
+        generator = new WorldManager(detailLevels, colliderLODIndex, terrainSettings, viewer, this.transform, mapMaterial);
+        generator.UpdateVisibleChunks();
+    }
 
-	void OnDestroy() {
-		generator.destroyed = true;
-	}
+    void Update()
+    {
+        generator.Update();
+    }
+
+    void OnDestroy()
+    {
+        generator.destroyed = true;
+    }
 }

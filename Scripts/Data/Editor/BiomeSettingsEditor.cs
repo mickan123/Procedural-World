@@ -16,7 +16,7 @@ public class BiomeSettingsEditor : ScriptlessEditor
     private SerializedProperty slopeBlendRange;
     private SerializedProperty heightMapSettings;
     private SerializedProperty heightMapGraph;
-    private SerializedProperty terrainObjectSettings; 
+    private SerializedProperty terrainObjectSettings;
     private ReorderableList textureDataList;
     private ReorderableList terrainObjectSettingsList;
     private TextureDataEditor textureDataEditor;
@@ -25,14 +25,15 @@ public class BiomeSettingsEditor : ScriptlessEditor
 
     private SerializedProperty hydraulicErosion;
     private SerializedProperty thermalErosion;
-    private SerializedProperty allowRoads; 
+    private SerializedProperty allowRoads;
 
     private SerializedProperty startHumidity;
     private SerializedProperty endHumidity;
-    private SerializedProperty startTemperature; 
+    private SerializedProperty startTemperature;
     private SerializedProperty endTemperature;
 
-    private void OnEnable() {
+    private void OnEnable()
+    {
         myTarget = (BiomeSettings)target;
         soTarget = new SerializedObject(target);
 
@@ -57,11 +58,12 @@ public class BiomeSettingsEditor : ScriptlessEditor
         endTemperature = soTarget.FindProperty("endTemperature");
     }
 
-    private void CreateTerrainObjectSettingsList() {
+    private void CreateTerrainObjectSettingsList()
+    {
         terrainObjectSettings = soTarget.FindProperty("terrainObjectSettings");
 
         terrainObjectSettingsList = new ReorderableList(
-            soTarget, 
+            soTarget,
             terrainObjectSettings,
             true, // Draggable
             true, // Display header
@@ -69,55 +71,64 @@ public class BiomeSettingsEditor : ScriptlessEditor
             true  // Subtract butotn
         );
 
-        terrainObjectSettingsList.drawHeaderCallback = (Rect rect) => {
+        terrainObjectSettingsList.drawHeaderCallback = (Rect rect) =>
+        {
             EditorGUI.LabelField(rect, "Terrain Object Settings");
         };
 
-        terrainObjectSettingsList.drawElementCallback = (Rect rect, int index, bool active, bool focused) => {
+        terrainObjectSettingsList.drawElementCallback = (Rect rect, int index, bool active, bool focused) =>
+        {
             SerializedProperty property = terrainObjectSettingsList.serializedProperty.GetArrayElementAtIndex(index);
             EditorGUI.indentLevel++;
             EditorGUI.ObjectField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property);
             rect.y += EditorGUIUtility.singleLineHeight;
             property.isExpanded = EditorGUI.Foldout(
-                new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), 
-                property.isExpanded, 
-                GUIContent.none, 
-                true, 
+                new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight),
+                property.isExpanded,
+                GUIContent.none,
+                true,
                 EditorStyles.foldout
             );
             rect.y += EditorGUIUtility.singleLineHeight;
-            if (property.isExpanded) {
+            if (property.isExpanded)
+            {
                 EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property, true);
             }
             EditorGUI.indentLevel--;
         };
 
-        terrainObjectSettingsList.elementHeightCallback = (int index) => {
+        terrainObjectSettingsList.elementHeightCallback = (int index) =>
+        {
             SerializedProperty property = terrainObjectSettingsList.serializedProperty.GetArrayElementAtIndex(index);
-            if (property.isExpanded) {
+            if (property.isExpanded)
+            {
                 return EditorGUI.GetPropertyHeight(property, true) + 2 * EditorGUIUtility.singleLineHeight;
-            } else {
+            }
+            else
+            {
                 return 2 * EditorGUIUtility.singleLineHeight;
             }
         };
 
-        terrainObjectSettingsList.onAddCallback = (ReorderableList list) => {
+        terrainObjectSettingsList.onAddCallback = (ReorderableList list) =>
+        {
             var index = list.serializedProperty.arraySize;
             list.serializedProperty.arraySize++;
             list.index = index;
-            
+
             myTarget.terrainObjectSettings.Add(ScriptableObject.CreateInstance("TerrainObjectSettings") as TerrainObjectSettings);
         };
     }
 
-    public override void OnInspectorGUI() {
+    public override void OnInspectorGUI()
+    {
         EditorGUI.BeginChangeCheck();
 
         EditorGUILayout.PropertyField(hydraulicErosion, true);
         EditorGUILayout.PropertyField(thermalErosion, true);
         EditorGUILayout.PropertyField(allowRoads, true);
         EditorGUILayout.Space();
-        
+
         textureDataEditor = (TextureDataEditor)Common.DisplayScriptableObjectEditor(textureData, myTarget.textureData, textureDataEditor);
         slopeTextureDataEditor = (TextureDataEditor)Common.DisplayScriptableObjectEditor(slopeTextureData, myTarget.slopeTextureData, slopeTextureDataEditor);
         EditorGUILayout.PropertyField(slopeThreshold, true);
@@ -130,7 +141,8 @@ public class BiomeSettingsEditor : ScriptlessEditor
 
         terrainObjectSettingsList.DoLayoutList();
 
-        if (EditorGUI.EndChangeCheck()) {
+        if (EditorGUI.EndChangeCheck())
+        {
             soTarget.ApplyModifiedProperties();
         }
     }

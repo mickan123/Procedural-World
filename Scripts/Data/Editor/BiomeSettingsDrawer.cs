@@ -4,9 +4,10 @@ using UnityEditor;
 [CustomPropertyDrawer(typeof(BiomeSettings))]
 public class BiomeSettingsDrawer : PropertyDrawer
 {
-    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
-        
-        if (property.objectReferenceValue == null) {
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    {
+        if (property.objectReferenceValue == null)
+        {
             return;
         }
         SerializedObject serializedObject = new SerializedObject(property.objectReferenceValue as BiomeSettings);
@@ -60,13 +61,16 @@ public class BiomeSettingsDrawer : PropertyDrawer
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, heightMapSettingsHeight), heightMapSettings, true);
         position.y += heightMapSettingsHeight;
 
-        if (EditorGUI.EndChangeCheck()) {
+        if (EditorGUI.EndChangeCheck())
+        {
             serializedObject.ApplyModifiedProperties();
         }
     }
 
-    public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {
-        if (property.objectReferenceValue == null) {
+    public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+    {
+        if (property.objectReferenceValue == null)
+        {
             return EditorGUIUtility.singleLineHeight;
         }
         SerializedObject serializedObject = new SerializedObject(property.objectReferenceValue as BiomeSettings);
@@ -76,12 +80,11 @@ public class BiomeSettingsDrawer : PropertyDrawer
         var textureData = serializedObject.FindProperty("textureData");
         var slopeTextureData = serializedObject.FindProperty("slopeTextureData");
         var heightMapSettings = serializedObject.FindProperty("heightMapSettings");
-        
+
         height += EditorGUI.GetPropertyHeight(textureData, true);
         height += EditorGUI.GetPropertyHeight(slopeTextureData, true);
         height += EditorGUI.GetPropertyHeight(heightMapSettings, true);
 
         return height;
     }
-
 }

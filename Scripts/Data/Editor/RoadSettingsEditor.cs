@@ -18,7 +18,8 @@ public class RoadSettingsEditor : ScriptlessEditor
     private SerializedProperty maxSlope;
     private TextureDataEditor roadTextureEditor;
 
-    private void OnEnable() {
+    private void OnEnable()
+    {
         myTarget = (RoadSettings)target;
         soTarget = new SerializedObject(target);
 
@@ -33,7 +34,8 @@ public class RoadSettingsEditor : ScriptlessEditor
         roadTextureEditor = null;
     }
 
-    public override void OnInspectorGUI() {
+    public override void OnInspectorGUI()
+    {
         soTarget.Update();
         EditorGUI.BeginChangeCheck();
 
@@ -46,7 +48,8 @@ public class RoadSettingsEditor : ScriptlessEditor
         EditorGUILayout.PropertyField(blendFactor);
         EditorGUILayout.PropertyField(maxSlope);
 
-        if (EditorGUI.EndChangeCheck()) {
+        if (EditorGUI.EndChangeCheck())
+        {
             soTarget.ApplyModifiedProperties();
         }
     }

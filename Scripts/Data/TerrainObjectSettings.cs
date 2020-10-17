@@ -276,7 +276,7 @@ public class ObjectSpawner
         Material material = Resources.Load("Materials/Grass Material") as Material;
 
         Camera camera = Camera.main;
-        
+
         for (int i = 0; i < positions.Count; i++)
         {
             GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);

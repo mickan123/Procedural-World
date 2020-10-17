@@ -3,18 +3,22 @@ using UnityEditor;
 using XNodeEditor;
 
 [CustomNodeEditor(typeof(HydraulicErosionNode))]
-public class HydraulicErosionNodeEditor : NodeEditor {
+public class HydraulicErosionNodeEditor : NodeEditor
+{
     private HydraulicErosionNode node;
 
-    public override void OnBodyGUI() {
-        if (node == null) {
+    public override void OnBodyGUI()
+    {
+        if (node == null)
+        {
             node = target as HydraulicErosionNode;
         }
         serializedObject.Update();
 
         SerializedProperty erosionSettings = serializedObject.FindProperty("erosionSettings");
         erosionSettings.isExpanded = EditorGUILayout.Foldout(erosionSettings.isExpanded, "Erosion Settings", true, EditorStyles.foldout);
-        if (erosionSettings.isExpanded) {
+        if (erosionSettings.isExpanded)
+        {
             EditorGUI.indentLevel++;
             EditorGUILayout.ObjectField(erosionSettings);
             NodeEditorGUILayout.PropertyField(erosionSettings, true);
@@ -25,4 +29,4 @@ public class HydraulicErosionNodeEditor : NodeEditor {
 
         serializedObject.ApplyModifiedProperties();
     }
-} 
+}

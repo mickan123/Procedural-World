@@ -3,21 +3,25 @@ using UnityEditor;
 using XNodeEditor;
 
 [CustomNodeEditor(typeof(SimplexNoiseNode))]
-public class SimplexNoiseNodeEditor : NodeEditor {
+public class SimplexNoiseNodeEditor : NodeEditor
+{
     private SimplexNoiseNode node;
 
-    public override void OnBodyGUI() {
-        if (node == null) {
+    public override void OnBodyGUI()
+    {
+        if (node == null)
+        {
             node = target as SimplexNoiseNode;
         }
         serializedObject.Update();
-        
+
         SerializedProperty normalizeMode = serializedObject.FindProperty("normalizeMode");
         NodeEditorGUILayout.PropertyField(normalizeMode, true);
-        
+
         SerializedProperty noiseMapSettings = serializedObject.FindProperty("noiseMapSettings");
         noiseMapSettings.isExpanded = EditorGUILayout.Foldout(noiseMapSettings.isExpanded, "Height Map Settings", true, EditorStyles.foldout);
-        if (noiseMapSettings.isExpanded) {
+        if (noiseMapSettings.isExpanded)
+        {
             EditorGUI.indentLevel++;
             EditorGUILayout.ObjectField(noiseMapSettings);
             NodeEditorGUILayout.PropertyField(noiseMapSettings, true);
@@ -28,4 +32,4 @@ public class SimplexNoiseNodeEditor : NodeEditor {
 
         serializedObject.ApplyModifiedProperties();
     }
-} 
+}

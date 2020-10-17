@@ -6,9 +6,11 @@ using UnityEditor;
 [CustomPropertyDrawer(typeof(ErosionSettings))]
 public class ErosionSettingsDrawer : PropertyDrawer
 {
-    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
-        
-        if (property.objectReferenceValue == null) {
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    {
+
+        if (property.objectReferenceValue == null)
+        {
             return;
         }
         SerializedObject serializedObject = new SerializedObject(property.objectReferenceValue as ErosionSettings);
@@ -29,7 +31,7 @@ public class ErosionSettingsDrawer : PropertyDrawer
         var erodeSpeed = serializedObject.FindProperty("erodeSpeed");
 
         var evaporateSpeed = serializedObject.FindProperty("evaporateSpeed");
-        
+
         var startSpeed = serializedObject.FindProperty("startSpeed");
         var startWater = serializedObject.FindProperty("startWater");
 
@@ -94,13 +96,16 @@ public class ErosionSettingsDrawer : PropertyDrawer
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), hardness, true);
         position.y += EditorGUIUtility.singleLineHeight;
 
-        if (EditorGUI.EndChangeCheck()) {
+        if (EditorGUI.EndChangeCheck())
+        {
             serializedObject.ApplyModifiedProperties();
         }
     }
 
-    public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {
-        if (property.objectReferenceValue == null) {
+    public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+    {
+        if (property.objectReferenceValue == null)
+        {
             return EditorGUIUtility.singleLineHeight;
         }
         SerializedObject serializedObject = new SerializedObject(property.objectReferenceValue as ErosionSettings);

@@ -9,7 +9,7 @@ public class TerrainSettingsEditor : Editor
 {
     private TerrainSettings myTarget;
     private SerializedObject soTarget;
-    
+
     // Biomes settings
     private SerializedProperty humidityMapGraph;
     private SerializedProperty temperatureMapGraph;
@@ -41,7 +41,8 @@ public class TerrainSettingsEditor : Editor
     private SerializedProperty seed;
 
     // Editors are reset to ensure it is written to next time OnInspectorGUI is called
-    private void OnEnable() {
+    private void OnEnable()
+    {
         myTarget = (TerrainSettings)target;
         soTarget = new SerializedObject(target);
 
@@ -51,7 +52,7 @@ public class TerrainSettingsEditor : Editor
         transitionDistance = soTarget.FindProperty("transitionDistance");
         biomeSettingsEditors = new Dictionary<BiomeSettings, BiomeSettingsEditor>();
         CreateBiomeSettingsList();
-        
+
         // Erosion settings
         erosionSettings = soTarget.FindProperty("erosionSettings");
 
@@ -75,12 +76,13 @@ public class TerrainSettingsEditor : Editor
         seed = soTarget.FindProperty("seed");
     }
 
-    private void CreateBiomeSettingsList() {
-        
+    private void CreateBiomeSettingsList()
+    {
+
         biomeSettings = soTarget.FindProperty("biomeSettings");
 
         biomeSettingsList = new ReorderableList(
-            soTarget, 
+            soTarget,
             biomeSettings,
             true, // Draggable
             true, // Display header
@@ -88,42 +90,49 @@ public class TerrainSettingsEditor : Editor
             true  // Subtract butotn
         );
 
-        biomeSettingsList.drawHeaderCallback = (Rect rect) => {
+        biomeSettingsList.drawHeaderCallback = (Rect rect) =>
+        {
             EditorGUI.LabelField(rect, "Biome Settings");
         };
 
-        biomeSettingsList.drawElementCallback = (Rect rect, int index, bool active, bool focused) => {
+        biomeSettingsList.drawElementCallback = (Rect rect, int index, bool active, bool focused) =>
+        {
             SerializedProperty property = biomeSettingsList.serializedProperty.GetArrayElementAtIndex(index);
             EditorGUI.ObjectField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), property);
         };
 
-        biomeSettingsList.onSelectCallback = (ReorderableList list) => {
+        biomeSettingsList.onSelectCallback = (ReorderableList list) =>
+        {
             SerializedProperty property = biomeSettingsList.serializedProperty.GetArrayElementAtIndex(list.index);
             BiomeSettingsWindow window = BiomeSettingsWindow.Open(property.objectReferenceValue as BiomeSettings);
             window.Show();
         };
 
-        biomeSettingsList.elementHeightCallback = (int index) => {
+        biomeSettingsList.elementHeightCallback = (int index) =>
+        {
             return EditorGUIUtility.singleLineHeight * 2;
         };
 
-        biomeSettingsList.onAddCallback = (ReorderableList list) => {
+        biomeSettingsList.onAddCallback = (ReorderableList list) =>
+        {
             var index = list.serializedProperty.arraySize;
             list.serializedProperty.arraySize++;
             list.index = index;
-            
+
             myTarget.biomeSettings.Add(ScriptableObject.CreateInstance("BiomeSettings") as BiomeSettings);
         };
-    }   
+    }
 
-    public override void OnInspectorGUI() {
+    public override void OnInspectorGUI()
+    {
         soTarget.Update();
         EditorGUI.BeginChangeCheck();
 
         CommonOptions();
 
-        myTarget.toolbarTop = GUILayout.Toolbar(myTarget.toolbarTop, new string[] { "Biomes", "Erosion", "Mesh", "Roads"});
-        switch (myTarget.toolbarTop) {
+        myTarget.toolbarTop = GUILayout.Toolbar(myTarget.toolbarTop, new string[] { "Biomes", "Erosion", "Mesh", "Roads" });
+        switch (myTarget.toolbarTop)
+        {
             case 0:
                 myTarget.toolbarBottom = -1;
                 myTarget.currentTab = "Biomes";
@@ -139,11 +148,12 @@ public class TerrainSettingsEditor : Editor
             case 3:
                 myTarget.toolbarBottom = -1;
                 myTarget.currentTab = "Roads";
-                break;            
+                break;
         }
 
         myTarget.toolbarBottom = GUILayout.Toolbar(myTarget.toolbarBottom, new string[] { "Rivers", "Preview" });
-        switch (myTarget.toolbarBottom) {
+        switch (myTarget.toolbarBottom)
+        {
             case 0:
                 myTarget.toolbarTop = -1;
                 myTarget.currentTab = "Rivers";
@@ -154,14 +164,16 @@ public class TerrainSettingsEditor : Editor
                 break;
         }
 
-        if (EditorGUI.EndChangeCheck()) {
+        if (EditorGUI.EndChangeCheck())
+        {
             soTarget.ApplyModifiedProperties();
             GUI.FocusControl(null);
         }
 
         EditorGUI.BeginChangeCheck();
 
-        switch (myTarget.currentTab) {
+        switch (myTarget.currentTab)
+        {
             case "Biomes":
                 BiomesTab();
                 break;
@@ -183,21 +195,25 @@ public class TerrainSettingsEditor : Editor
         }
 
         EditorGUILayout.Space();
-        if (GUILayout.Button("Generate")) {
-			myTarget.DrawMapInEditor();
-		}
+        if (GUILayout.Button("Generate"))
+        {
+            myTarget.DrawMapInEditor();
+        }
 
-        if (EditorGUI.EndChangeCheck()) {
+        if (EditorGUI.EndChangeCheck())
+        {
             soTarget.ApplyModifiedProperties();
         }
     }
 
-    private void CommonOptions() {
+    private void CommonOptions()
+    {
         EditorGUILayout.PropertyField(seed);
         EditorGUILayout.Space();
     }
 
-    private void BiomesTab() {
+    private void BiomesTab()
+    {
         EditorGUILayout.PropertyField(transitionDistance);
         EditorGUILayout.Space();
 
@@ -206,10 +222,12 @@ public class TerrainSettingsEditor : Editor
         EditorGUILayout.PropertyField(temperatureMapGraph, true);
         EditorGUILayout.Space();
 
-        for (int i = 0 ; i < biomeSettings.arraySize; i++) {
+        for (int i = 0; i < biomeSettings.arraySize; i++)
+        {
             SerializedProperty prop = biomeSettings.GetArrayElementAtIndex(i);
             BiomeSettings settings = prop.objectReferenceValue as BiomeSettings;
-            if (settings != null) {
+            if (settings != null)
+            {
                 EditorGUILayout.ObjectField(prop);
                 EditorGUILayout.MinMaxSlider(ref settings.startTemperature, ref settings.endTemperature, 0f, 1f);
                 EditorGUILayout.MinMaxSlider(ref settings.startHumidity, ref settings.endHumidity, 0f, 1f);
@@ -223,35 +241,42 @@ public class TerrainSettingsEditor : Editor
         biomeSettingsList.DoLayoutList();
     }
 
-    private void ErosionTab() {
+    private void ErosionTab()
+    {
         EditorGUILayout.PropertyField(erosionSettings, true);
     }
 
-    private void MeshTab() {
+    private void MeshTab()
+    {
         Common.DisplayScriptableObjectEditor(meshSettings, myTarget.meshSettings, meshSettingsEditor);
     }
 
-    private void RoadsTab() {
+    private void RoadsTab()
+    {
         Common.DisplayScriptableObjectEditor(roadSettings, myTarget.roadSettings, roadSettingsEditor);
     }
 
-    private void RiversTab() {
+    private void RiversTab()
+    {
 
     }
 
-    private void PreviewTab() {
+    private void PreviewTab()
+    {
         EditorGUILayout.LabelField("Preview Settings", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(previewMaterial);
         EditorGUILayout.PropertyField(drawMode, true);
         EditorGUILayout.PropertyField(centre, true);
         EditorGUILayout.PropertyField(editorPreviewLOD, true);
-        if (drawMode.enumValueIndex == (int)TerrainSettings.DrawMode.SingleBiomeMesh) {
+        if (drawMode.enumValueIndex == (int)TerrainSettings.DrawMode.SingleBiomeMesh)
+        {
             EditorGUILayout.PropertyField(singleBiomeIndex, true);
-        }   
-        if (drawMode.enumValueIndex == (int)TerrainSettings.DrawMode.NoiseMapTexture) {
+        }
+        if (drawMode.enumValueIndex == (int)TerrainSettings.DrawMode.NoiseMapTexture)
+        {
             EditorGUILayout.PropertyField(noiseMapBiomeIndex, true);
         }
     }
 
-    
+
 }
