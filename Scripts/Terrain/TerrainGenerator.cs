@@ -7,6 +7,7 @@ public class TerrainGenerator : MonoBehaviour {
 	public Material mapMaterial;
 
 	public LODInfo[] detailLevels;
+
 	public int colliderLODIndex;
 
 	public TerrainSettings terrainSettings;

@@ -14,6 +14,12 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
     private SerializedProperty spawnMode;
     private SerializedProperty numRandomSpawns;
 
+    // Detail vars
+    private SerializedProperty isDetail;
+    private SerializedProperty detailMode;
+    private SerializedProperty detailViewDistance;
+    private SerializedProperty detailTexture;
+
     // Radius vars
     private SerializedProperty varyRadius;
     private SerializedProperty radius;
@@ -65,6 +71,11 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
         terrainObjects = soTarget.FindProperty("terrainObjects");
         spawnMode = soTarget.FindProperty("spawnMode");
         numRandomSpawns = soTarget.FindProperty("numRandomSpawns");
+        
+        isDetail = soTarget.FindProperty("isDetail");
+        detailMode = soTarget.FindProperty("detailMode");
+        detailViewDistance = soTarget.FindProperty("detailViewDistance");
+        detailTexture = soTarget.FindProperty("detailTexture");
 
         varyRadius = soTarget.FindProperty("varyRadius");
         radius = soTarget.FindProperty("radius");
@@ -107,14 +118,56 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
     public override void OnInspectorGUI() {
         EditorGUI.BeginChangeCheck();
 
+        EditorGUILayout.PropertyField(isDetail, true);
+        EditorGUILayout.Space();
+
+        if (myTarget.isDetail) {
+            DetailObjectSettings();
+        }
+        else {
+            MeshObjectSettings();
+        }
+
+        if (EditorGUI.EndChangeCheck()) {
+            soTarget.ApplyModifiedProperties();
+        }
+    }
+
+    public void MeshObjectSettings() {
+        GameObjectSettings();
+        SpawnRadiusSettings();
+        HeightSettings();
+        SlopeSettings();
+        ScaleSettings();
+        TranslationSettings();
+        RotationSettings();
+        OtherSettings();
+    }
+
+    public void DetailObjectSettings() {
+        EditorGUILayout.LabelField("Detail Texture", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(detailTexture, true);
+        EditorGUILayout.Space();
+        GameObjectSettings();
+        HeightSettings();
+        SlopeSettings();
+        ScaleSettings();
+        OtherSettings();
+    }
+
+    public void GameObjectSettings() {
         EditorGUILayout.LabelField("Game Objects", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(terrainObjects, true);
+        if (!myTarget.isDetail) {
+            EditorGUILayout.PropertyField(terrainObjects, true);
+        }  
         EditorGUILayout.PropertyField(spawnMode, true);
         if (spawnMode.enumValueIndex == (int)TerrainObjectSettings.SpawnMode.Random) {
             EditorGUILayout.PropertyField(numRandomSpawns, true);
         }
         EditorGUILayout.Space();
+    }
 
+    public void SpawnRadiusSettings() {
         EditorGUILayout.LabelField("Radius", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(varyRadius, true);
         if (myTarget.varyRadius) {
@@ -135,7 +188,9 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
             EditorGUILayout.PropertyField(radius, true);
             EditorGUILayout.Space();
         }
-        
+    }
+
+    public void HeightSettings() {
         EditorGUILayout.LabelField("Height", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(constrainHeight, true);
         if (myTarget.constrainHeight) {
@@ -144,7 +199,9 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
             EditorGUILayout.PropertyField(heightProbabilityCurve, true);
         }
         EditorGUILayout.Space();
-        
+    }
+
+    public void SlopeSettings() {
         EditorGUILayout.LabelField("Slope", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(constrainSlope, true);
         if (myTarget.constrainSlope) {
@@ -152,7 +209,9 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
             EditorGUILayout.PropertyField(maxSlope, true);
         }
         EditorGUILayout.Space();
+    }
 
+    public void ScaleSettings() {
         EditorGUILayout.LabelField("Scale", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(uniformScale, true);
         EditorGUILayout.PropertyField(randomScale, true);
@@ -171,7 +230,9 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
             EditorGUILayout.PropertyField(nonUniformScale, true);
         }
         EditorGUILayout.Space();
+    }
 
+    public void TranslationSettings() {
         EditorGUILayout.LabelField("Translation", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(randomTranslation, true);
         if (myTarget.randomTranslation) {
@@ -182,7 +243,9 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
             EditorGUILayout.PropertyField(translation, true);
         }
         EditorGUILayout.Space();
-
+    }
+    
+    public void RotationSettings() {
         EditorGUILayout.LabelField("Rotation", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(randomRotation, true);
         if (myTarget.randomRotation) {
@@ -193,14 +256,12 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
             EditorGUILayout.PropertyField(rotation, true);
         }
         EditorGUILayout.Space();
+    }
 
+    public void OtherSettings() {
         EditorGUILayout.LabelField("Other", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(hide, true);
         EditorGUILayout.PropertyField(spawnOnRoad, true);
         EditorGUILayout.Space();
-
-        if (EditorGUI.EndChangeCheck()) {
-            soTarget.ApplyModifiedProperties();
-        }
     }
 }

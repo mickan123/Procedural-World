@@ -252,6 +252,7 @@ public class MeshData {
 
 	public Mesh CreateMesh() {
 		Mesh mesh = new Mesh(); 
+		mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 		mesh.vertices = vertices;
 		mesh.triangles = triangles;
 		mesh.uv = uvs;

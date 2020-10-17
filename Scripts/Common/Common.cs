@@ -152,7 +152,7 @@ public static class Common {
     #if UNITY_EDITOR
 
 	public static Editor DisplayScriptableObjectEditor(SerializedProperty property, Object targetObject, Editor targetEditor) {
-        EditorGUILayout.PropertyField(property, true);
+        EditorGUILayout.PropertyField(property);
         if (property.objectReferenceValue != null) {
             property.isExpanded = EditorGUILayout.Foldout(property.isExpanded, GUIContent.none, true, EditorStyles.foldout);
         }

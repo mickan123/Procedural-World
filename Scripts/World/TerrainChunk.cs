@@ -29,7 +29,9 @@ public class TerrainChunk {
 	private bool heightMapReceived;
 	private int previousLODIndex = -1;
 	private bool hasSetCollider;
+
 	private float maxViewDst;
+	private float meshWorldSize;
 
 	private MeshSettings meshSettings;
 	private TerrainSettings terrainSettings;
@@ -80,8 +82,8 @@ public class TerrainChunk {
 				lodMeshes[i].updateCallback += UpdateCollisionMesh;
 			}
 		}
-
-		maxViewDst = detailLevels[detailLevels.Length - 1].visibleDstThreshold;
+		meshWorldSize = terrainSettings.meshSettings.meshWorldSize - 1;
+		maxViewDst = detailLevels[detailLevels.Length - 1].chunkDistanceThreshold * meshWorldSize;
 	}
 
 	public void Load(WorldManager worldGenerator) {
@@ -106,7 +108,7 @@ public class TerrainChunk {
 		UpdateTerrainChunk();
 		this.UpdateMaterial();
 
-		List<SpawnObject> spawnObjects = this.chunkData.objects;
+		List<ObjectSpawner> spawnObjects = this.chunkData.objects;
 		for (int i = 0; i < spawnObjects.Count; i++) {
 			spawnObjects[i].Spawn(meshObject.transform);
 		}
@@ -199,7 +201,7 @@ public class TerrainChunk {
 				int lodIndex = 0;
 
 				for (int i = 0; i < detailLevels.Length - 1; i++) {
-					if (viewerDstFromNearestEdge > detailLevels [i].visibleDstThreshold) {
+					if (viewerDstFromNearestEdge > (detailLevels[i].chunkDistanceThreshold * meshWorldSize)) {
 						lodIndex = i + 1;
 					} else {
 						break;
@@ -234,7 +236,9 @@ public class TerrainChunk {
 		if (!hasSetCollider) {
 			float sqrDstFromViewerToEdge = bounds.SqrDistance(viewerPosition);
 
-			if (sqrDstFromViewerToEdge < detailLevels [colliderLODIndex].sqrVisibleDstThreshold) {
+			float viewDist = detailLevels[colliderLODIndex].chunkDistanceThreshold * meshWorldSize;
+
+			if (sqrDstFromViewerToEdge < viewDist * viewDist) {
 				if (!lodMeshes [colliderLODIndex].hasRequestedMesh) {
 					lodMeshes [colliderLODIndex].RequestMesh(heightMap, meshSettings);
 				}

@@ -52,7 +52,7 @@ public static class ChunkDataGenerator
             objectStartTime = Time.realtimeSinceStartup;
         }
         #endif
-        List<SpawnObject> objects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 
+        List<ObjectSpawner> objects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap, 
                                                                         biomeData.biomeInfo, 
                                                                         road,
                                                                         terrainSettings, 
@@ -71,10 +71,10 @@ public static class ChunkDataGenerator
 
 public class ChunkData {
     public BiomeData biomeData;
-    public List<SpawnObject> objects;
+    public List<ObjectSpawner> objects;
     public Road road;
 
-    public ChunkData(BiomeData biomeData, List<SpawnObject> objects, Road road) {
+    public ChunkData(BiomeData biomeData, List<ObjectSpawner> objects, Road road) {
         this.biomeData = biomeData;
         this.objects = objects;
         this.road = road;
