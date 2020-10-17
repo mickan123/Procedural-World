@@ -4,70 +4,181 @@ using UnityEditor;
 [CustomPropertyDrawer(typeof(TerrainObjectSettings))]
 public class TerrainObjectSettingsDrawer : PropertyDrawer
 {
-    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
+    private SerializedProperty terrainObjects;
+    private SerializedProperty spawnMode;
+    private SerializedProperty numRandomSpawns;
+
+    // Detail vars
+    private SerializedProperty isDetail;
+    private SerializedProperty detailMode;
+    private SerializedProperty detailViewDistance;
+    private SerializedProperty detailTexture;
+
+    // Radius vars
+    private SerializedProperty varyRadius;
+    private SerializedProperty radius;
+    private SerializedProperty minRadius;
+    private SerializedProperty maxRadius;
+    private SerializedProperty noiseMapSettings;
+
+    // Height vars
+    private SerializedProperty constrainHeight;
+    private SerializedProperty minHeight;
+    private SerializedProperty maxHeight;
+    private SerializedProperty heightProbabilityCurve;
+
+    // Slope vars
+    private SerializedProperty constrainSlope;
+    private SerializedProperty minSlope;
+    private SerializedProperty maxSlope;
+
+    // Scale vars
+    private SerializedProperty uniformScale;
+    private SerializedProperty randomScale;
+    private SerializedProperty scale;
+    private SerializedProperty nonUniformScale;
+    private SerializedProperty minScaleNonUniform;
+    private SerializedProperty maxScaleNonUniform;
+    private SerializedProperty minScaleUniform;
+    private SerializedProperty maxScaleUniform;
+
+    // Translation vars
+    private SerializedProperty randomTranslation;
+    private SerializedProperty translation;
+    private SerializedProperty minTranslation;
+    private SerializedProperty maxTranslation;
+
+    // Rotation vars
+    private SerializedProperty randomRotation;
+    private SerializedProperty rotation;
+    private SerializedProperty minRotation;
+    private SerializedProperty maxRotation;
+
+    // Other vars
+    private SerializedProperty spawnOnRoad;
+    private SerializedProperty hide;
+
+
+    private void InitVars(SerializedObject soTarget) {
+        terrainObjects = soTarget.FindProperty("terrainObjects");
+        spawnMode = soTarget.FindProperty("spawnMode");
+        numRandomSpawns = soTarget.FindProperty("numRandomSpawns");
         
+        isDetail = soTarget.FindProperty("isDetail");
+        detailMode = soTarget.FindProperty("detailMode");
+        detailViewDistance = soTarget.FindProperty("detailViewDistance");
+        detailTexture = soTarget.FindProperty("detailTexture");
+
+        varyRadius = soTarget.FindProperty("varyRadius");
+        radius = soTarget.FindProperty("radius");
+        minRadius = soTarget.FindProperty("minRadius");
+        maxRadius = soTarget.FindProperty("maxRadius");
+        noiseMapSettings = soTarget.FindProperty("noiseMapSettings");
+
+        constrainHeight = soTarget.FindProperty("constrainHeight");
+        minHeight = soTarget.FindProperty("minHeight");
+        maxHeight = soTarget.FindProperty("maxHeight");
+        heightProbabilityCurve = soTarget.FindProperty("heightProbabilityCurve");
+
+        constrainSlope = soTarget.FindProperty("constrainSlope");
+        minSlope = soTarget.FindProperty("minSlope");
+        maxSlope = soTarget.FindProperty("maxSlope");
+
+        uniformScale = soTarget.FindProperty("uniformScale");
+        randomScale = soTarget.FindProperty("randomScale");
+        scale = soTarget.FindProperty("scale");
+        nonUniformScale = soTarget.FindProperty("nonUniformScale");
+        minScaleNonUniform = soTarget.FindProperty("minScaleNonUniform");
+        maxScaleNonUniform = soTarget.FindProperty("maxScaleNonUniform");
+        minScaleUniform = soTarget.FindProperty("minScaleUniform");
+        maxScaleUniform = soTarget.FindProperty("maxScaleUniform");
+
+        randomTranslation = soTarget.FindProperty("randomTranslation");
+        translation = soTarget.FindProperty("translation");
+        minTranslation = soTarget.FindProperty("minTranslation");
+        maxTranslation = soTarget.FindProperty("maxTranslation");
+
+        randomRotation = soTarget.FindProperty("randomRotation");
+        rotation = soTarget.FindProperty("rotation");
+        minRotation = soTarget.FindProperty("minRotation");
+        maxRotation = soTarget.FindProperty("maxRotation");
+
+        hide = soTarget.FindProperty("hide");
+        spawnOnRoad = soTarget.FindProperty("spawnOnRoad");
+    }
+
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
         if (property.objectReferenceValue == null) {
             return;
         }
+        TerrainObjectSettings terainObjectSettings = property.objectReferenceValue as TerrainObjectSettings;
         SerializedObject serializedObject = new SerializedObject(property.objectReferenceValue as TerrainObjectSettings);
+
+        this.InitVars(serializedObject);
 
         EditorGUI.BeginChangeCheck();
 
-        var terrainObjects = serializedObject.FindProperty("terrainObjects");
-        var spawnMode = serializedObject.FindProperty("spawnMode");
-        var numRandomSpawns = serializedObject.FindProperty("numRandomSpawns");
+        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), isDetail, true);
+        position.y += 2 * EditorGUIUtility.singleLineHeight;
 
-        var varyRadius = serializedObject.FindProperty("varyRadius");
-        var radius = serializedObject.FindProperty("radius");
-        var minRadius = serializedObject.FindProperty("minRadius");
-        var maxRadius = serializedObject.FindProperty("maxRadius");
-        var noiseMapSettings = serializedObject.FindProperty("noiseMapSettings");
-
-        var constrainHeight = serializedObject.FindProperty("constrainHeight");
-        var minHeight = serializedObject.FindProperty("minHeight");
-        var maxHeight = serializedObject.FindProperty("maxHeight");
-        var heightProbabilityCurve = serializedObject.FindProperty("heightProbabilityCurve");
-
-        var constrainSlope = serializedObject.FindProperty("constrainSlope");
-        var minSlope = serializedObject.FindProperty("minSlope");
-        var maxSlope = serializedObject.FindProperty("maxSlope");
-
-        var uniformScale = serializedObject.FindProperty("uniformScale");
-        var randomScale = serializedObject.FindProperty("randomScale");
-        var scale = serializedObject.FindProperty("scale");
-        var nonUniformScale = serializedObject.FindProperty("nonUniformScale");
-        var minScaleNonUniform = serializedObject.FindProperty("minScaleNonUniform");
-        var maxScaleNonUniform = serializedObject.FindProperty("maxScaleNonUniform");
-        var minScaleUniform = serializedObject.FindProperty("minScaleUniform");
-        var maxScaleUniform = serializedObject.FindProperty("maxScaleUniform");
-
-        var randomTranslation = serializedObject.FindProperty("randomTranslation");
-        var translation = serializedObject.FindProperty("translation");
-        var minTranslation = serializedObject.FindProperty("minTranslation");
-        var maxTranslation = serializedObject.FindProperty("maxTranslation");
-
-        var randomRotation = serializedObject.FindProperty("randomRotation");
-        var rotation = serializedObject.FindProperty("rotation");
-        var minRotation = serializedObject.FindProperty("minRotation");
-        var maxRotation = serializedObject.FindProperty("maxRotation");
-
-        var hide = serializedObject.FindProperty("hide");
-        var spawnOnRoad = serializedObject.FindProperty("spawnOnRoad");
-
-        position.y += EditorGUIUtility.singleLineHeight;
-
+        if (terainObjectSettings.isDetail) {
+            DetailObjectSettings(ref position);
+        }       
+        else {
+            MeshObjectSettings(ref position);
+        }
         
+        if (EditorGUI.EndChangeCheck()) {
+            serializedObject.ApplyModifiedProperties();
+        }
+    }
+
+    private void MeshObjectSettings(ref Rect position) {
+        this.GameObjectSettings(ref position);
+        this.SpawnRadiusSettings(ref position);
+        this.HeightSettings(ref position);
+        this.SlopeSettings(ref position);
+        this.ScaleSettings(ref position);
+        this.TranslationSettings(ref position);
+        this.RotationSettings(ref position);
+        this.OtherSettings(ref position);
+    }
+
+    private void DetailObjectSettings(ref Rect position) {
+        this.DetailOnlySettings(ref position);
+        this.GameObjectSettings(ref position);
+        this.HeightSettings(ref position);
+        this.SlopeSettings(ref position);
+        this.ScaleSettings(ref position);
+        this.OtherSettings(ref position);
+    }
+
+    private void DetailOnlySettings(ref Rect position) {
+        EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Detail Settings", EditorStyles.boldLabel);
+        position.y += EditorGUIUtility.singleLineHeight;
+        float detailTextureHeight = EditorGUI.GetPropertyHeight(detailTexture, true);
+        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, detailTextureHeight), detailTexture, true);
+        position.y += detailTextureHeight;
+        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), detailMode, true);
+        position.y += 2 * EditorGUIUtility.singleLineHeight;
+    }
+
+    private void GameObjectSettings(ref Rect position) {
+        EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Object Settings", EditorStyles.boldLabel);
+        position.y += EditorGUIUtility.singleLineHeight;
         float terrainObjectsHeight = EditorGUI.GetPropertyHeight(terrainObjects, true);
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, terrainObjectsHeight), terrainObjects, true);
         position.y += terrainObjectsHeight;
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, terrainObjectsHeight), spawnMode, true);
+        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), spawnMode, true);
         position.y += EditorGUIUtility.singleLineHeight;
         if (spawnMode.enumValueIndex == (int)TerrainObjectSettings.SpawnMode.Random) {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), numRandomSpawns, true);
             position.y += EditorGUIUtility.singleLineHeight;
         }
         position.y += EditorGUIUtility.singleLineHeight;
-        
+    }
+
+    private void SpawnRadiusSettings(ref Rect position) {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Radius", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), varyRadius, true);
@@ -99,7 +210,9 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
             position.y += EditorGUIUtility.singleLineHeight;
         }
         position.y += EditorGUIUtility.singleLineHeight;
-        
+    }
+
+    private void HeightSettings(ref Rect position) {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Height", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), constrainHeight, true);
@@ -113,7 +226,9 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
             position.y += EditorGUIUtility.singleLineHeight;
         }
         position.y += EditorGUIUtility.singleLineHeight;
+    }
 
+    private void SlopeSettings(ref Rect position) {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Slope", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), constrainSlope, true);
@@ -125,7 +240,9 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
             position.y += EditorGUIUtility.singleLineHeight;
         }
         position.y += EditorGUIUtility.singleLineHeight;
+    }
 
+    private void ScaleSettings(ref Rect position) {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Scale", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), uniformScale, true);
@@ -153,7 +270,9 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
             position.y += EditorGUIUtility.singleLineHeight;
         }
         position.y += EditorGUIUtility.singleLineHeight;
+    }
 
+    private void TranslationSettings(ref Rect position) {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Translation", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), randomTranslation, true);
@@ -168,8 +287,10 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), translation, true);
             position.y += EditorGUIUtility.singleLineHeight;
         }
-        position.y += EditorGUIUtility.singleLineHeight;
+        position.y += 2 * EditorGUIUtility.singleLineHeight;
+    }
 
+    private void RotationSettings(ref Rect position) {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Rotation", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), randomRotation, true);
@@ -184,19 +305,16 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), rotation, true);
             position.y += EditorGUIUtility.singleLineHeight;
         }
-        position.y += EditorGUIUtility.singleLineHeight;
+        position.y += 2 * EditorGUIUtility.singleLineHeight;
+    }
 
+    private void OtherSettings(ref Rect position) {
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Other", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), hide, true);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), spawnOnRoad, true);
-        position.y += EditorGUIUtility.singleLineHeight;
-        position.y += EditorGUIUtility.singleLineHeight;
-
-        if (EditorGUI.EndChangeCheck()) {
-            serializedObject.ApplyModifiedProperties();
-        }
+        position.y += 2 * EditorGUIUtility.singleLineHeight;
     }
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {
@@ -205,41 +323,53 @@ public class TerrainObjectSettingsDrawer : PropertyDrawer
         }
         
         SerializedObject serializedObject = new SerializedObject(property.objectReferenceValue as TerrainObjectSettings);
+        TerrainObjectSettings terrainObjectSettings = property.objectReferenceValue as TerrainObjectSettings;
 
-        float height = 0;
+        float detailSettingsHeight = (terrainObjectSettings.isDetail) ? 5 * EditorGUIUtility.singleLineHeight : 0f;
+        float varyRadiusSettingsHeight = ((terrainObjectSettings.varyRadius) ? 6f : 4f) * EditorGUIUtility.singleLineHeight;
+        float constrainHeightSettingsHeight = ((terrainObjectSettings.constrainHeight) ? 6f : 3f) * EditorGUIUtility.singleLineHeight;
+        float constrainSlopeSettingsHeight = ((terrainObjectSettings.constrainSlope) ? 5f : 3f) * EditorGUIUtility.singleLineHeight;
+        float scaleSettingsHeight = ((terrainObjectSettings.randomScale) ? 6f : 5f) * EditorGUIUtility.singleLineHeight;
+        float translationSettingsHeight = ((terrainObjectSettings.randomTranslation) ? 6f : 5f) * EditorGUIUtility.singleLineHeight;
+        float rotationSettingsHeight = ((terrainObjectSettings.randomRotation) ? 6f : 5f) * EditorGUIUtility.singleLineHeight;
+        float otherSettingsHeight = 4f * EditorGUIUtility.singleLineHeight;
 
         var terrainObjects = serializedObject.FindProperty("terrainObjects");
-        var spawnMode = serializedObject.FindProperty("spawnMode");
-        height += EditorGUI.GetPropertyHeight(terrainObjects, true) + 2 * EditorGUIUtility.singleLineHeight;
-        if (spawnMode.enumValueIndex == (int)TerrainObjectSettings.SpawnMode.Random) {
-            height += EditorGUIUtility.singleLineHeight;
-        }
-
-        var varyRadius = serializedObject.FindProperty("varyRadius");
-        height += (varyRadius.boolValue) ? 6f * EditorGUIUtility.singleLineHeight : 4f * EditorGUIUtility.singleLineHeight;
-
-        var constrainHeight = serializedObject.FindProperty("constrainHeight");
-        height += (constrainHeight.boolValue) ? 6f * EditorGUIUtility.singleLineHeight : 3f * EditorGUIUtility.singleLineHeight;
-
-        var constrainSlope = serializedObject.FindProperty("constrainSlope");
-        height += (constrainSlope.boolValue) ? 5f * EditorGUIUtility.singleLineHeight : 3f * EditorGUIUtility.singleLineHeight;
-
-        var randomScale = serializedObject.FindProperty("randomScale");
-        height += (randomScale.boolValue) ? 6f * EditorGUIUtility.singleLineHeight : 5f * EditorGUIUtility.singleLineHeight;
-
-        var randomTranslation = serializedObject.FindProperty("randomTranslation");
-        height += (randomTranslation.boolValue) ? 5f * EditorGUIUtility.singleLineHeight : 4f * EditorGUIUtility.singleLineHeight;
-
-        var randomRotation = serializedObject.FindProperty("randomRotation");
-        height += (randomRotation.boolValue) ? 5f * EditorGUIUtility.singleLineHeight : 4f * EditorGUIUtility.singleLineHeight;
-
-        height += 4f * EditorGUIUtility.singleLineHeight;
+        float terrainObjectsSettingsHeight = EditorGUI.GetPropertyHeight(terrainObjects, true) + 3 * EditorGUIUtility.singleLineHeight;
 
         var noiseMapSettings = serializedObject.FindProperty("noiseMapSettings");
-        if (noiseMapSettings.isExpanded) {
-            height += EditorGUI.GetPropertyHeight(noiseMapSettings, true);
-        }
+        float noiseMapSettingsHeight = (noiseMapSettings.isExpanded) ? EditorGUI.GetPropertyHeight(noiseMapSettings, true) : 0f;
 
+        var spawnMode = serializedObject.FindProperty("spawnMode");
+        float spawnModeSettingsHeight = 0f;
+        if (spawnMode.enumValueIndex == (int)TerrainObjectSettings.SpawnMode.Random) {
+            spawnModeSettingsHeight += EditorGUIUtility.singleLineHeight;
+        }   
+
+        float height = 2 * EditorGUIUtility.singleLineHeight;
+        if (terrainObjectSettings.isDetail)
+        {
+            height += detailSettingsHeight
+                   + terrainObjectsSettingsHeight
+                   + constrainHeightSettingsHeight
+                   + constrainSlopeSettingsHeight
+                   + scaleSettingsHeight
+                   + otherSettingsHeight;
+        }
+        else
+        {
+            height += varyRadiusSettingsHeight 
+                   + constrainHeightSettingsHeight
+                   + constrainSlopeSettingsHeight
+                   + scaleSettingsHeight
+                   + translationSettingsHeight
+                   + rotationSettingsHeight
+                   + otherSettingsHeight
+                   + terrainObjectsSettingsHeight
+                   + noiseMapSettingsHeight
+                   + spawnModeSettingsHeight;
+        }
+        
         return height;
     }
 }   

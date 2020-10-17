@@ -134,25 +134,26 @@ public class TerrainObjectSettingsEditor : ScriptlessEditor
     }
 
     public void MeshObjectSettings() {
-        GameObjectSettings();
-        SpawnRadiusSettings();
-        HeightSettings();
-        SlopeSettings();
-        ScaleSettings();
-        TranslationSettings();
-        RotationSettings();
-        OtherSettings();
+        this.GameObjectSettings();
+        this.SpawnRadiusSettings();
+        this.HeightSettings();
+        this.SlopeSettings();
+        this.ScaleSettings();
+        this.TranslationSettings();
+        this.RotationSettings();
+        this.OtherSettings();
     }
 
     public void DetailObjectSettings() {
         EditorGUILayout.LabelField("Detail Texture", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(detailTexture, true);
+        EditorGUILayout.PropertyField(detailMode, true);
         EditorGUILayout.Space();
-        GameObjectSettings();
-        HeightSettings();
-        SlopeSettings();
-        ScaleSettings();
-        OtherSettings();
+        this.GameObjectSettings();
+        this.HeightSettings();
+        this.SlopeSettings();
+        this.ScaleSettings();
+        this.OtherSettings();
     }
 
     public void GameObjectSettings() {
