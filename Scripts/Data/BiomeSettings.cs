@@ -7,11 +7,10 @@ public class BiomeSettings : ScriptableObject
 {
     public TextureData textureData;
     public TextureData slopeTextureData;
-    public float slopeThreshold = 0.8f;
-    public float slopeBlendRange = 0.5f;
+    public float angleThreshold = 30;
+    public float angleBlendRange = 15;
 
     public BiomeGraph biomeGraph;
-
 
     public bool hydraulicErosion = true;
     public bool thermalErosion = true;

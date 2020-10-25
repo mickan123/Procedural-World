@@ -209,6 +209,7 @@ public static class HydraulicErosion
         randomIndexBuffer.Release();
     }
 
+    // CPU Erosion below
     public static void ErodeDrop(Drop drop, TerrainSettings terrainSettings, float[,] map, int mapSize, WorldManager worldGenerator)
     {
         ErosionSettings settings = terrainSettings.erosionSettings;

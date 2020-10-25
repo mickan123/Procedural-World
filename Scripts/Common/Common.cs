@@ -79,7 +79,7 @@ public static class Common
         return height;
     }
 
-    public static float CalculateSlope(float xIn, float yIn, float[,] heightMap)
+    public static float CalculateAngle(float xIn, float yIn, float[,] heightMap)
     {
         int coordX = (int)xIn;
         int coordZ = (int)yIn;
@@ -98,9 +98,39 @@ public static class Common
         float gradientX = (heightNE - heightNW) * (1 - y) + (heightSE - heightSW) * y;
         float gradientY = (heightSW - heightNW) * (1 - x) + (heightSE - heightNE) * x;
 
-        float slope = Mathf.Sqrt(gradientX * gradientX + gradientY * gradientY);
+        float degrees = (Mathf.Rad2Deg * Mathf.Atan2(Mathf.Abs(gradientY), Mathf.Abs(gradientX)));
 
-        return slope;
+        return degrees;
+    }
+
+    private static readonly int[,] offsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1} };
+
+    public static float CalculateAngle(int xIn, int yIn, float[,] heightMap)
+    {
+        int maxIndex = heightMap.GetLength(0) - 1;
+
+        float maxAngle = 0f;
+        for (int i = 0; i < 4; i++)
+        {
+            float angle = AngleBetweenTwoPoints(
+                xIn, 
+                yIn, 
+                Mathf.Min(Mathf.Max(xIn + offsets[i, 0], 0), maxIndex), 
+                Mathf.Min(Mathf.Max(yIn + offsets[i, 1], 0), maxIndex), 
+                heightMap
+            );
+            maxAngle = Mathf.Max(maxAngle, angle);
+        }
+        return maxAngle;
+    }
+
+    private static float AngleBetweenTwoPoints(int x1, int y1, int x2, int y2, float[,] heightMap)
+    {
+        float angle = Mathf.Rad2Deg * Mathf.Atan2(
+            heightMap[x1, y1] - heightMap[x2, y2], 
+            1f
+        );
+        return angle;
     }
 
     public static float DistanceFromLine(Vector2 point, Vector2 origin, Vector2 direction)

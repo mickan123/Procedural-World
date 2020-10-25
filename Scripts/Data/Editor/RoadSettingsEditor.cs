@@ -15,7 +15,7 @@ public class RoadSettingsEditor : ScriptlessEditor
     private SerializedProperty stepSize;
     private SerializedProperty smoothness;
     private SerializedProperty blendFactor;
-    private SerializedProperty maxSlope;
+    private SerializedProperty maxAngle;
     private TextureDataEditor roadTextureEditor;
 
     private void OnEnable()
@@ -29,7 +29,7 @@ public class RoadSettingsEditor : ScriptlessEditor
         stepSize = soTarget.FindProperty("stepSize");
         smoothness = soTarget.FindProperty("smoothness");
         blendFactor = soTarget.FindProperty("blendFactor");
-        maxSlope = soTarget.FindProperty("maxSlope");
+        maxAngle = soTarget.FindProperty("maxAngle");
 
         roadTextureEditor = null;
     }
@@ -46,7 +46,7 @@ public class RoadSettingsEditor : ScriptlessEditor
         EditorGUILayout.PropertyField(stepSize);
         EditorGUILayout.PropertyField(smoothness);
         EditorGUILayout.PropertyField(blendFactor);
-        EditorGUILayout.PropertyField(maxSlope);
+        EditorGUILayout.PropertyField(maxAngle);
 
         if (EditorGUI.EndChangeCheck())
         {

@@ -339,8 +339,8 @@ public class TerrainSettings : ScriptableObject
             if (biomeSettings[i].slopeTextureData != null)
             {
                 slopeLayerCounts[i] = biomeSettings[i].slopeTextureData.textureLayers.Length;
-                slopeThresholds[i] = biomeSettings[i].slopeThreshold;
-                slopeBlendRanges[i] = biomeSettings[i].slopeBlendRange;
+                slopeThresholds[i] = biomeSettings[i].angleThreshold / 90f;
+                slopeBlendRanges[i] = biomeSettings[i].angleBlendRange / 90f;
                 for (int j = 0; j < biomeSettings[i].slopeTextureData.textureLayers.Length; j++)
                 {
                     TextureLayer curLayer = biomeSettings[i].slopeTextureData.textureLayers[j];

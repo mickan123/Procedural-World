@@ -17,10 +17,10 @@ public class FilterObjectsSlopeNodeEditor : NodeEditor
 
         NodeEditorGUILayout.PortField(node.GetPort("positionDataIn"));
 
-        SerializedProperty minSlope = serializedObject.FindProperty("minSlope");
-        NodeEditorGUILayout.PropertyField(minSlope, true);
-        SerializedProperty maxSlope = serializedObject.FindProperty("minSlope");
-        NodeEditorGUILayout.PropertyField(maxSlope, true);
+        SerializedProperty minAngle = serializedObject.FindProperty("minAngle");
+        NodeEditorGUILayout.PropertyField(minAngle, true);
+        SerializedProperty maxAngle = serializedObject.FindProperty("maxAngle");
+        NodeEditorGUILayout.PropertyField(maxAngle, true);
 
         NodeEditorGUILayout.PortField(node.GetPort("positionDataOut"));
 

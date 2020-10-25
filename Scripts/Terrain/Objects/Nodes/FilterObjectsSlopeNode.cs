@@ -9,8 +9,8 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
     [Input] public ObjectPositionData positionDataIn;
     [Output] public ObjectPositionData positionDataOut;
 
-    public float minSlope;
-    public float maxSlope;
+    public float minAngle;
+    public float maxAngle;
 
     public override object GetValue(NodePort port)
     {
@@ -29,8 +29,8 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
         for (int i = 0; i < positionData.positions.Count; i++)
         {
             Vector3 curPoint = positionData.positions[i].position;
-            float slope = Common.CalculateSlope(curPoint.x, curPoint.z, positionData.heightMap);
-            if (slope > maxSlope || slope < minSlope)
+            float angle = Common.CalculateAngle(curPoint.x, curPoint.z, positionData.heightMap);
+            if (angle > maxAngle || angle < minAngle)
             {
                 positionData.positions.RemoveAt(i);
                 i--;

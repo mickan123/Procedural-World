@@ -12,8 +12,8 @@ public class BiomeSettingsEditor : ScriptlessEditor
 
     private SerializedProperty textureData;
     private SerializedProperty slopeTextureData;
-    private SerializedProperty slopeThreshold;
-    private SerializedProperty slopeBlendRange;
+    private SerializedProperty angleThreshold;
+    private SerializedProperty angleBlendRange;
     private SerializedProperty heightMapSettings;
     private SerializedProperty biomeGraph;
     private SerializedProperty terrainObjectSettings;
@@ -37,8 +37,8 @@ public class BiomeSettingsEditor : ScriptlessEditor
 
         textureData = soTarget.FindProperty("textureData");
         slopeTextureData = soTarget.FindProperty("slopeTextureData");
-        slopeThreshold = soTarget.FindProperty("slopeThreshold");
-        slopeBlendRange = soTarget.FindProperty("slopeBlendRange");
+        angleThreshold = soTarget.FindProperty("angleThreshold");
+        angleBlendRange = soTarget.FindProperty("angleBlendRange");
         heightMapSettings = soTarget.FindProperty("heightMapSettings");
         biomeGraph = soTarget.FindProperty("biomeGraph");
         textureDataEditor = null;
@@ -65,8 +65,8 @@ public class BiomeSettingsEditor : ScriptlessEditor
 
         textureDataEditor = (TextureDataEditor)Common.DisplayScriptableObjectEditor(textureData, myTarget.textureData, textureDataEditor);
         slopeTextureDataEditor = (TextureDataEditor)Common.DisplayScriptableObjectEditor(slopeTextureData, myTarget.slopeTextureData, slopeTextureDataEditor);
-        EditorGUILayout.PropertyField(slopeThreshold, true);
-        EditorGUILayout.PropertyField(slopeBlendRange, true);
+        EditorGUILayout.PropertyField(angleThreshold, true);
+        EditorGUILayout.PropertyField(angleBlendRange, true);
         EditorGUILayout.Space();
 
         EditorGUILayout.PropertyField(biomeGraph, true);

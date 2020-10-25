@@ -407,8 +407,8 @@ public class Road
         }
         
         // Calculate slope multiplier
-        float slope = Common.CalculateSlope(x, y, workingHeightMap);
-        float slopeMultiplier = Mathf.Max(0f, 1f - (slope / this.roadSettings.maxSlope));
+        float angle = Common.CalculateAngle(x, y, workingHeightMap);
+        float slopeMultiplier = Mathf.Max(0f, 1f - (angle / this.roadSettings.maxAngle));
         
         float halfRoadWidth = roadSettings.width / 2f;
         if (distance < halfRoadWidth) {

@@ -23,12 +23,12 @@ public static class ObjectFilters
         }
     }
 
-    public static void FilterPointsBySlope(ref List<Vector3> points, float minSlope, float maxSlope, float[,] heightMap)
+    public static void FilterPointsBySlope(ref List<Vector3> points, float minAngle, float maxAngle, float[,] heightMap)
     {
         for (int i = 0; i < points.Count; i++)
         {
-            float slope = Common.CalculateSlope(points[i].x, points[i].z, heightMap);
-            if (slope > maxSlope || slope < minSlope)
+            float angle = Common.CalculateAngle(points[i].x, points[i].z, heightMap);
+            if (angle > maxAngle || angle < minAngle)
             {
                 points.RemoveAt(i);
                 i--;

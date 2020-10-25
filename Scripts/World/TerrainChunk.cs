@@ -109,9 +109,8 @@ public class TerrainChunk
 
     void OnChunkDataReceived(object chunkData)
     {
-
         this.chunkData = (ChunkData)chunkData;
-        this.heightMap = this.chunkData.biomeData.heightNoiseMap;
+        this.heightMap = this.chunkData.biomeData.heightNoiseMap;  
         heightMapReceived = true;
         UpdateTerrainChunk();
         this.UpdateMaterial();
@@ -139,12 +138,14 @@ public class TerrainChunk
         {
             biomeStrengthTextures[i] = new Texture2D(width, width, TextureFormat.RGBA32, false, false);
         }
-        this.biomeStrengthTexArray = new Texture2DArray(finalTexWidth,
-                                                                finalTexWidth,
-                                                                terrainSettings.maxBiomeCount,
-                                                                TextureFormat.RGBA32,
-                                                                false,
-                                                                false);
+        this.biomeStrengthTexArray = new Texture2DArray(
+            finalTexWidth,
+            finalTexWidth,
+            terrainSettings.maxBiomeCount,
+            TextureFormat.RGBA32,
+            false,
+            false
+        );
 
         biomeMapTex.filterMode = FilterMode.Trilinear;
         biomeStrengthTexArray.filterMode = FilterMode.Point; // TODO: Should this be bilinear
@@ -155,23 +156,23 @@ public class TerrainChunk
         {
             for (int y = 0; y < width; y++)
             {
-
                 float roadStrength = chunkData.road.roadStrengthMap[x, y];
-                float slope = Common.CalculateSlope(x, y, heightMap);
-                biomeMapTex.SetPixel(x, y, new Color(chunkData.road.roadStrengthMap[x, y],
-                                                     slope,
-                                                     0f,
-                                                     0f));
+                float angle = Common.CalculateAngle(x, y, heightMap);
+                angle /= 90f; // Normalize 0 to 1 range
+
+                angle = ((int)(angle * 10f)) / 10f;
+                biomeMapTex.SetPixel(x, y, new Color(chunkData.road.roadStrengthMap[x, y], angle, 0f, 0f));
 
                 for (int w = 0; w < terrainSettings.maxBiomeCount; w += biomesPerTexture)
                 {
                     int texIndex = w / biomesPerTexture;
 
-                    Color biomeStrengths = new Color((w < numBiomes) ? info.biomeStrengths[x, y, w] : 0f,
-                                                    (w + 1 < numBiomes) ? info.biomeStrengths[x, y, w + 1] : 0f,
-                                                    (w + 2 < numBiomes) ? info.biomeStrengths[x, y, w + 2] : 0f,
-                                                    (w + 3 < numBiomes) ? info.biomeStrengths[x, y, w + 3] : 0f);
-
+                    Color biomeStrengths = new Color(
+                        (w < numBiomes) ? info.biomeStrengths[x, y, w] : 0f,
+                        (w + 1 < numBiomes) ? info.biomeStrengths[x, y, w + 1] : 0f,
+                        (w + 2 < numBiomes) ? info.biomeStrengths[x, y, w + 2] : 0f,
+                        (w + 3 < numBiomes) ? info.biomeStrengths[x, y, w + 3] : 0f
+                    );
                     biomeStrengthTextures[texIndex].SetPixel(x, y, biomeStrengths);
                 }
             }
