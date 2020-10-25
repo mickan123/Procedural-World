@@ -3,30 +3,40 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
-public class SimplexNoiseNode : Node
+public class SimplexNoiseNode : BiomeGraphNode
 {
     public NoiseMapSettings noiseMapSettings;
     public HeightMapGenerator.NormalizeMode normalizeMode;
 
     [Output] public float[,] heightMap;
-    
-    public override object GetValue(NodePort port) {
-        if (port.fieldName == "heightMap") {
+
+    public override object GetValue(NodePort port)
+    {
+        var biomeGraph = this.graph as BiomeGraph;
+        if (!biomeGraph.initialized)
+        {
+            return null;
+        }
+
+        if (port.fieldName == "heightMap")
+        {
             return GetHeightMap();
         }
-        else {
+        else
+        {
             return null;
         }
     }
 
-    public float[,] GetHeightMap() {
-        var heightMapGraph = this.graph as HeightMapNodeGraph;
-        float[,] heightMap =  HeightMapGenerator.GenerateHeightMap(
-            heightMapGraph.width,
-            heightMapGraph.height,
+    public float[,] GetHeightMap()
+    {
+        var biomeGraph = this.graph as BiomeGraph;
+        float[,] heightMap = HeightMapGenerator.GenerateHeightMap(
+            biomeGraph.width,
+            biomeGraph.height,
             this.noiseMapSettings,
-            heightMapGraph.terrainSettings,
-            heightMapGraph.sampleCentre,
+            biomeGraph.terrainSettings,
+            biomeGraph.sampleCentre,
             normalizeMode,
             this.noiseMapSettings.seed
         );

@@ -10,9 +10,8 @@ public class BiomeSettings : ScriptableObject
     public float slopeThreshold = 0.8f;
     public float slopeBlendRange = 0.5f;
 
-    public HeightMapNodeGraph heightMapGraph;
+    public BiomeGraph biomeGraph;
 
-    public List<TerrainObjectSettings> terrainObjectSettings = new List<TerrainObjectSettings>();
 
     public bool hydraulicErosion = true;
     public bool thermalErosion = true;
@@ -28,13 +27,6 @@ public class BiomeSettings : ScriptableObject
 
     public void OnValidate()
     {
-        for (int i = 0; i < terrainObjectSettings.Count; i++)
-        {
-            if (terrainObjectSettings[i] != null)
-            {
-                terrainObjectSettings[i].OnValidate();
-            }
-        }
         if (textureData != null)
         {
             textureData.OnValidate();

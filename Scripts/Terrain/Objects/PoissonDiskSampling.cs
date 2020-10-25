@@ -5,13 +5,14 @@ using UnityEngine;
 public static class PoissonDiskSampling
 {
 
-    public static List<Vector3> GeneratePoints(TerrainObjectSettings settings,
-                                                Vector2 sampleCentre,
-                                                float[,] heightMap,
-                                                System.Random prng,
-                                                TerrainSettings terrainSettings,
-                                                int biome,
-                                                int numSamplesBeforeRejection = 35)
+    public static List<Vector3> GeneratePoints(
+        PoissonDiskSamplingSettings settings,
+        Vector2 sampleCentre,
+        float[,] heightMap,
+        System.Random prng,
+        TerrainSettings terrainSettings,
+        int numSamplesBeforeRejection = 35
+    )
     {
         int mapSize = heightMap.GetLength(0);
 
@@ -142,5 +143,40 @@ public static class PoissonDiskSampling
             return true;
         }
         return false;
+    }
+}
+
+[System.Serializable]
+public class PoissonDiskSamplingSettings 
+{
+    public bool varyRadius = false;
+    public float radius = 5f;
+    public float minRadius = 5f;
+    public float maxRadius = 50f;
+    public NoiseMapSettings noiseMapSettings;
+
+    PoissonDiskSamplingSettings(
+        bool varyRadius,
+        float radius,
+        float minRadius,
+        float maxRadius,
+        NoiseMapSettings noiseMapSettings
+    )
+    {
+        this.varyRadius = varyRadius;
+        this.radius = radius;
+        this.minRadius = minRadius;
+        this.maxRadius = maxRadius;
+        this.noiseMapSettings = noiseMapSettings;
+    }
+
+    public void OnValidate() {
+        if (noiseMapSettings != null)
+        {
+            noiseMapSettings.OnValidate();
+        }
+
+        minRadius = Mathf.Max(minRadius, 0f);
+        maxRadius = Mathf.Max(maxRadius, minRadius);
     }
 }

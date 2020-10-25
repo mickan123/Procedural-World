@@ -4,13 +4,10 @@ using UnityEngine;
 
 public static class MeshGenerator
 {
-
     public static MeshData GenerateTerrainMesh(float[,] heightMap, MeshSettings meshSettings, int levelOfDetail)
     {
-
         int skipIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
         int numVertsPerLine = meshSettings.numVerticesPerLine;
-
 
         MeshData meshData = new MeshData(numVertsPerLine, skipIncrement, meshSettings.useFlatShading);
 
@@ -195,7 +192,6 @@ public class MeshData
 
     Vector3[] CalculateNormals()
     {
-
         Vector3[] vertexNormals = new Vector3[vertices.Length];
         int triangleCount = triangles.Length / 3;
         for (int i = 0; i < triangleCount; i++)
@@ -233,12 +229,10 @@ public class MeshData
                 vertexNormals[vertexIndexC] += triangleNormal;
             }
         }
-
         for (int i = 0; i < vertexNormals.Length; i++)
         {
             vertexNormals[i].Normalize();
         }
-
         return vertexNormals;
     }
 

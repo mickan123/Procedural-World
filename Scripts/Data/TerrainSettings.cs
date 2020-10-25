@@ -14,8 +14,8 @@ public class TerrainSettings : ScriptableObject
     [HideInInspector] public string currentTab;
 
     // Biome settings
-    public HeightMapNodeGraph humidityMapGraph;
-    public HeightMapNodeGraph temperatureMapGraph;
+    public BiomeGraph humidityMapGraph;
+    public BiomeGraph temperatureMapGraph;
 
     [Range(0, 1)] public float transitionDistance;
     public List<BiomeSettings> biomeSettings = new List<BiomeSettings>();
@@ -81,41 +81,24 @@ public class TerrainSettings : ScriptableObject
 
         erosionSettings.seed = prng.Next(-100000, 100000);
 
+        humidityMapGraph.Init(prng);
+        temperatureMapGraph.Init(prng);
+
         for (int i = 0; i < biomeSettings.Count; i++)
         {
-
-            var graph = biomeSettings[i].heightMapGraph;
-            foreach (Node node in graph.nodes)
+            var graph = biomeSettings[i].biomeGraph;
+            if (graph != null)
             {
-                if (node is SimplexNoiseNode)
-                {
-                    SimplexNoiseNode typedNode = node as SimplexNoiseNode;
-                    typedNode.noiseMapSettings.seed = prng.Next(-100000, 100000);
-                }
-                else if (node is RidgedTurbulenceNode)
-                {
-                    RidgedTurbulenceNode typedNode = node as RidgedTurbulenceNode;
-                    typedNode.noiseMapSettings.seed = prng.Next(-100000, 100000);
-                }
-                else if (node is VoronoiNoiseNode)
-                {
-                    VoronoiNoiseNode typedNode = node as VoronoiNoiseNode;
-                    typedNode.seed = prng.Next(-100000, 100000);
-                }
-                else if (node is TerracedNoiseNode)
-                {
-                    TerracedNoiseNode typedNode = node as TerracedNoiseNode;
-                    typedNode.noiseMapSettings.seed = prng.Next(-100000, 100000);
-                }
+                graph.Init(prng);
             }
+        }
+    }
 
-            for (int j = 0; j < biomeSettings[i].terrainObjectSettings.Count; j++)
-            {
-                if (biomeSettings[i].terrainObjectSettings[j] != null)
-                {
-                    biomeSettings[i].terrainObjectSettings[j].noiseMapSettings.seed = prng.Next(-100000, 100000);
-                }
-            }
+    public void SetBiomeGraphHeightMap(float[,] heightMap) 
+    {
+        for (int i = 0; i < biomeSettings.Count; i++)
+        {
+            biomeSettings[i].biomeGraph.heightMap = heightMap;
         }
     }
 
@@ -146,7 +129,7 @@ public class TerrainSettings : ScriptableObject
 
         if (drawMode == DrawMode.NoiseMapTexture)
         {
-            float[,] heightMap = this.biomeSettings[noiseMapBiomeIndex].heightMapGraph.GetHeightMap(
+            float[,] heightMap = this.biomeSettings[noiseMapBiomeIndex].biomeGraph.GetHeightMap(
                 this,
                 this.centre,
                 width,
@@ -289,7 +272,6 @@ public class TerrainSettings : ScriptableObject
 
     public void ApplyToMaterial(Material material)
     {
-
         // Biome texture settings
         float[] baseLayerCounts = new float[biomeSettings.Count];
         Color[] baseColours = new Color[maxLayerCount * maxBiomeCount];
@@ -435,7 +417,7 @@ public class TerrainSettings : ScriptableObject
             float maxHeight = float.MinValue;
             for (int i = 0; i < biomeSettings.Count; i++)
             {
-                float height = biomeSettings[i].heightMapGraph.GetMaxHeight();
+                float height = biomeSettings[i].biomeGraph.GetMaxHeight();
                 if (height > maxHeight)
                 {
                     maxHeight = height;

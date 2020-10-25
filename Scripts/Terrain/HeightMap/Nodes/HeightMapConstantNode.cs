@@ -3,29 +3,33 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
-public class HeightMapConstantNode : Node
+public class HeightMapConstantNode : BiomeGraphNode
 {
     [Output] public float[,] heightMapOut;
 
     public float value = 1f;
 
-    public override object GetValue(NodePort port) {
+    public override object GetValue(NodePort port)
+    {
 
-        HeightMapNodeGraph heightMapGraph = this.graph as HeightMapNodeGraph;
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
 
-        int width = heightMapGraph.width;
-        int height = heightMapGraph.height;
+        int width = biomeGraph.width;
+        int height = biomeGraph.height;
 
         float[,] result = new float[width, height];
 
-        if (port.fieldName == "heightMapOut") {
-            for (int i = 0; i < width; i++) {
-                for (int j = 0; j < height; j++) {
+        if (port.fieldName == "heightMapOut")
+        {
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++)
+                {
                     result[i, j] = value;
                 }
             }
         }
-        
+
         return result;
     }
 }

@@ -4,10 +4,8 @@ using UnityEngine;
 
 public static class ChunkDataGenerator
 {
-
     public static ChunkData GenerateChunkData(TerrainSettings terrainSettings, Vector2 chunkCentre, WorldManager worldGenerator)
     {
-
         // Generate heightmap and biomestrength data
 #if (UNITY_EDITOR && PROFILE)
         float biomeDataStartTime = 0f;
@@ -15,11 +13,13 @@ public static class ChunkDataGenerator
             biomeDataStartTime = Time.realtimeSinceStartup;
         }
 #endif
-        BiomeData biomeData = BiomeHeightMapGenerator.GenerateBiomeNoiseMaps(terrainSettings.meshSettings.numVerticesPerLine,
-                                                                            terrainSettings.meshSettings.numVerticesPerLine,
-                                                                            terrainSettings,
-                                                                            chunkCentre,
-                                                                            worldGenerator);
+        BiomeData biomeData = BiomeHeightMapGenerator.GenerateBiomeNoiseMaps(
+            terrainSettings.meshSettings.numVerticesPerLine,
+            terrainSettings.meshSettings.numVerticesPerLine,
+            terrainSettings,
+            chunkCentre,
+            worldGenerator
+        );
 #if (UNITY_EDITOR && PROFILE)
         if (terrainSettings.IsMainThread()) {
             float biomeDataEndTime = Time.realtimeSinceStartup;
@@ -53,11 +53,16 @@ public static class ChunkDataGenerator
             objectStartTime = Time.realtimeSinceStartup;
         }
 #endif
-        List<ObjectSpawner> objects = ObjectGenerator.GenerateBiomeObjects(biomeData.heightNoiseMap,
-                                                                        biomeData.biomeInfo,
-                                                                        road,
-                                                                        terrainSettings,
-                                                                        chunkCentre);
+
+		terrainSettings.SetBiomeGraphHeightMap(biomeData.heightNoiseMap);
+        List<ObjectSpawner> objects = ObjectGenerator.GenerateObjectSpawners(
+			biomeData.heightNoiseMap,
+			biomeData.biomeInfo,
+			road,
+			terrainSettings,
+			chunkCentre
+        );
+
 #if UNITY_EDITOR && PROFILE
         if (terrainSettings.IsMainThread()) {
             float objectEndTime = Time.realtimeSinceStartup;

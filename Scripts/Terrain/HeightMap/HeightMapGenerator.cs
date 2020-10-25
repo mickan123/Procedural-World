@@ -81,7 +81,6 @@ public static class HeightMapGenerator
         int seed
     )
     {
-
         float[,] values = Noise.GenerateNoiseMap(width, height, noiseSettings.simplexNoiseSettings, sampleCentre, noiseSettings.noiseType, seed);
 
         if (normalizeMode == NormalizeMode.GlobalBiome)
@@ -308,7 +307,6 @@ public static class HeightMapGenerator
         int seed
     )
     {
-
         float[,] values = new float[width, height];
         int padding = (height - meshSettings.meshWorldSize - 3) / 2;
         int chunkIdxY = (int)(sampleCentre.y + padding) / meshSettings.meshWorldSize;
@@ -317,16 +315,17 @@ public static class HeightMapGenerator
 
         for (int w = 0; w < noiseSettings.sandDuneSettings.sandDunePeriods.Length; w++)
         {
-
             SandDunePeriod settings = noiseSettings.sandDuneSettings.sandDunePeriods[w];
             float duneHeight = ((2 * sandDuneSettings.sigma * settings.duneWidth) / Mathf.PI) * Mathf.Max(1 - sandDuneSettings.xm, 0.01f);
 
-            float[,] noiseValues = Noise.GenerateNoiseMap(width,
-                                                        height,
-                                                        noiseSettings.simplexNoiseSettings,
-                                                        sampleCentre,
-                                                        NoiseMapSettings.NoiseType.Simplex,
-                                                        seed + w);
+            float[,] noiseValues = Noise.GenerateNoiseMap(
+                width,
+                height,
+                noiseSettings.simplexNoiseSettings,
+                sampleCentre,
+                NoiseMapSettings.NoiseType.Simplex,
+                seed + w
+            );
             for (int i = 0; i < width; i++)
             {
                 for (int j = 0; j < height; j++)

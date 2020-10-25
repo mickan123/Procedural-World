@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
-public class HeightMapOutputNode : Node
+public class HeightMapOutputNode : BiomeGraphNode
 {
     [Input(ShowBackingValue.Never, ConnectionType.Override)] public float[,] heightMap;
-    
-    public float[,] GetValue() {
+
+    public float[,] GetValue()
+    {
         return GetInputValue<float[,]>("heightMap");
     }
 }

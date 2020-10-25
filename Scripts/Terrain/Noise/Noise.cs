@@ -75,7 +75,7 @@ public static class Noise
 
         for (int i = 0; i < terrainSettings.biomeSettings.Count; i++)
         {
-            float height = terrainSettings.biomeSettings[i].heightMapGraph.GetMaxPossibleHeight();
+            float height = terrainSettings.biomeSettings[i].biomeGraph.GetMaxPossibleHeight();
             if (height > maxPossibleHeight)
             {
                 maxPossibleHeight = height;

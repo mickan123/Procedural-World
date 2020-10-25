@@ -5,8 +5,8 @@ using System.Linq;
 
 public static class BiomeHeightMapGenerator
 {
-
     private static readonly int[,] neighBouroffsets = { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
+
     public static BiomeData GenerateBiomeNoiseMaps(int width, int height, TerrainSettings terrainSettings, Vector2 chunkCentre, WorldManager worldManager)
     {
 
@@ -36,11 +36,13 @@ public static class BiomeHeightMapGenerator
 		}
 #endif
 
-        BiomeInfo biomeInfo = GenerateBiomeInfo(paddedWidth,
-                                                paddedHeight,
-                                                humidityNoiseMap,
-                                                temperatureNoiseMap,
-                                                terrainSettings);
+        BiomeInfo biomeInfo = GenerateBiomeInfo(
+            paddedWidth,
+            paddedHeight,
+            humidityNoiseMap,
+            temperatureNoiseMap,
+            terrainSettings
+        );
 #if (PROFILE && UNITY_EDITOR)
 		if (terrainSettings.IsMainThread()) {
 			float biomeInfoEndTime = Time.realtimeSinceStartup;
@@ -56,13 +58,15 @@ public static class BiomeHeightMapGenerator
 		}
 #endif
 
-        float[,] heightNoiseMap = GenerateBiomeHeightMap(paddedWidth,
-                                                        paddedHeight,
-                                                        terrainSettings,
-                                                        humidityNoiseMap,
-                                                        temperatureNoiseMap,
-                                                        paddedChunkCentre,
-                                                        biomeInfo);
+        float[,] heightNoiseMap = GenerateBiomeHeightMap(
+            paddedWidth,
+            paddedHeight,
+            terrainSettings,
+            humidityNoiseMap,
+            temperatureNoiseMap,
+            paddedChunkCentre,
+            biomeInfo
+        );
 
 #if (PROFILE && UNITY_EDITOR)
 		if (terrainSettings.IsMainThread()) {
@@ -183,27 +187,27 @@ public static class BiomeHeightMapGenerator
                 }
             }
         }
-
         return mask;
     }
 
 
-    public static float[,] GenerateBiomeHeightMap(int width,
-                                                 int height,
-                                                 TerrainSettings terrainSettings,
-                                                 float[,] humidityNoiseMap,
-                                                 float[,] temperatureNoiseMap,
-                                                 Vector2 sampleCentre,
-                                                 BiomeInfo biomeInfo)
+    public static float[,] GenerateBiomeHeightMap(
+        int width,
+        int height,
+        TerrainSettings terrainSettings,
+        float[,] humidityNoiseMap,
+        float[,] temperatureNoiseMap,
+        Vector2 sampleCentre,
+        BiomeInfo biomeInfo
+    )
     {
-
         // Generate noise maps for all nearby and present biomes
         int numBiomes = terrainSettings.biomeSettings.Count;
         List<float[,]> biomeNoiseMaps = new List<float[,]>();
         for (int i = 0; i < numBiomes; i++)
         {
             biomeNoiseMaps.Add(
-                terrainSettings.biomeSettings[i].heightMapGraph.GetHeightMap(
+                terrainSettings.biomeSettings[i].biomeGraph.GetHeightMap(
                     terrainSettings,
                     sampleCentre,
                     width,
@@ -239,7 +243,6 @@ public static class BiomeHeightMapGenerator
         {
             for (int j = 0; j < height; j++)
             {
-
                 float humidity = humidityNoiseMap[i, j];
                 float temperature = temperatureNoiseMap[i, j];
 

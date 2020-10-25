@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
-public class VoronoiNoiseNode: Node
+public class VoronoiNoiseNode : BiomeGraphNode
 {
     public HeightMapGenerator.NormalizeMode normalizeMode;
     public HeightMapGenerator.VoronoiMode voronoiMode;
@@ -11,26 +11,28 @@ public class VoronoiNoiseNode: Node
     [Range(1, 1000)] public int numLloydsIterations = 5;
     [Range(0, 200)] public float voronoiCrackWidth = 4f;
 
-    [HideInInspector] public int seed; // Initialised by terrain settings
-
     [Output] public float[,] heightMap;
 
-    public override object GetValue(NodePort port) {
-        if (port.fieldName == "heightMap") {
+    public override object GetValue(NodePort port)
+    {
+        if (port.fieldName == "heightMap")
+        {
             return GetVoronoiNoiseHeightMap();
         }
-        else {
+        else
+        {
             return null;
         }
     }
 
-    public float[,] GetVoronoiNoiseHeightMap() {
-        var heightMapGraph = this.graph as HeightMapNodeGraph;
-        float[,] heightMap =  HeightMapGenerator.GenerateVeronoiMap(
-            heightMapGraph.width,
-            heightMapGraph.height,
-            heightMapGraph.terrainSettings,
-            heightMapGraph.sampleCentre,
+    public float[,] GetVoronoiNoiseHeightMap()
+    {
+        var biomeGraph = this.graph as BiomeGraph;
+        float[,] heightMap = HeightMapGenerator.GenerateVeronoiMap(
+            biomeGraph.width,
+            biomeGraph.height,
+            biomeGraph.terrainSettings,
+            biomeGraph.sampleCentre,
             normalizeMode,
             voronoiMode,
             numVoronoiPolygons,

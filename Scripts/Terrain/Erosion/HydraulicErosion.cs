@@ -58,7 +58,14 @@ public static class HydraulicErosion
         brushValues = new BrushValues(erosionSettings, settings.meshSettings.numVerticesPerLine);
     }
 
-    public static float[,] Erode(float[,] values, float[,] mask, TerrainSettings terrainSettings, BiomeInfo info, WorldManager worldGenerator, Vector2 chunkCentre)
+    public static float[,] Erode(
+        float[,] values, 
+        float[,] mask, 
+        TerrainSettings terrainSettings, 
+        BiomeInfo info, 
+        WorldManager worldGenerator, 
+        Vector2 chunkCentre
+    )
     {
 
 #if (PROFILE && UNITY_EDITOR)
@@ -160,7 +167,6 @@ public static class HydraulicErosion
 
     public static void GPUErosion(ErosionSettings settings, int mapSize, float[] map, int[] randomIndices, ref bool gpuDone)
     {
-
         // Send brush data to compute shader
         ComputeBuffer brushIndexBuffer = new ComputeBuffer(brushValues.brushIndexOffsets.Count, sizeof(int));
         ComputeBuffer brushWeightBuffer = new ComputeBuffer(brushValues.brushWeights.Count, sizeof(int));
@@ -202,7 +208,6 @@ public static class HydraulicErosion
         mapBuffer.Release();
         randomIndexBuffer.Release();
     }
-
 
     public static void ErodeDrop(Drop drop, TerrainSettings terrainSettings, float[,] map, int mapSize, WorldManager worldGenerator)
     {

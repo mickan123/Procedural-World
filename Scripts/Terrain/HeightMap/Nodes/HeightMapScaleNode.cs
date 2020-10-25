@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
-public class HeightMapScaleNode : Node
+public class HeightMapScaleNode : BiomeGraphNode
 {
     [Input] public float[,] heightMapIn;
     [Output] public float[,] heightMapOut;
@@ -11,7 +11,8 @@ public class HeightMapScaleNode : Node
     public float scale;
     public AnimationCurve heightCurve;
 
-    public override object GetValue(NodePort port) {
+    public override object GetValue(NodePort port)
+    {
 
         float[,] heightMapIn = GetInputValue<float[,]>("heightMapIn", this.heightMapIn);
 
@@ -20,21 +21,25 @@ public class HeightMapScaleNode : Node
 
         float[,] result = new float[width, height];
 
-        if (port.fieldName == "heightMapOut") {
+        if (port.fieldName == "heightMapOut")
+        {
             ScaleHeightMap(heightMapIn, ref result);
         }
 
         return result;
     }
 
-    public void ScaleHeightMap(float[,] heightMap, ref float[,] result) {
+    public void ScaleHeightMap(float[,] heightMap, ref float[,] result)
+    {
         int width = heightMap.GetLength(0);
         int height = heightMap.GetLength(1);
 
         AnimationCurve heightCurve_threadsafe = new AnimationCurve(this.heightCurve.keys);
 
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
                 result[x, y] = scale * heightCurve_threadsafe.Evaluate(heightMap[x, y]) * heightMap[x, y];
             }
         }

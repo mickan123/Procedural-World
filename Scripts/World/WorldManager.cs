@@ -118,7 +118,7 @@ public class WorldManager
         }
     }
     private static readonly int[,] neighBouroffsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1},
-                                                           { 1 , 1}, { 1 ,-1}, { -1, 1}, {-1 , -1} };
+                                                        { 1 , 1}, { 1 ,-1}, { -1, 1}, {-1 , -1} };
 
     public void DoneErosion(ChunkCoord chunkCoord, float[,] heightMap)
     {

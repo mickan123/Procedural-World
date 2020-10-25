@@ -4,24 +4,33 @@ using UnityEngine;
 
 public static class RandomPoints
 {
-    public static List<Vector3> GeneratePoints(TerrainObjectSettings settings, System.Random prng, float[,] heightMap)
+    public static List<Vector3> GeneratePoints(int numPoints, System.Random prng, float[,] heightMap)
     {
-
-        float mapSize = heightMap.GetLength(0);
         List<Vector3> points = new List<Vector3>();
 
-        for (int i = 0; i < settings.numRandomSpawns; i++)
-        {
-            float x = Common.NextFloat(prng, 0, mapSize - 1);
-            float z = Common.NextFloat(prng, 0, mapSize - 1);
-            float offset = 1f;
-            float y = Common.HeightFromFloatCoord(x + offset, z + offset, heightMap);
+        int increment = 10;
+        int mapSize = heightMap.GetLength(0);
 
-            if (x >= 0f && z >= 0f && x <= mapSize - 3 && z <= mapSize - 3)
+        for (int x = 0; x < mapSize; x += increment)
+        {
+            for (int z = 0; z < mapSize; z += increment)
             {
-                points.Add(new Vector3(x, y, z));
+                for (int spawn = 0; spawn < numPoints; spawn++)
+                {
+                    float xCoord = Common.NextFloat(prng, x, x + increment);
+                    float zCoord = Common.NextFloat(prng, z, z + increment);
+
+                    float offset = 1f;
+                    float yCoord = Common.HeightFromFloatCoord(xCoord + offset, zCoord + offset, heightMap);
+
+                    if (xCoord >= 0f && zCoord >= 0f && xCoord <= mapSize - 3 && zCoord <= mapSize - 3)
+                    {
+                        points.Add(new Vector3(xCoord, yCoord, zCoord));
+                    }
+                }
             }
         }
+
         return points;
     }
 }
