@@ -90,9 +90,9 @@ public class TerrainChunk
         maxViewDst = detailLevels[detailLevels.Length - 1].chunkDistanceThreshold * meshWorldSize;
     }
 
-    public void Load(WorldManager worldGenerator)
+    public void Load(WorldManager worldManager)
     {
-        ThreadedDataRequester.RequestData(() => ChunkDataGenerator.GenerateChunkData(terrainSettings, sampleCentre, worldGenerator), OnChunkDataReceived);
+        ThreadedDataRequester.RequestData(() => ChunkDataGenerator.GenerateChunkData(terrainSettings, sampleCentre, worldManager), OnChunkDataReceived);
     }
 
     public void LoadInEditor()

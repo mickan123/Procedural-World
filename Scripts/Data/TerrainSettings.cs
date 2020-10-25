@@ -94,6 +94,15 @@ public class TerrainSettings : ScriptableObject
         }
     }
 
+    public void SetBiomeGraphSettings(WorldManager manager, BiomeInfo info) 
+    {
+        for (int i = 0; i < biomeSettings.Count; i++)
+        {
+            biomeSettings[i].biomeGraph.worldManager = manager;
+            biomeSettings[i].biomeGraph.biomeInfo = info;
+        }
+    }
+
     public void SetBiomeGraphHeightMap(float[,] heightMap) 
     {
         for (int i = 0; i < biomeSettings.Count; i++)

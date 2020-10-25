@@ -15,6 +15,8 @@ public class HydraulicErosionNodeEditor : NodeEditor
         }
         serializedObject.Update();
 
+        NodeEditorGUILayout.PortField(node.GetPort("heightMapIn"));
+
         SerializedProperty erosionSettings = serializedObject.FindProperty("erosionSettings");
         erosionSettings.isExpanded = EditorGUILayout.Foldout(erosionSettings.isExpanded, "Erosion Settings", true, EditorStyles.foldout);
         if (erosionSettings.isExpanded)
@@ -25,7 +27,7 @@ public class HydraulicErosionNodeEditor : NodeEditor
             EditorGUI.indentLevel--;
         }
 
-        NodeEditorGUILayout.PortField(node.GetPort("heightMap"));
+        NodeEditorGUILayout.PortField(node.GetPort("heightMapOut"));
 
         serializedObject.ApplyModifiedProperties();
     }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class ChunkDataGenerator
 {
-    public static ChunkData GenerateChunkData(TerrainSettings terrainSettings, Vector2 chunkCentre, WorldManager worldGenerator)
+    public static ChunkData GenerateChunkData(TerrainSettings terrainSettings, Vector2 chunkCentre, WorldManager worldManager)
     {
         // Generate heightmap and biomestrength data
 #if (UNITY_EDITOR && PROFILE)
@@ -18,7 +18,7 @@ public static class ChunkDataGenerator
             terrainSettings.meshSettings.numVerticesPerLine,
             terrainSettings,
             chunkCentre,
-            worldGenerator
+            worldManager
         );
 #if (UNITY_EDITOR && PROFILE)
         if (terrainSettings.IsMainThread()) {

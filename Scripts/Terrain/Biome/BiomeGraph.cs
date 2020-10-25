@@ -6,6 +6,8 @@ using System.Collections.Generic;
 [Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/BiomeGraph")]
 public class BiomeGraph : NodeGraph
 {
+    public WorldManager worldManager;
+    public BiomeInfo biomeInfo;
     public TerrainSettings terrainSettings;
     public Vector2 sampleCentre;
     public int width;
