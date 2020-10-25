@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
+[XNode.Node.CreateNodeMenuAttribute("Objects/Filters/HeightFilter")]
 public class FilterObjectsHeightNode : BiomeGraphNode
 {
     [Input] public ObjectPositionData positionDataIn;

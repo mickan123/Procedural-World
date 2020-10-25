@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
+[XNode.Node.CreateNodeMenuAttribute("HeightMap/TerracedNoise")]
 public class TerracedNoiseNode : BiomeGraphNode
 {
     [Range(1, 50)] public int numTerraces;

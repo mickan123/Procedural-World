@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
+[XNode.Node.CreateNodeMenuAttribute("Objects/RandomPoints")]
 public class RandomPointsNode : BiomeGraphNode
 {
     [Output] public ObjectPositionData positionData;

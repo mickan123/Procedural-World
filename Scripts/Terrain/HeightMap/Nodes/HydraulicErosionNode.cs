@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
+[XNode.Node.CreateNodeMenuAttribute("HeightMap/HydraulicErosion")]
 public class HydraulicErosionNode : BiomeGraphNode
 {
     public ErosionSettings erosionSettings;

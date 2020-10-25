@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
+[XNode.Node.CreateNodeMenuAttribute("HeightMap/Math")]
 public class HeightMapMathNode : BiomeGraphNode
 {
     [Input] public float[,] heightMapInA;
@@ -38,7 +39,6 @@ public class HeightMapMathNode : BiomeGraphNode
                     break;
             }
         }
-
         return result;
     }
 

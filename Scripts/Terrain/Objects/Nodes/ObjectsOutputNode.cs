@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
+[XNode.Node.CreateNodeMenuAttribute("Objects/ObjectsOutput")]
 public class ObjectsOutputNode : BiomeGraphNode
 {
     [Input(ShowBackingValue.Never, ConnectionType.Override)] public ObjectPositionData positionData;

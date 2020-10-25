@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
+[XNode.Node.CreateNodeMenuAttribute("Objects/Rotate")]
 public class RotateObjectsNode : BiomeGraphNode
 {
     [Input] public ObjectPositionData positionDataIn;

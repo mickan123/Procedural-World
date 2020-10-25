@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
+[XNode.Node.CreateNodeMenuAttribute("Objects/Scale")]
 public class ScaleObjectsNode : BiomeGraphNode
 {
     [Input] public ObjectPositionData positionDataIn;

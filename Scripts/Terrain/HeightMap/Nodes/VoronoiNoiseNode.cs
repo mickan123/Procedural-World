@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
+[XNode.Node.CreateNodeMenuAttribute("HeightMap/VoronoiNoise")]
 public class VoronoiNoiseNode : BiomeGraphNode
 {
     public HeightMapGenerator.NormalizeMode normalizeMode;

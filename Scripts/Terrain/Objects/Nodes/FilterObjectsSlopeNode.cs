@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
+[XNode.Node.CreateNodeMenuAttribute("Objects/Filters/SlopeFilter")]
 public class FilterObjectsSlopeNode : BiomeGraphNode
 {
     [Input] public ObjectPositionData positionDataIn;

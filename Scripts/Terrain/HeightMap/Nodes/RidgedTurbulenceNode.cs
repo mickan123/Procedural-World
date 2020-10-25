@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
+[XNode.Node.CreateNodeMenuAttribute("HeightMap/RidgedTurbulence")]
 public class RidgedTurbulenceNode : BiomeGraphNode
 {
     public NoiseMapSettings noiseMapSettings;

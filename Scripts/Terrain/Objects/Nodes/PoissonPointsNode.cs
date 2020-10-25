@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
+[XNode.Node.CreateNodeMenuAttribute("Objects/PoissonPoints")]
 public class PoissonPointsNode : BiomeGraphNode
 {
     [Output] public ObjectPositionData positionData;

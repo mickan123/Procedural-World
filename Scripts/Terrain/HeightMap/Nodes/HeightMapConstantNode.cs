@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
+[XNode.Node.CreateNodeMenuAttribute("HeightMap/Constant")]
 public class HeightMapConstantNode : BiomeGraphNode
 {
     [Output] public float[,] heightMapOut;
@@ -11,7 +12,6 @@ public class HeightMapConstantNode : BiomeGraphNode
 
     public override object GetValue(NodePort port)
     {
-
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
 
         int width = biomeGraph.width;
@@ -29,7 +29,6 @@ public class HeightMapConstantNode : BiomeGraphNode
                 }
             }
         }
-
         return result;
     }
 }

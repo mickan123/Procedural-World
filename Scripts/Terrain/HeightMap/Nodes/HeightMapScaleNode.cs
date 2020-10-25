@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XNode;
 
+[XNode.Node.CreateNodeMenuAttribute("HeightMap/Scale")]
 public class HeightMapScaleNode : BiomeGraphNode
 {
     [Input] public float[,] heightMapIn;
