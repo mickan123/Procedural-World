@@ -5,7 +5,6 @@ using UnityEditor;
 
 public static class Common
 {
-
     // Thread safe random float in range [begin, end]
     public static float NextFloat(System.Random prng, float begin, float end)
     {
@@ -212,7 +211,6 @@ public static class Common
             list[n] = value;  
         }  
     }
-
 
 #if UNITY_EDITOR
 

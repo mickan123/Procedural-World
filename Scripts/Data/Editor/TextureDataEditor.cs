@@ -67,7 +67,6 @@ public class TextureDataEditor : ScriptlessEditor
             list.index = index;
 
             // TODO add default texture
-            // myTarget.terrainObjectSettings.Add(ScriptableObject.CreateInstance("TerrainObjectSettings") as TerrainObjectSettings);
         };
     }
 

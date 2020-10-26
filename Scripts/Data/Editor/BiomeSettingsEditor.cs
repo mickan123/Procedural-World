@@ -16,7 +16,6 @@ public class BiomeSettingsEditor : ScriptlessEditor
     private SerializedProperty angleBlendRange;
     private SerializedProperty heightMapSettings;
     private SerializedProperty biomeGraph;
-    private SerializedProperty terrainObjectSettings;
     private ReorderableList textureDataList;
     private TextureDataEditor textureDataEditor;
     private TextureDataEditor slopeTextureDataEditor;

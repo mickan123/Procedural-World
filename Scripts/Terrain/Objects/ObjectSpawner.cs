@@ -2,36 +2,28 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public struct TerrainObject
+public class ObjectPositionData
 {
-    public GameObject gameObject;
-    [Range(0, 1)] public float probability;
-
-    public TerrainObject(GameObject gameObject, float probability)
-    {
-        this.gameObject = gameObject;
-        this.probability = probability;
-    }
-}
-
-public class ObjectPositionData {
-
     public bool isDetail = false;
+    
     public List<ObjectPosition> positions;
     public float[,] heightMap;
-    public TerrainObject[] terrainObjects;
+
+    public GameObject[] terrainObjects;
+
     public Material[] detailMaterials;
     public ObjectSpawner.DetailMode detailMode;
 
-    public ObjectPositionData(List<ObjectPosition> positions, float[,] heightMap, TerrainObject[] terrainObjects) {
+    public ObjectPositionData(List<ObjectPosition> positions, float[,] heightMap, GameObject[] terrainObjects)
+    {
         this.positions = positions;
         this.heightMap = heightMap;
         this.terrainObjects = terrainObjects;
         this.isDetail = false;
     }
 
-    public ObjectPositionData(List<ObjectPosition> positions, float[,] heightMap, Material[] detailMaterials, ObjectSpawner.DetailMode detailMode) {
+    public ObjectPositionData(List<ObjectPosition> positions, float[,] heightMap, Material[] detailMaterials, ObjectSpawner.DetailMode detailMode)
+    {
         this.positions = positions;
         this.heightMap = heightMap;
         this.detailMaterials = detailMaterials;
@@ -53,7 +45,8 @@ public class ObjectPosition
         this.scale = scale;
     }
 
-    public ObjectPosition(Vector3 position) {
+    public ObjectPosition(Vector3 position)
+    {
         this.position = position;
         this.scale = new Vector3(1f, 1f, 1f);
         this.rotation = Quaternion.identity;
@@ -70,7 +63,7 @@ public class ObjectSpawner
     private DetailMode detailMode;
 
     // Mesh object only settings
-    public TerrainObject[] terrainObjects;
+    public GameObject[] terrainObjects;
 
     // Common settings
     public List<ObjectPosition> positions;
@@ -82,7 +75,7 @@ public class ObjectSpawner
     private Transform parent;
 
     public ObjectSpawner(
-        TerrainObject[] terrainObjects,
+        GameObject[] terrainObjects,
         List<ObjectPosition> positions,
         System.Random prng,
         bool hide
@@ -91,7 +84,7 @@ public class ObjectSpawner
         this.isDetail = false;
         if (terrainObjects == null)
         {
-            this.terrainObjects = new TerrainObject[0];
+            this.terrainObjects = new GameObject[0];
         }
         else
         {
@@ -138,28 +131,22 @@ public class ObjectSpawner
         else
         {
             SpawnMeshObjects();
-        }        
+        }
     }
 
     private void SpawnMeshObjects()
     {
         for (int i = 0; i < positions.Count; i++)
         {
-            float rand = (float)prng.NextDouble();
-            for (int j = 0; j < terrainObjects.Length; j++)
-            {
-                if (rand < terrainObjects[j].probability)
-                {
-                    GameObject obj = UnityEngine.Object.Instantiate(terrainObjects[j].gameObject);
-                    obj.transform.parent = parent;
-                    obj.transform.localPosition = positions[i].position;
-                    obj.transform.rotation = positions[i].rotation;
-                    obj.transform.localScale = positions[i].scale;
-                    obj.SetActive(!hide);
-                    spawnedObjects.Add(obj);
-                    break;
-                }
-            }
+            float rand = Common.NextFloat(prng, 0, terrainObjects.Length);
+            int objIndex = (int)rand;
+            GameObject obj = UnityEngine.Object.Instantiate(terrainObjects[objIndex].gameObject);
+            obj.transform.parent = parent;
+            obj.transform.localPosition = positions[i].position;
+            obj.transform.rotation = positions[i].rotation;
+            obj.transform.localScale = positions[i].scale;
+            obj.SetActive(!hide);
+            spawnedObjects.Add(obj);
         }
         if (spawnedObjects.Count > 0)
         {
@@ -179,7 +166,8 @@ public class ObjectSpawner
 
         int detailsInterval = this.positions.Count / this.detailMaterials.Length;
 
-        for (int i = 0; i < this.detailMaterials.Length; i++) {
+        for (int i = 0; i < this.detailMaterials.Length; i++)
+        {
             Camera camera = Camera.main;
 
             GameObject groupObject = new GameObject();
@@ -187,7 +175,7 @@ public class ObjectSpawner
             groupObject.transform.localPosition = new Vector3(0f, 0f, 0f);
             MeshFilter groupMeshFilter = groupObject.AddComponent<MeshFilter>();
             MeshRenderer groupMeshRenderer = groupObject.AddComponent<MeshRenderer>();
-            
+
             Mesh mesh;
             if (this.detailMode == DetailMode.Billboard)
             {
@@ -201,7 +189,7 @@ public class ObjectSpawner
             {
                 mesh = this.GenerateCircleDetailsMesh(this.positions.GetRange(i * detailsInterval, detailsInterval));
             }
-            else 
+            else
             {
                 mesh = this.GenerateCircleDetailsMesh(this.positions.GetRange(i * detailsInterval, detailsInterval));
             }
@@ -213,14 +201,14 @@ public class ObjectSpawner
             groupMeshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             groupMeshRenderer.receiveShadows = false;
             groupMeshRenderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.BlendProbes;
-            
+
             groupObject.SetActive(!hide);
-        }        
+        }
     }
 
-    private void GeometryShaderDetails() 
+    private void GeometryShaderDetails()
     {
-        
+
     }
 
     private Mesh GenerateBillboardDetailsMesh(List<ObjectPosition> points)
@@ -408,7 +396,7 @@ public class ObjectSpawner
             triangles[trianglesOffset + 27] = 16 + verticesOffset;
             triangles[trianglesOffset + 28] = 18 + verticesOffset;
             triangles[trianglesOffset + 29] = 17 + verticesOffset;
-            
+
             // Rotated 120 degrees clockwise reverse
             triangles[trianglesOffset + 30] = 20 + verticesOffset;
             triangles[trianglesOffset + 31] = 23 + verticesOffset;

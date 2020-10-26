@@ -39,7 +39,6 @@ public struct ChunkCoord : IEquatable<ChunkCoord>
         return this.x + "," + this.y;
     }
 
-
     public static bool operator ==(ChunkCoord coord1, ChunkCoord coord2)
     {
         return coord1.Equals(coord2);

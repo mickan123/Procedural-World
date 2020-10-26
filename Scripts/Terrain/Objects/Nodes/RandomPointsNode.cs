@@ -9,7 +9,7 @@ public class RandomPointsNode : BiomeGraphNode
     [Output] public ObjectPositionData positionData;
 
     public bool isDetail = false;
-    public TerrainObject[] terrainObjects;
+    public GameObject[] terrainObjects;
     public Material[] detailMaterials;
     public ObjectSpawner.DetailMode detailMode;
     public int numPoints; // TODO convert this to density

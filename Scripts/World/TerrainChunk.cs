@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class TerrainChunk
 {
-
     const float colliderGenerationDistanceThreshold = 200;
 
     public event System.Action<TerrainChunk, bool> onVisibilityChanged;
@@ -304,7 +303,6 @@ public class TerrainChunk
 
 class LODMesh
 {
-
     public Mesh mesh;
     public bool hasRequestedMesh;
     public bool hasMesh;
@@ -336,5 +334,4 @@ class LODMesh
         this.mesh = meshData.CreateMesh();
         hasMesh = true;
     }
-
 }
