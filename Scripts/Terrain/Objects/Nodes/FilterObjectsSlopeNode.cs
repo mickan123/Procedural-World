@@ -36,6 +36,6 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
                 i--;
             }
         }
-        return positionDataIn;
+        return positionData;
     }
 }

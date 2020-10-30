@@ -103,11 +103,12 @@ public class TerrainSettings : ScriptableObject
         }
     }
 
-    public void SetBiomeGraphHeightMap(float[,] heightMap) 
+    public void SetBiomeGraphHeightmaps(float[,] heightMap, float[,] roadStrengthMap) 
     {
         for (int i = 0; i < biomeSettings.Count; i++)
         {
             biomeSettings[i].biomeGraph.heightMap = heightMap;
+            biomeSettings[i].biomeGraph.roadStrengthMap = roadStrengthMap;
         }
     }
 

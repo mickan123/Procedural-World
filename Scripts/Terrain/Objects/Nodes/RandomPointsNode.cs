@@ -30,6 +30,11 @@ public class RandomPointsNode : BiomeGraphNode
     {
         System.Random prng = new System.Random(this.seed);
         var biomeGraph = this.graph as BiomeGraph;
+        
+        if (biomeGraph.heightMap == null)
+        {
+            return null;
+        }
 
         List<Vector3> points = RandomPoints.GeneratePoints(numPoints, prng, biomeGraph.heightMap);
 

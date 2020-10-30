@@ -51,6 +51,6 @@ public class FilterObjectsHeightNode : BiomeGraphNode
                 }
             }
         }
-        return positionDataIn;
+        return positionData;
     }
 }

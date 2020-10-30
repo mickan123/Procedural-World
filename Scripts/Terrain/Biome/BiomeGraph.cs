@@ -14,6 +14,7 @@ public class BiomeGraph : NodeGraph
     public int height;
 
     public float[,] heightMap;
+    public float[,] roadStrengthMap;
 
     public bool initialized = false;
 
