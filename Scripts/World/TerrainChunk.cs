@@ -159,7 +159,6 @@ public class TerrainChunk
                 float angle = Common.CalculateAngle(x, y, heightMap);
                 angle /= 90f; // Normalize 0 to 1 range
 
-                angle = ((int)(angle * 10f)) / 10f;
                 biomeMapTex.SetPixel(x, y, new Color(chunkData.road.roadStrengthMap[x, y], angle, 0f, 0f));
 
                 for (int w = 0; w < terrainSettings.maxBiomeCount; w += biomesPerTexture)
