@@ -5,7 +5,7 @@ using UnityEngine;
 [System.Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/ErosionSettings")]
 public class ErosionSettings : ScriptableObject
 {
-    public ComputeShader erosionShader;
+    public static ComputeShader erosionShader;
     public float gravity = 4;
 
     public int smoothFilterWidth = 3; // Size of smoothing filter

@@ -44,8 +44,6 @@ public class ErosionSettingsDrawer : PropertyDrawer
 
         EditorGUI.BeginChangeCheck();
 
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), erosionShader, true);
-        position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), gravity, true);
         position.y += 2 * EditorGUIUtility.singleLineHeight;
 

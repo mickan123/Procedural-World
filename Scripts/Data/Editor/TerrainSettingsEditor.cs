@@ -130,37 +130,34 @@ public class TerrainSettingsEditor : Editor
 
         CommonOptions();
 
-        myTarget.toolbarTop = GUILayout.Toolbar(myTarget.toolbarTop, new string[] { "Biomes", "Erosion", "Mesh", "Roads" });
+        myTarget.toolbarTop = GUILayout.Toolbar(myTarget.toolbarTop, new string[] { "Biomes", "Mesh", "Roads", "Rivers" });
         switch (myTarget.toolbarTop)
         {
             case 0:
                 myTarget.toolbarBottom = -1;
                 myTarget.currentTab = "Biomes";
                 break;
+            
             case 1:
-                myTarget.toolbarBottom = -1;
-                myTarget.currentTab = "Erosion";
-                break;
-            case 2:
                 myTarget.toolbarBottom = -1;
                 myTarget.currentTab = "Mesh";
                 break;
-            case 3:
+            case 2:
                 myTarget.toolbarBottom = -1;
                 myTarget.currentTab = "Roads";
                 break;
+            case 3:
+                myTarget.toolbarBottom = -1;
+                myTarget.currentTab = "Rivers";
+                break;
         }
 
-        myTarget.toolbarBottom = GUILayout.Toolbar(myTarget.toolbarBottom, new string[] { "Rivers", "Preview" });
+        myTarget.toolbarBottom = GUILayout.Toolbar(myTarget.toolbarBottom, new string[] { "Preview" });
         switch (myTarget.toolbarBottom)
         {
             case 0:
                 myTarget.toolbarTop = -1;
                 myTarget.currentTab = "Rivers";
-                break;
-            case 1:
-                myTarget.toolbarTop = -1;
-                myTarget.currentTab = "Preview";
                 break;
         }
 
@@ -176,9 +173,6 @@ public class TerrainSettingsEditor : Editor
         {
             case "Biomes":
                 BiomesTab();
-                break;
-            case "Erosion":
-                ErosionTab();
                 break;
             case "Mesh":
                 MeshTab();
@@ -239,11 +233,6 @@ public class TerrainSettingsEditor : Editor
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Biome Configuration Settings", EditorStyles.boldLabel);
         biomeSettingsList.DoLayoutList();
-    }
-
-    private void ErosionTab()
-    {
-        EditorGUILayout.PropertyField(erosionSettings, true);
     }
 
     private void MeshTab()
