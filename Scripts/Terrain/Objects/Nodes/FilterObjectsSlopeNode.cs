@@ -26,12 +26,16 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
 
     private ObjectPositionData FilterBySlope(ObjectPositionData positionData)
     {
+        if (positionData == null)
+        {
+            return null;
+        }
         for (int i = 0; i < positionData.positions.Count; i++)
         {
             Vector3 curPoint = positionData.positions[i].position;
             float angle = Common.CalculateAngle(curPoint.x, curPoint.z, positionData.heightMap);
             if (angle > maxAngle || angle < minAngle)
-            {
+            {                
                 positionData.positions.RemoveAt(i);
                 i--;
             }

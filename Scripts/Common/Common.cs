@@ -94,12 +94,22 @@ public static class Common
         float heightSW = heightMap[coordX, Mathf.Min(coordZ + 1, maxIndex)];
         float heightSE = heightMap[Mathf.Min(coordX + 1, maxIndex), Mathf.Min(coordZ + 1, maxIndex)];
 
-        float gradientX = (heightNE - heightNW) * (1 - y) + (heightSE - heightSW) * y;
-        float gradientY = (heightSW - heightNW) * (1 - x) + (heightSE - heightNE) * x;
+        float heightE = heightNE * (1 - y) + heightSE * y;
+        float heightW = heightNW * (1 - y) + heightSW * y;
+        float heightN = heightNE * x + heightNW * (1 - x);
+        float heightS = heightSE * x + heightSW * (1 - x);
 
-        float degrees = (Mathf.Rad2Deg * Mathf.Atan2(Mathf.Abs(gradientY), Mathf.Abs(gradientX)));
+        float angleEW = Mathf.Rad2Deg * Mathf.Atan2(
+            heightE - heightW, 
+            1f
+        );
+        float angleNS = Mathf.Rad2Deg * Mathf.Atan2(
+            heightN - heightS, 
+            1f
+        );
+        float maxAngle = Mathf.Max(angleEW, angleNS);
 
-        return degrees;
+        return maxAngle;
     }
 
     private static readonly int[,] offsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1} };
