@@ -31,17 +31,23 @@ public class FilterObjectsRoadNode : BiomeGraphNode
 
         System.Random prng = new System.Random();
 
+        List<int> indices = new List<int>(positionData.positions.Count);
         for (int i = 0; i < positionData.positions.Count; i++)
         {
             Vector3 point = positionData.positions[i].position;
             float roadStrength = Common.HeightFromFloatCoord(point.x, point.z, biomeGraph.roadStrengthMap);
 
-            if (Common.NextFloat(prng, 0f, 0.5f) <= roadStrength)
+            if (Common.NextFloat(prng, 0f, 0.5f) > roadStrength)
             {
-                positionData.positions.RemoveAt(i);
-                i--;
+                indices.Add(i);
             }
         }
+        List<ObjectPosition> updatedPositions = new List<ObjectPosition>(indices.Count);
+        for (int i = 0; i < indices.Count; i++)
+        {
+            updatedPositions.Add(positionData.positions[indices[i]]);
+        }
+        positionData.positions = updatedPositions;
         return positionData;
     }
 }

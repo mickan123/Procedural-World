@@ -114,7 +114,6 @@ public static class PoissonDiskSampling
     {
         if (candidate.x >= 0 && candidate.x < spawnSize && candidate.y >= 0 && candidate.y < spawnSize)
         {
-
             int cellX = (int)(candidate.x / cellSize);
             int cellY = (int)(candidate.y / cellSize);
             int searchStartX = Mathf.Max(0, cellX - 1);

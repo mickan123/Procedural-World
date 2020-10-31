@@ -29,6 +29,10 @@ public class PoissonPointsNode : BiomeGraphNode
     public ObjectPositionData GetPositionData()
     {
         var biomeGraph = this.graph as BiomeGraph;
+        if (this.settings == null || this.settings.noiseMapSettings == null)
+        {
+            return null;
+        }
 
         System.Random prng = new System.Random(this.seed);
 

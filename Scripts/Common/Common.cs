@@ -96,20 +96,33 @@ public static class Common
 
         float heightE = heightNE * (1 - y) + heightSE * y;
         float heightW = heightNW * (1 - y) + heightSW * y;
-        float heightN = heightNE * x + heightNW * (1 - x);
-        float heightS = heightSE * x + heightSW * (1 - x);
+        float heightN = heightNW * (1 - x) + heightNE * x;
+        float heightS = heightSW * (1 - x) + heightSE * x;
 
-        float angleEW = Mathf.Rad2Deg * Mathf.Atan2(
-            heightE - heightW, 
-            1f
-        );
-        float angleNS = Mathf.Rad2Deg * Mathf.Atan2(
-            heightN - heightS, 
-            1f
-        );
-        float maxAngle = Mathf.Max(angleEW, angleNS);
+        float height = heightNW * (1 - x) * (1 - y)
+                     + heightNE * x * (1 - y)
+                     + heightSW * (1 - x) * y
+                     + heightSE * x * y;
 
-        return maxAngle;
+        float angleN = Mathf.Abs(Mathf.Rad2Deg * Mathf.Atan2(
+            heightN - height, 
+            (1 - y)
+        ));
+        float angleS = Mathf.Abs(Mathf.Rad2Deg * Mathf.Atan2(
+            heightS - height, 
+            y
+        ));
+        float angleE = Mathf.Abs(Mathf.Rad2Deg * Mathf.Atan2(
+            heightE - height, 
+            x
+        ));
+        float angleW = Mathf.Abs(Mathf.Rad2Deg * Mathf.Atan2(
+            heightW - height, 
+            (1 - x)
+        ));
+        float averageAngle = (angleW + angleE + angleS + angleN) / 4f;
+
+        return averageAngle;
     }
 
     private static readonly int[,] offsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1} };
@@ -135,10 +148,10 @@ public static class Common
 
     private static float AngleBetweenTwoPoints(int x1, int y1, int x2, int y2, float[,] heightMap)
     {
-        float angle = Mathf.Rad2Deg * Mathf.Atan2(
+        float angle = Mathf.Abs(Mathf.Rad2Deg * Mathf.Atan2(
             heightMap[x1, y1] - heightMap[x2, y2], 
             1f
-        );
+        ));
         return angle;
     }
 

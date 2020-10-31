@@ -26,20 +26,30 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
 
     private ObjectPositionData FilterBySlope(ObjectPositionData positionData)
     {
+        float startTime = Time.realtimeSinceStartup;
         if (positionData == null)
         {
             return null;
         }
+        List<int> indices = new List<int>(positionData.positions.Count);
         for (int i = 0; i < positionData.positions.Count; i++)
         {
             Vector3 curPoint = positionData.positions[i].position;
             float angle = Common.CalculateAngle(curPoint.x, curPoint.z, positionData.heightMap);
-            if (angle > maxAngle || angle < minAngle)
-            {                
-                positionData.positions.RemoveAt(i);
-                i--;
+            if (angle < maxAngle && angle > minAngle)
+            {
+                indices.Add(i);
             }
         }
+        List<ObjectPosition> updatedPositions = new List<ObjectPosition>(indices.Count);
+        for (int i = 0; i < indices.Count; i++)
+        {
+            updatedPositions.Add(positionData.positions[indices[i]]);
+        }
+        positionData.positions = updatedPositions;
+        float endTime = Time.realtimeSinceStartup;
+        float timeTaken = endTime - startTime;
+        Debug.Log("Object mesh time taken: " + timeTaken + "s");
         return positionData;
     }
 }
