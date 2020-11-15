@@ -26,7 +26,6 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
 
     private ObjectPositionData FilterBySlope(ObjectPositionData positionData)
     {
-        float startTime = Time.realtimeSinceStartup;
         if (positionData == null)
         {
             return null;
@@ -47,9 +46,6 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
             updatedPositions.Add(positionData.positions[indices[i]]);
         }
         positionData.positions = updatedPositions;
-        float endTime = Time.realtimeSinceStartup;
-        float timeTaken = endTime - startTime;
-        Debug.Log("Object mesh time taken: " + timeTaken + "s");
         return positionData;
     }
 }

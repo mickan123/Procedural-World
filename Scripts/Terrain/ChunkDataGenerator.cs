@@ -54,7 +54,6 @@ public static class ChunkDataGenerator
         }
 #endif
 
-		terrainSettings.SetBiomeGraphHeightmaps(biomeData.heightNoiseMap, road.roadStrengthMap);
         List<ObjectSpawner> objects = ObjectGenerator.GenerateObjectSpawners(
 			biomeData.heightNoiseMap,
 			biomeData.biomeInfo,

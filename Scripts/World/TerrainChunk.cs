@@ -111,7 +111,7 @@ public class TerrainChunk
         this.chunkData = (ChunkData)chunkData;
         this.heightMap = this.chunkData.biomeData.heightNoiseMap;  
         heightMapReceived = true;
-        UpdateTerrainChunk();
+        this.UpdateTerrainChunk();
         this.UpdateMaterial();
 
         List<ObjectSpawner> spawnObjects = this.chunkData.objects;

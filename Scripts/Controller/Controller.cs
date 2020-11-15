@@ -44,22 +44,14 @@ public class Controller : MonoBehaviour
         }
     }
 
-
     public Camera cam;
     public MovementSettings movementSettings = new MovementSettings();
-    public MouseLook mouseLook = new MouseLook();
 
     private Rigidbody rigidBody;
 
     void Start()
     {
         rigidBody = GetComponent<Rigidbody>();
-        mouseLook.Init(transform, cam.transform);
-    }
-
-    void Update()
-    {
-        RotateView();
     }
 
     private Vector2 GetInput()
@@ -71,17 +63,6 @@ public class Controller : MonoBehaviour
         };
         movementSettings.UpdateDesiredTargetSpeed(input);
         return input;
-    }
-
-    private void RotateView()
-    {
-        //avoids the mouse looking if the game is effectively paused
-        if (Mathf.Abs(Time.timeScale) < float.Epsilon) return;
-
-        // get the rotation before it's changed
-        float oldYRotation = transform.eulerAngles.y;
-
-        mouseLook.LookRotation(transform, cam.transform);
     }
 
     private void FixedUpdate()

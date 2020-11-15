@@ -17,7 +17,6 @@ public class Dispatcher : MonoBehaviour
 
     public static void RunOnMainThread(Action action)
     {
-
         lock (_backlog)
         {
             _backlog.Add(action);

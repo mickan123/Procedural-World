@@ -14,14 +14,18 @@ public static class BiomeHeightMapGenerator
         int paddedHeight = height + 2 * padding;
         Vector2 paddedChunkCentre = new Vector2(chunkCentre.x - padding, chunkCentre.y - padding);
 
-        float[,] humidityNoiseMap = terrainSettings.humidityMapGraph.GetHeightMap(
+        
+        BiomeGraph humidityGraph = terrainSettings.humidityMapGraph;
+        // Dispatcher.RunOnMainThread(() => GPUErosion(settings, mapSize, map, randomIndices, ref gpuDone));
+        float[,] humidityNoiseMap = humidityGraph.GetHeightMap(
             terrainSettings,
             paddedChunkCentre,
             paddedWidth,
             paddedHeight
         );
 
-        float[,] temperatureNoiseMap = terrainSettings.temperatureMapGraph.GetHeightMap(
+        BiomeGraph temperatureGraph = terrainSettings.temperatureMapGraph;
+        float[,] temperatureNoiseMap = temperatureGraph.GetHeightMap(
             terrainSettings,
             paddedChunkCentre,
             paddedWidth,
@@ -42,7 +46,6 @@ public static class BiomeHeightMapGenerator
             temperatureNoiseMap,
             terrainSettings
         );
-        terrainSettings.SetBiomeGraphSettings(worldManager, biomeInfo);
         
 #if (PROFILE && UNITY_EDITOR)
 		if (terrainSettings.IsMainThread()) {
@@ -66,7 +69,8 @@ public static class BiomeHeightMapGenerator
             humidityNoiseMap,
             temperatureNoiseMap,
             paddedChunkCentre,
-            biomeInfo
+            biomeInfo,
+            worldManager
         );
 
 #if (PROFILE && UNITY_EDITOR)
@@ -105,7 +109,8 @@ public static class BiomeHeightMapGenerator
         float[,] humidityNoiseMap,
         float[,] temperatureNoiseMap,
         Vector2 sampleCentre,
-        BiomeInfo biomeInfo
+        BiomeInfo biomeInfo,
+        WorldManager manager
     )
     {
         // Generate noise maps for all nearby and present biomes
@@ -113,8 +118,11 @@ public static class BiomeHeightMapGenerator
         List<float[,]> biomeNoiseMaps = new List<float[,]>();
         for (int i = 0; i < numBiomes; i++)
         {
+            BiomeGraph graph = terrainSettings.biomeSettings[i].biomeGraph;
             biomeNoiseMaps.Add(
-                terrainSettings.biomeSettings[i].biomeGraph.GetHeightMap(
+                graph.GetHeightMap(
+                    manager,
+                    biomeInfo,
                     terrainSettings,
                     sampleCentre,
                     width,

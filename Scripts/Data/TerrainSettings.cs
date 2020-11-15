@@ -94,24 +94,6 @@ public class TerrainSettings : ScriptableObject
         }
     }
 
-    public void SetBiomeGraphSettings(WorldManager manager, BiomeInfo info) 
-    {
-        for (int i = 0; i < biomeSettings.Count; i++)
-        {
-            biomeSettings[i].biomeGraph.worldManager = manager;
-            biomeSettings[i].biomeGraph.biomeInfo = info;
-        }
-    }
-
-    public void SetBiomeGraphHeightmaps(float[,] heightMap, float[,] roadStrengthMap) 
-    {
-        for (int i = 0; i < biomeSettings.Count; i++)
-        {
-            biomeSettings[i].biomeGraph.heightMap = heightMap;
-            biomeSettings[i].biomeGraph.roadStrengthMap = roadStrengthMap;
-        }
-    }
-
     public void DrawMapInEditor()
     {
         this.ResetPreview();

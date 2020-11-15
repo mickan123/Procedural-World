@@ -36,8 +36,38 @@ public class BiomeGraph : NodeGraph
         return null;
     }
 
-    public List<ObjectSpawner> GetObjectSpawners() {
+    public float[,] GetHeightMap(
+        WorldManager manager, 
+        BiomeInfo info, 
+        TerrainSettings terrainSettings, 
+        Vector2 sampleCentre, 
+        int width, 
+        int height
+    )
+    {
+        this.biomeInfo = info;
+        this.worldManager = manager;
+        this.terrainSettings = terrainSettings;
+        this.sampleCentre = sampleCentre;
+        this.width = width;
+        this.height = height;
+
+        foreach (Node node in this.nodes)
+        {
+            if (node is HeightMapOutputNode)
+            {
+                var typedNode = node as HeightMapOutputNode;
+                return typedNode.GetValue();
+            }
+        }
+        return null;
+    }
+
+    public List<ObjectSpawner> GetObjectSpawners(float[,] heightMap, float[,] roadStrengthMap) {
         List<ObjectSpawner> objectSpawners = new List<ObjectSpawner>();
+
+        this.heightMap = heightMap;
+        this.roadStrengthMap = roadStrengthMap;
 
         foreach (Node node in this.nodes)
         {
@@ -148,4 +178,3 @@ public class BiomeGraph : NodeGraph
         return maxHeight;
     }
 }
-

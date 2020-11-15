@@ -13,7 +13,8 @@ public static class ObjectGenerator
         {
             if (HeightMapContainesBiome(info, biome))
             {
-                List<ObjectSpawner> spawners = settings.biomeSettings[biome].biomeGraph.GetObjectSpawners();
+                BiomeGraph graph = settings.biomeSettings[biome].biomeGraph.Copy() as BiomeGraph;
+                List<ObjectSpawner> spawners = graph.GetObjectSpawners(heightMap, road.roadStrengthMap);
                 biomeObjectSpawners.AddRange(spawners);
             }
         }

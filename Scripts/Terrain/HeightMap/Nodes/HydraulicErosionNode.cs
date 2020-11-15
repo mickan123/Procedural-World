@@ -18,8 +18,7 @@ public class HydraulicErosionNode : BiomeGraphNode
     {
         if (port.fieldName == "heightMapOut")
         {
-            var temp = ErodeHeightMap();
-            return temp;
+            return ErodeHeightMap();
         }
         else
         {
