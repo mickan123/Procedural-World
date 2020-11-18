@@ -16,24 +16,29 @@ public class BiomeGraph : NodeGraph
     public float[,] heightMap;
     public float[,] roadStrengthMap;
 
+    private static readonly System.Object obj = new System.Object();
+
     public bool initialized = false;
 
     public float[,] GetHeightMap(TerrainSettings terrainSettings, Vector2 sampleCentre, int width, int height)
     {
-        this.terrainSettings = terrainSettings;
-        this.sampleCentre = sampleCentre;
-        this.width = width;
-        this.height = height;
-
-        foreach (Node node in this.nodes)
+        lock(obj)
         {
-            if (node is HeightMapOutputNode)
+            this.terrainSettings = terrainSettings;
+            this.sampleCentre = sampleCentre;
+            this.width = width;
+            this.height = height;
+
+            foreach (Node node in this.nodes)
             {
-                var typedNode = node as HeightMapOutputNode;
-                return typedNode.GetValue();
+                if (node is HeightMapOutputNode)
+                {
+                    var typedNode = node as HeightMapOutputNode;
+                    return typedNode.GetValue();
+                }
             }
+            return null;
         }
-        return null;
     }
 
     public float[,] GetHeightMap(
@@ -45,43 +50,49 @@ public class BiomeGraph : NodeGraph
         int height
     )
     {
-        this.biomeInfo = info;
-        this.worldManager = manager;
-        this.terrainSettings = terrainSettings;
-        this.sampleCentre = sampleCentre;
-        this.width = width;
-        this.height = height;
-
-        foreach (Node node in this.nodes)
+        lock(obj)
         {
-            if (node is HeightMapOutputNode)
+            this.biomeInfo = info;
+            this.worldManager = manager;
+            this.terrainSettings = terrainSettings;
+            this.sampleCentre = sampleCentre;
+            this.width = width;
+            this.height = height;
+
+            foreach (Node node in this.nodes)
             {
-                var typedNode = node as HeightMapOutputNode;
-                return typedNode.GetValue();
+                if (node is HeightMapOutputNode)
+                {
+                    var typedNode = node as HeightMapOutputNode;
+                    return typedNode.GetValue();
+                }
             }
+            return null;
         }
-        return null;
     }
 
     public List<ObjectSpawner> GetObjectSpawners(float[,] heightMap, float[,] roadStrengthMap) {
-        List<ObjectSpawner> objectSpawners = new List<ObjectSpawner>();
-
-        this.heightMap = heightMap;
-        this.roadStrengthMap = roadStrengthMap;
-
-        foreach (Node node in this.nodes)
+        lock(obj)
         {
-            if (node is ObjectsOutputNode) {
-                ObjectsOutputNode typedNode = node as ObjectsOutputNode;
-                objectSpawners.Add(typedNode.GetValue());
-            }
-            else if (node is DetailsOutputNode) {
-                DetailsOutputNode typedNode = node as DetailsOutputNode;
-                objectSpawners.Add(typedNode.GetValue());
-            }
-        }
+            List<ObjectSpawner> objectSpawners = new List<ObjectSpawner>();
 
-        return objectSpawners;
+            this.heightMap = heightMap;
+            this.roadStrengthMap = roadStrengthMap;
+
+            foreach (Node node in this.nodes)
+            {
+                if (node is ObjectsOutputNode) {
+                    ObjectsOutputNode typedNode = node as ObjectsOutputNode;
+                    objectSpawners.Add(typedNode.GetValue());
+                }
+                else if (node is DetailsOutputNode) {
+                    DetailsOutputNode typedNode = node as DetailsOutputNode;
+                    objectSpawners.Add(typedNode.GetValue());
+                }
+            }
+
+            return objectSpawners;
+        }
     }
 
     public void Init(System.Random prng) {

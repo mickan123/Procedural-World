@@ -61,7 +61,6 @@ public static class HydraulicErosion
 
     public static float[,] Erode(
         float[,] values, 
-        float[,] mask, 
         TerrainSettings terrainSettings, 
         BiomeInfo info, 
         WorldManager worldGenerator, 
@@ -131,11 +130,16 @@ public static class HydraulicErosion
                 Thread.Sleep(1);
             }
 
-            // Weight erosion by biome strengths and whether erosion is enabled
+            // Weight erosion by biome strengths, whether erosion is enabled, and distance from edge
+            float blendDistance = 10f;
             for (int i = 0; i < mapSize; i++)
             {
                 for (int j = 0; j < mapSize; j++)
                 {
+                    float nearDist = Mathf.Min(i, j);
+                    float farDist = mapSize - 1 - Mathf.Max(i, j);
+                    float distFromEdge = Mathf.Min(nearDist, farDist);
+                    float edgeMultiplier = Mathf.Min(distFromEdge / blendDistance, 1f);
                     float val = 0;
                     for (int w = 0; w < numBiomes; w++)
                     {
@@ -148,9 +152,7 @@ public static class HydraulicErosion
                             val += info.biomeStrengths[i, j, w] * values[i, j];
                         }
                     }
-
-                    // Blend values according to mask
-                    values[i, j] = val * mask[i, j] + (1f - mask[i, j]) * values[i, j];
+                    values[i, j] = edgeMultiplier * map[i * mapSize + j]  + (1f - edgeMultiplier) * values[i, j];
                 }
             }
         }

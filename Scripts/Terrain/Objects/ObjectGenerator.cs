@@ -3,7 +3,13 @@ using UnityEngine;
 
 public static class ObjectGenerator
 {
-    public static List<ObjectSpawner> GenerateObjectSpawners(float[,] heightMap, BiomeInfo info, Road road, TerrainSettings settings, Vector2 sampleCentre)
+    public static List<ObjectSpawner> GenerateObjectSpawners(
+        float[,] heightMap, 
+        BiomeInfo info, 
+        Road road, 
+        TerrainSettings settings, 
+        Vector2 sampleCentre
+    )
     {
         List<ObjectSpawner> biomeObjectSpawners = new List<ObjectSpawner>();
 
@@ -13,7 +19,7 @@ public static class ObjectGenerator
         {
             if (HeightMapContainesBiome(info, biome))
             {
-                BiomeGraph graph = settings.biomeSettings[biome].biomeGraph.Copy() as BiomeGraph;
+                BiomeGraph graph = settings.biomeSettings[biome].biomeGraph;
                 List<ObjectSpawner> spawners = graph.GetObjectSpawners(heightMap, road.roadStrengthMap);
                 biomeObjectSpawners.AddRange(spawners);
             }
