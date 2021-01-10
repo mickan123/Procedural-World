@@ -22,10 +22,24 @@ public class BiomeSettings : ScriptableObject
     [Range(0, 1)] public float startTemperature;
     [Range(0, 1)] public float endTemperature;
 
+    private float minWidth = 0.02f;
+
 #if UNITY_EDITOR
 
     public void OnValidate()
     {
+        // Ensure values are in correct range
+        this.startHumidity = Mathf.Clamp(this.startHumidity, 0f, 1f - minWidth);
+        this.endHumidity = Mathf.Clamp(this.endHumidity, minWidth, 1f);
+        this.startTemperature = Mathf.Clamp(this.startTemperature, 0f, 1f - minWidth);
+        this.endTemperature = Mathf.Clamp(this.endTemperature, minWidth, 1f);
+
+        // Ensure min < max
+        this.startHumidity = Mathf.Min(this.startHumidity, this.endHumidity - minWidth);
+        this.endHumidity = Mathf.Max(this.endHumidity, this.startHumidity + minWidth);
+        this.startTemperature = Mathf.Min(this.startTemperature, this.endTemperature - minWidth);
+        this.endTemperature = Mathf.Max(this.endTemperature, this.startTemperature + minWidth);
+        
         if (textureData != null)
         {
             textureData.OnValidate();

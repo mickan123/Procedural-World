@@ -318,7 +318,6 @@ public class TerrainSettings : ScriptableObject
         // Set slope texture settings
         for (int i = 0; i < biomeSettings.Count; i++)
         {
-
             if (biomeSettings[i].slopeTextureData != null)
             {
                 slopeLayerCounts[i] = biomeSettings[i].slopeTextureData.textureLayers.Length;

@@ -11,9 +11,6 @@ public class TerrainSettingsEditor : Editor
     private SerializedObject soTarget;
 
     // Biomes settings
-    private SerializedProperty humidityMapGraph;
-    private SerializedProperty temperatureMapGraph;
-    private SerializedProperty transitionDistance;
     private SerializedProperty biomeSettings;
     private ReorderableList biomeSettingsList;
     private Dictionary<BiomeSettings, BiomeSettingsEditor> biomeSettingsEditors;
@@ -47,9 +44,6 @@ public class TerrainSettingsEditor : Editor
         soTarget = new SerializedObject(target);
 
         // Biomes settings
-        humidityMapGraph = soTarget.FindProperty("humidityMapGraph");
-        temperatureMapGraph = soTarget.FindProperty("temperatureMapGraph");
-        transitionDistance = soTarget.FindProperty("transitionDistance");
         biomeSettingsEditors = new Dictionary<BiomeSettings, BiomeSettingsEditor>();
         CreateBiomeSettingsList();
 
@@ -119,7 +113,12 @@ public class TerrainSettingsEditor : Editor
             list.serializedProperty.arraySize++;
             list.index = index;
 
-            myTarget.biomeSettings.Add(ScriptableObject.CreateInstance("BiomeSettings") as BiomeSettings);
+            BiomeSettings settings = ScriptableObject.CreateInstance("BiomeSettings") as BiomeSettings;
+            settings.startHumidity = Mathf.Min(0.98f, settings.startHumidity);
+            settings.endHumidity = Mathf.Max(0.02f, settings.endHumidity);
+            settings.startTemperature = Mathf.Min(0.98f, settings.startTemperature);
+            settings.endTemperature = Mathf.Max(0.02f, settings.endTemperature);
+            myTarget.biomeSettings.Add(settings);
         };
     }
 
@@ -208,31 +207,14 @@ public class TerrainSettingsEditor : Editor
 
     private void BiomesTab()
     {
-        EditorGUILayout.PropertyField(transitionDistance);
-        EditorGUILayout.Space();
-
-        EditorGUILayout.LabelField("Biome Spawn Settings", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(humidityMapGraph, true);
-        EditorGUILayout.PropertyField(temperatureMapGraph, true);
-        EditorGUILayout.Space();
-
-        for (int i = 0; i < biomeSettings.arraySize; i++)
-        {
-            SerializedProperty prop = biomeSettings.GetArrayElementAtIndex(i);
-            BiomeSettings settings = prop.objectReferenceValue as BiomeSettings;
-            if (settings != null)
-            {
-                EditorGUILayout.ObjectField(prop);
-                EditorGUILayout.MinMaxSlider(ref settings.startTemperature, ref settings.endTemperature, 0f, 1f);
-                EditorGUILayout.MinMaxSlider(ref settings.startHumidity, ref settings.endHumidity, 0f, 1f);
-                EditorGUILayout.Space();
-            }
-        }
-        myTarget.ValidateBiomeSpawnCriteria();
-
-        EditorGUILayout.Space();
         EditorGUILayout.LabelField("Biome Configuration Settings", EditorStyles.boldLabel);
         biomeSettingsList.DoLayoutList();
+
+        if (GUILayout.Button("Biome Spawn Settings Window"))
+        {
+            BiomeZoneWindow window = BiomeZoneWindow.Open(myTarget, soTarget);
+            window.Show();
+        }
     }
 
     private void MeshTab()

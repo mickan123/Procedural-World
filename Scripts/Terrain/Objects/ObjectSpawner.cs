@@ -198,8 +198,8 @@ public class ObjectSpawner
             groupMeshRenderer.sharedMaterial = this.detailMaterials[i];
 
             // TODO options for lighting on details
-            groupMeshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            groupMeshRenderer.receiveShadows = false;
+            groupMeshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+            groupMeshRenderer.receiveShadows = true;
             groupMeshRenderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.BlendProbes;
 
             groupObject.SetActive(!hide);

@@ -4,18 +4,12 @@ using UnityEditor;
 
 public class BiomeSettingsWindow : EditorWindow
 {
-
     public BiomeSettings biomeSettings;
     public BiomeSettingsEditor editor;
 
     private Vector2 scrollPos;
     private GUISkin skin;
     private GUIStyle tabStyle;
-
-    private void OnEnable()
-    {
-
-    }
 
     private void OnGUI()
     {
