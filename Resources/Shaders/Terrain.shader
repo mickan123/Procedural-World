@@ -87,11 +87,20 @@
 			for (int i = 0; i < maxTexturesPerBiome; i++) {
 				int idx = maxTexturesPerBiome * biomeIndex + i;
 
-				if (heightPercent > startHeights[idx] && heightPercent < endHeights[idx] 
-				&& slope > startSlopes[idx] && slope < endSlopes[idx]) {
-					heightSlopeTexture = triplanar(worldPos, blendAxes, idx);
+				if (heightPercent > startHeights[idx] - blendStrength[idx] && heightPercent < endHeights[idx] + blendStrength[idx] 
+				&& slope > startSlopes[idx] - blendStrength[idx] && slope < endSlopes[idx] + blendStrength[idx]) {
+					float drawStrengthHeight = inverseLerp(-blendStrength[idx] / 2, blendStrength[idx] / 2, heightPercent - startHeights[idx]);
+					float drawStrengthSlope = inverseLerp(-blendStrength[idx] / 2, blendStrength[idx] / 2, slope - startSlopes[idx]);
+
+					float drawStrength = min(drawStrengthHeight, drawStrengthSlope);
+
+					float3 textureColour = triplanar(worldPos, blendAxes, idx);
+
+					heightSlopeTexture = heightSlopeTexture * (1 - drawStrength) + textureColour * drawStrength;
+
 				}
 			}
+			
 			return heightSlopeTexture; 
 		}
 

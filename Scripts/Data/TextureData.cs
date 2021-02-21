@@ -40,7 +40,6 @@ public class TextureData : ScriptableObject
         this.startSlope = Mathf.Clamp(this.startSlope, 0f, 90f - minWidthSlope);
         this.endSlope = Mathf.Clamp(this.endSlope, minWidthSlope, 90f);
 
-
         // Ensure min < max
         this.startHeight = Mathf.Min(this.startHeight, this.endHeight - minWidthHeight);
         this.endHeight = Mathf.Max(this.endHeight, this.startHeight + minWidthHeight);
