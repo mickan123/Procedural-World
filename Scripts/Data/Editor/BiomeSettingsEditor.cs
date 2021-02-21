@@ -17,8 +17,6 @@ public class BiomeSettingsEditor : ScriptlessEditor
     private SerializedProperty heightMapSettings;
     private SerializedProperty biomeGraph;
     private ReorderableList textureDataList;
-    private TextureDataEditor textureDataEditor;
-    private TextureDataEditor slopeTextureDataEditor;
 
     private SerializedProperty hydraulicErosion;
     private SerializedProperty thermalErosion;
@@ -40,8 +38,6 @@ public class BiomeSettingsEditor : ScriptlessEditor
         angleBlendRange = soTarget.FindProperty("angleBlendRange");
         heightMapSettings = soTarget.FindProperty("heightMapSettings");
         biomeGraph = soTarget.FindProperty("biomeGraph");
-        textureDataEditor = null;
-        slopeTextureDataEditor = null;
 
         hydraulicErosion = soTarget.FindProperty("hydraulicErosion");
         thermalErosion = soTarget.FindProperty("thermalErosion");
@@ -62,8 +58,6 @@ public class BiomeSettingsEditor : ScriptlessEditor
         EditorGUILayout.PropertyField(allowRoads, true);
         EditorGUILayout.Space();
 
-        textureDataEditor = (TextureDataEditor)Common.DisplayScriptableObjectEditor(textureData, myTarget.textureData, textureDataEditor);
-        slopeTextureDataEditor = (TextureDataEditor)Common.DisplayScriptableObjectEditor(slopeTextureData, myTarget.slopeTextureData, slopeTextureDataEditor);
         EditorGUILayout.PropertyField(angleThreshold, true);
         EditorGUILayout.PropertyField(angleBlendRange, true);
         EditorGUILayout.Space();
@@ -72,9 +66,63 @@ public class BiomeSettingsEditor : ScriptlessEditor
         EditorGUILayout.Space();
         EditorGUILayout.Space();
 
+        this.CreateTextureDataList();
+
         if (EditorGUI.EndChangeCheck())
         {
             soTarget.ApplyModifiedProperties();
         }
+    }
+
+    private void CreateTextureDataList()
+    {
+        textureDataList = new ReorderableList(
+            soTarget,
+            textureData,
+            true, // Draggable
+            true, // Display header
+            true, // Add button
+            true  // Subtract butotn
+        );
+
+        textureDataList.drawHeaderCallback = (Rect rect) =>
+        {
+            EditorGUI.LabelField(rect, "Texture Data");
+        };
+
+        textureDataList.drawElementCallback = (Rect rect, int index, bool active, bool focused) =>
+        {
+            SerializedProperty property = textureDataList.serializedProperty.GetArrayElementAtIndex(index);
+            Rect pos = new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight);
+            EditorGUI.ObjectField(pos, property);
+            pos.y += EditorGUIUtility.singleLineHeight;
+
+            if (active) 
+            {
+                EditorGUI.PropertyField(pos, property);
+            }
+        };
+
+        textureDataList.onSelectCallback = (ReorderableList list) =>
+        {
+            SerializedProperty property = textureDataList.serializedProperty.GetArrayElementAtIndex(list.index);
+        };
+
+        textureDataList.elementHeightCallback = (int index) =>
+        {
+            return EditorGUIUtility.singleLineHeight * 2;
+        };
+
+        textureDataList.onAddCallback = (ReorderableList list) =>
+        {
+            var index = list.serializedProperty.arraySize;
+            list.serializedProperty.arraySize++;
+            list.index = index;
+
+            TextureData settings = ScriptableObject.CreateInstance("TextureData") as TextureData;
+            myTarget.textureData.Add(settings);
+        };
+
+        this.textureDataList.DoLayoutList();
     }
 }

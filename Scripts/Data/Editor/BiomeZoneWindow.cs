@@ -71,7 +71,6 @@ public class BiomeZoneWindow : EditorWindow
         this.biomeSettingsBoxes = new List<BiomeSettingsBox>();
         for (int i = 0; i < this.terrainSettings.biomeSettings.Count; i++)
         {
-            
             BiomeSettingsBox box = new BiomeSettingsBox(this.terrainSettings.biomeSettings[i], biomeZoneRect, this.selectWidth);
             biomeSettingsBoxes.Add(box);
             box.Draw();
@@ -338,12 +337,11 @@ public class BiomeZoneWindow : EditorWindow
             this.curSelectedSettings.endTemperature += deltaTemperature;
 
             this.previousMousePos = Event.current.mousePosition;
-            CheckBiomeSettingsOverlap(this.curSelectedSettings, biomeZoneRect, deltaHumidity, deltaTemperature);
         }
 
         this.curSelectedSettings.OnValidate();
         
-        CheckBiomeSettingsOverlap(this.curSelectedSettings, biomeZoneRect, 0f, 0f);
+        CheckBiomeSettingsOverlap(this.curSelectedSettings, biomeZoneRect);
         Repaint();
     }
 
@@ -358,7 +356,7 @@ public class BiomeZoneWindow : EditorWindow
         return new Vector2(humidity, temperature);
     }
 
-    private bool CheckBiomeSettingsOverlap(BiomeSettings settings, Rect biomeZoneRect, float deltaHumidity, float deltaTemperature)
+    private bool CheckBiomeSettingsOverlap(BiomeSettings settings, Rect biomeZoneRect)
     {
         float biomeX = biomeZoneRect.x + settings.startHumidity * biomeZoneRect.width;
         float biomeWidth = biomeZoneRect.x + settings.endHumidity * biomeZoneRect.width - biomeX;
@@ -390,11 +388,63 @@ public class BiomeZoneWindow : EditorWindow
                 {
                     settings.startTemperature = overlappingSettings.endTemperature;
                 }
-                if (this.clickType == ClickType.BottomEdge)
+                else if (this.clickType == ClickType.BottomEdge)
                 {
                     settings.endTemperature = overlappingSettings.startTemperature;
                 }
-                if (this.clickType == ClickType.Pan)
+                else if (this.clickType == ClickType.TopRightCorner) 
+                {   
+                    float deltaHumidity = settings.endHumidity - overlappingSettings.startHumidity;
+                    float deltaTemperature = overlappingSettings.endTemperature - settings.startTemperature;
+                    if (deltaHumidity < deltaTemperature)
+                    {
+                        settings.endHumidity = overlappingSettings.startHumidity;
+                    }
+                    else
+                    {
+                        settings.startTemperature = overlappingSettings.endTemperature;
+                    }
+                }
+                else if (this.clickType == ClickType.BottomRightCorner)
+                {
+                    float deltaHumidity = settings.endHumidity - overlappingSettings.startHumidity;
+                    float deltaTemperature = settings.endTemperature - overlappingSettings.startTemperature;
+                    if (deltaHumidity < deltaTemperature)
+                    {
+                        settings.endHumidity = overlappingSettings.startHumidity;
+                    }
+                    else
+                    {
+                        settings.endTemperature = overlappingSettings.startTemperature;
+                    }
+                }
+                else if (this.clickType == ClickType.BottomLeftCorner)
+                {
+                    float deltaHumidity = overlappingSettings.endHumidity - settings.startHumidity;
+                    float deltaTemperature = settings.endTemperature - overlappingSettings.startTemperature;
+                    if (deltaHumidity < deltaTemperature)
+                    {
+                        settings.startHumidity = overlappingSettings.endHumidity;
+                    }
+                    else
+                    {
+                        settings.endTemperature = overlappingSettings.startTemperature;
+                    }
+                }
+                else if (this.clickType == ClickType.TopLeftCorner)
+                {
+                    float deltaHumidity = overlappingSettings.endHumidity - settings.startHumidity;
+                    float deltaTemperature = overlappingSettings.endTemperature - settings.startTemperature;
+                    if (deltaHumidity < deltaTemperature)
+                    {
+                        settings.startHumidity = overlappingSettings.endHumidity;
+                    }
+                    else
+                    {
+                        settings.startTemperature = overlappingSettings.endTemperature;
+                    }
+                }
+                else if (this.clickType == ClickType.Pan)
                 {
                     float humidityCorrection = 0f;
                     float temperatureCorrection = 0f;

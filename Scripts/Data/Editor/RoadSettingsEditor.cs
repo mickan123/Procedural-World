@@ -16,7 +16,6 @@ public class RoadSettingsEditor : ScriptlessEditor
     private SerializedProperty smoothness;
     private SerializedProperty blendFactor;
     private SerializedProperty maxAngle;
-    private TextureDataEditor roadTextureEditor;
 
     private void OnEnable()
     {
@@ -30,16 +29,12 @@ public class RoadSettingsEditor : ScriptlessEditor
         smoothness = soTarget.FindProperty("smoothness");
         blendFactor = soTarget.FindProperty("blendFactor");
         maxAngle = soTarget.FindProperty("maxAngle");
-
-        roadTextureEditor = null;
     }
 
     public override void OnInspectorGUI()
     {
         soTarget.Update();
         EditorGUI.BeginChangeCheck();
-
-        roadTextureEditor = (TextureDataEditor)Common.DisplayScriptableObjectEditor(roadTexture, myTarget.roadTexture, roadTextureEditor);
 
         EditorGUILayout.PropertyField(width);
         EditorGUILayout.PropertyField(roadMaterial);
