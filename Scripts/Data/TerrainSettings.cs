@@ -271,6 +271,7 @@ public class TerrainSettings : ScriptableObject
         float[] startSlopes = new float[biomeSettings.Count * maxTexturesPerBiome];
         float[] endSlopes = new float[biomeSettings.Count * maxTexturesPerBiome];
         Color[] tints = new Color[biomeSettings.Count * maxTexturesPerBiome];
+        float[] tintStrengths = new float[biomeSettings.Count * maxTexturesPerBiome];
         float[] blendStrength = new float[biomeSettings.Count * maxTexturesPerBiome];
         float[] textureScales = new float[biomeSettings.Count * maxTexturesPerBiome];
 
@@ -290,8 +291,9 @@ public class TerrainSettings : ScriptableObject
                 // Normalize slopes into [0, 1] range
                 startSlopes[i * maxTexturesPerBiome + j] = curData.startSlope / 90f;
                 endSlopes[i * maxTexturesPerBiome + j] = curData.endSlope / 90f;
-                
+
                 tints[i * maxTexturesPerBiome + j] = curData.tint;
+                tintStrengths[i * maxTexturesPerBiome + j] = curData.tintStrength;
                 blendStrength[i * maxTexturesPerBiome + j] = curData.blendStrength;
                 textureScales[i * maxTexturesPerBiome + j] = curData.textureScale;
     
@@ -315,6 +317,7 @@ public class TerrainSettings : ScriptableObject
         material.SetFloatArray("startSlopes", startSlopes);
         material.SetFloatArray("endSlopes", endSlopes);
         material.SetColorArray("tints", tints);
+        material.SetFloatArray("tintStrengths", tintStrengths);
         material.SetFloatArray("blendStrength", blendStrength);
         material.SetFloatArray("textureScales", textureScales);
     }

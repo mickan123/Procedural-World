@@ -30,6 +30,7 @@
 		float startSlopes[maxTexturesPerBiome * maxBiomeCount];
 		float endSlopes[maxTexturesPerBiome * maxBiomeCount];
 		float3 tints[maxTexturesPerBiome * maxBiomeCount];
+		float tintStrengths[maxTexturesPerBiome * maxBiomeCount];
 		float blendStrength[maxTexturesPerBiome * maxBiomeCount];
 		float textureScales[maxTexturesPerBiome * maxBiomeCount];
 		
@@ -94,10 +95,10 @@
 
 					float drawStrength = min(drawStrengthHeight, drawStrengthSlope);
 
-					float3 textureColour = triplanar(worldPos, blendAxes, idx);
+					float3 baseColour = tints[idx] * tintStrengths[idx];
+					float3 textureColour = triplanar(worldPos, blendAxes, idx) * (1 - tintStrengths[idx]);
 
-					heightSlopeTexture = heightSlopeTexture * (1 - drawStrength) + textureColour * drawStrength;
-
+					heightSlopeTexture = heightSlopeTexture * (1 - drawStrength) + (textureColour + baseColour) * drawStrength;
 				}
 			}
 			
