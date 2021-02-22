@@ -454,7 +454,15 @@ public class BiomeZoneWindow : EditorWindow
                     Rect rightLine = new Rect(rect.x + rect.width, rect.y, 0, rect.height);
                     Rect topLine = new Rect(rect.x, rect.y, rect.width, 0);
                     Rect bottomLine = new Rect(rect.x, rect.y + rect.height, rect.width, 0);
-
+                    
+                    /* 12 Kinds of possible overlaps
+                     * 4 sides times 3 types of overlaps
+                     *    _____                          ______
+                     *        _|____     ____|_     ____|___
+                     *       | |             |_|__      |  |
+                     *       |_|____     ______|    ____|__|
+                     *    _____|                        |______
+                     */ 
                     if (leftLine.Overlaps(overlappingRect) && topLine.Overlaps(overlappingRect) && bottomLine.Overlaps(overlappingRect))
                     {
                         humidityCorrection = overlappingSettings.endHumidity - settings.startHumidity;

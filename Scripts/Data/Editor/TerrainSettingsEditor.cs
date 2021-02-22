@@ -208,13 +208,15 @@ public class TerrainSettingsEditor : Editor
     private void BiomesTab()
     {
         EditorGUILayout.LabelField("Biome Configuration Settings", EditorStyles.boldLabel);
-        biomeSettingsList.DoLayoutList();
 
         if (GUILayout.Button("Biome Spawn Settings Window"))
         {
             BiomeZoneWindow window = BiomeZoneWindow.Open(myTarget, soTarget);
             window.Show();
         }
+        EditorGUILayout.Space();
+
+        biomeSettingsList.DoLayoutList();
     }
 
     private void MeshTab()

@@ -101,8 +101,22 @@
 					heightSlopeTexture = heightSlopeTexture * (1 - drawStrength) + (textureColour + baseColour) * drawStrength;
 				}
 			}
-			
-			return heightSlopeTexture; 
+
+			// Calculate road texture
+			float3 roadTexture = float3(0, 0, 0);
+
+			// for (int i = 0; i < roadLayerCount; i++) {
+			// 	int idx = i;
+
+			// 	float drawStrength = inverseLerp(-roadBlends[idx] / 2, roadBlends[idx] / 2, heightPercent - roadStartHeights[idx]);
+
+			// 	float3 roadColour = roadColours[idx] * roadColourStrengths[idx];
+			// 	float3 textureColour = triplanarRoad(worldPos, blendAxes, idx) * (1 - roadColourStrengths[idx]);
+
+			// 	roadTexture = roadTexture * (1 - drawStrength) + (roadColour + textureColour) * drawStrength;
+			// }
+
+			return roadStrength * roadTexture + (1 - roadStrength) * heightSlopeTexture; 
 		}
 
 		void surf(Input IN, inout SurfaceOutputStandard o) {

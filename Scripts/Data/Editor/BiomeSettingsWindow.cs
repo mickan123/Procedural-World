@@ -40,20 +40,49 @@ public class BiomeSettingsWindow : EditorWindow
         // Create box that will hold all biome areas
         float xBorderBuffer = 20;
         float yBorderBuffer = 20;
-        float startX = xBorderBuffer;
-        float width = position.width - 2 * xBorderBuffer;
+        float startX = 2 * xBorderBuffer;
+        float width = position.width - 3 * xBorderBuffer;
         float startY = yBorderBuffer;
         float height = Mathf.Min(position.height - 500, width);
  
         Rect textureSettingsRect = new Rect(startX, startY, width, height);
         GUI.Box(textureSettingsRect, "");
 
+        // Add ticks to box
+        int numHeightTicks = 5;
+        int numSlopeTicks = 7;
+        float tickwidth = 5f;
+        GUIStyle tickLabelStyle = new GUIStyle();
+        tickLabelStyle.fontSize = 10;
+        tickLabelStyle.alignment = TextAnchor.MiddleCenter;
+
+        // Height ticks
+        Rect tickLine = new Rect(startX - tickwidth, startY, tickwidth, 1);
+        for (int i = 0; i <= numHeightTicks; i++)
+        {
+            GUI.Box(tickLine, "");
+            Rect labelRect = new Rect(tickLine.x - 20, tickLine.y - 10, 20, 20);
+            float tickLabelValue = 1f - (1f / (float)numHeightTicks) * i;
+            EditorGUI.LabelField(labelRect, tickLabelValue.ToString(), tickLabelStyle);
+            tickLine.y += height / numHeightTicks;
+        }
+
+        // Slope ticks
+        tickLine = new Rect(startX, startY + height - 1, 1, tickwidth);
+        for (int i = 0; i < numSlopeTicks; i++) 
+        {
+            GUI.Box(tickLine, "");
+            Rect labelRect = new Rect(tickLine.x - 5, tickLine.y + 5, 10, 10);
+            EditorGUI.LabelField(labelRect, (i * 90 / (numSlopeTicks - 1)).ToString(), tickLabelStyle);
+            tickLine.x += width / (numSlopeTicks - 1);
+        }
+
         // Add axis labels
         var centreTextStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter };
         EditorGUIUtility.RotateAroundPivot(-90, new Vector2(startX - xBorderBuffer, (startY + height) / 2));
-        EditorGUI.LabelField(new Rect(startX, startY, width, height), "Height");
+        EditorGUI.LabelField(new Rect(startX - 50, startY - yBorderBuffer, width, height), "Height");
         EditorGUIUtility.RotateAroundPivot(90, new Vector2(startX - xBorderBuffer, (startY + height) / 2));
-        EditorGUI.LabelField(new Rect(startX, height + EditorGUIUtility.singleLineHeight, width, EditorGUIUtility.singleLineHeight), "Slope (Degrees)", centreTextStyle);
+        EditorGUI.LabelField(new Rect(startX, height + 2 * EditorGUIUtility.singleLineHeight, width, EditorGUIUtility.singleLineHeight), "Slope (Degrees)", centreTextStyle);
 
         // Create boxes for each individual biome
         this.textureSettingsBoxes = new List<TextureSettingsBox>();
@@ -71,7 +100,7 @@ public class BiomeSettingsWindow : EditorWindow
 
         GUILayout.BeginArea(new Rect(
             xBorderBuffer, 
-            textureSettingsRect.height + 2 * yBorderBuffer,
+            textureSettingsRect.height + 3 * yBorderBuffer,
             position.width - 2 * xBorderBuffer, 
             position.height - textureSettingsRect.height - 2 * yBorderBuffer
         ));
@@ -381,92 +410,105 @@ public class BiomeSettingsWindow : EditorWindow
                 }
                 else if (this.clickType == ClickType.Pan)
                 {
-                    float slopeCorrection = 0f;
-                    float heightCorrection = 0f;
-
-                    // Left line overlap
-                    Rect leftLine = new Rect(rect.x, rect.y, 0, rect.height);
-                    Rect rightLine = new Rect(rect.x + rect.width, rect.y, 0, rect.height);
-                    Rect topLine = new Rect(rect.x, rect.y, rect.width, 0);
-                    Rect bottomLine = new Rect(rect.x, rect.y + rect.height, rect.width, 0);
-
-                    if (leftLine.Overlaps(overlappingRect) && topLine.Overlaps(overlappingRect) && bottomLine.Overlaps(overlappingRect))
-                    {
-                        slopeCorrection = overlappingSettings.endSlope - settings.startSlope;
-                        heightCorrection = float.MaxValue;
-                    }
-                    else if (leftLine.Overlaps(overlappingRect) && topLine.Overlaps(overlappingRect) && rightLine.Overlaps(overlappingRect))
-                    {
-                        heightCorrection = overlappingSettings.endHeight - settings.startHeight;
-                        slopeCorrection = float.MaxValue;
-                    }
-                    else if (topLine.Overlaps(overlappingRect) && rightLine.Overlaps(overlappingRect) && bottomLine.Overlaps(overlappingRect))
-                    {
-                        slopeCorrection = overlappingSettings.startSlope - settings.endSlope;
-                        heightCorrection = float.MaxValue;
-                    }
-                    else if (rightLine.Overlaps(overlappingRect) && bottomLine.Overlaps(overlappingRect) && leftLine.Overlaps(overlappingRect))
-                    {
-                        heightCorrection = overlappingSettings.startHeight - settings.endHeight;
-                        slopeCorrection = float.MaxValue;
-                    }
-                    else if (leftLine.Overlaps(overlappingRect) && topLine.Overlaps(overlappingRect))
-                    {
-                        slopeCorrection = overlappingSettings.endSlope - settings.startSlope;
-                        heightCorrection = overlappingSettings.endHeight - settings.startHeight;
-                    }
-                    else if (topLine.Overlaps(overlappingRect) && rightLine.Overlaps(overlappingRect))
-                    {
-                        heightCorrection = overlappingSettings.endHeight - settings.startHeight;
-                        slopeCorrection = overlappingSettings.startSlope - settings.endSlope;
-                    }
-                    else if (rightLine.Overlaps(overlappingRect) && bottomLine.Overlaps(overlappingRect))
-                    {
-                        heightCorrection = overlappingSettings.startHeight - settings.endHeight;
-                        slopeCorrection = overlappingSettings.startSlope - settings.endSlope;
-                    }
-                    else if (bottomLine.Overlaps(overlappingRect) && leftLine.Overlaps(overlappingRect))
-                    {
-                        heightCorrection = overlappingSettings.startHeight - settings.endHeight;
-                        slopeCorrection = overlappingSettings.endSlope - settings.startSlope;
-                    }
-                    else if (leftLine.Overlaps(overlappingRect))
-                    {
-                        slopeCorrection = overlappingSettings.endSlope - settings.startSlope;
-                        heightCorrection = float.MaxValue;
-                    }
-                    else if (rightLine.Overlaps(overlappingRect))
-                    {
-                        slopeCorrection = overlappingSettings.startSlope - settings.endSlope;
-                        heightCorrection = float.MaxValue;
-                    }
-                    else if (topLine.Overlaps(overlappingRect))
-                    {
-                        heightCorrection = overlappingSettings.endHeight - settings.startHeight;
-                        slopeCorrection = float.MaxValue;
-                    }
-                    else if (bottomLine.Overlaps(overlappingRect))
-                    {
-                        heightCorrection = overlappingSettings.startHeight - settings.endHeight;
-                        slopeCorrection = float.MaxValue;
-                    }
-
-                    if ((Mathf.Abs(slopeCorrection) / 90f) < Mathf.Abs(heightCorrection))
-                    {
-                        settings.startSlope += slopeCorrection;
-                        settings.endSlope += slopeCorrection;
-                    }
-                    else
-                    {
-                        settings.startHeight += heightCorrection;
-                        settings.endHeight += heightCorrection;
-                    }
+                    this.HandlePanOverlap(rect, settings, overlappingRect, overlappingSettings);
                 }
                 overlaps = true;
             }
         }
 
         return overlaps;
+    }
+
+    private void HandlePanOverlap(Rect rect, TextureData settings, Rect overlappingRect, TextureData overlappingSettings)
+    {
+        float slopeCorrection = 0f;
+        float heightCorrection = 0f;
+
+        // Left line overlap
+        Rect leftLine = new Rect(rect.x, rect.y, 0, rect.height);
+        Rect rightLine = new Rect(rect.x + rect.width, rect.y, 0, rect.height);
+        Rect topLine = new Rect(rect.x, rect.y, rect.width, 0);
+        Rect bottomLine = new Rect(rect.x, rect.y + rect.height, rect.width, 0);
+
+        /* 12 Kinds of possible overlaps
+         * 4 sides times 3 types of overlaps
+         *    _____                          ______
+         *        _|____     ____|_     ____|___
+         *       | |             |_|__      |  |
+         *       |_|____     ______|    ____|__|
+         *    _____|                        |______
+         */ 
+        if (leftLine.Overlaps(overlappingRect) && topLine.Overlaps(overlappingRect) && bottomLine.Overlaps(overlappingRect))
+        {
+            slopeCorrection = overlappingSettings.endSlope - settings.startSlope;
+            heightCorrection = float.MaxValue;
+        }
+        else if (leftLine.Overlaps(overlappingRect) && topLine.Overlaps(overlappingRect) && rightLine.Overlaps(overlappingRect))
+        {
+            heightCorrection = overlappingSettings.endHeight - settings.startHeight;
+            slopeCorrection = float.MaxValue;
+        }
+        else if (topLine.Overlaps(overlappingRect) && rightLine.Overlaps(overlappingRect) && bottomLine.Overlaps(overlappingRect))
+        {
+            slopeCorrection = overlappingSettings.startSlope - settings.endSlope;
+            heightCorrection = float.MaxValue;
+        }
+        else if (rightLine.Overlaps(overlappingRect) && bottomLine.Overlaps(overlappingRect) && leftLine.Overlaps(overlappingRect))
+        {
+            heightCorrection = overlappingSettings.startHeight - settings.endHeight;
+            slopeCorrection = float.MaxValue;
+        }
+        else if (leftLine.Overlaps(overlappingRect) && topLine.Overlaps(overlappingRect))
+        {
+            slopeCorrection = overlappingSettings.endSlope - settings.startSlope;
+            heightCorrection = overlappingSettings.endHeight - settings.startHeight;
+        }
+        else if (topLine.Overlaps(overlappingRect) && rightLine.Overlaps(overlappingRect))
+        {
+            heightCorrection = overlappingSettings.endHeight - settings.startHeight;
+            slopeCorrection = overlappingSettings.startSlope - settings.endSlope;
+        }
+        else if (rightLine.Overlaps(overlappingRect) && bottomLine.Overlaps(overlappingRect))
+        {
+            heightCorrection = overlappingSettings.startHeight - settings.endHeight;
+            slopeCorrection = overlappingSettings.startSlope - settings.endSlope;
+        }
+        else if (bottomLine.Overlaps(overlappingRect) && leftLine.Overlaps(overlappingRect))
+        {
+            heightCorrection = overlappingSettings.startHeight - settings.endHeight;
+            slopeCorrection = overlappingSettings.endSlope - settings.startSlope;
+        }
+        else if (leftLine.Overlaps(overlappingRect))
+        {
+            slopeCorrection = overlappingSettings.endSlope - settings.startSlope;
+            heightCorrection = float.MaxValue;
+        }
+        else if (rightLine.Overlaps(overlappingRect))
+        {
+            slopeCorrection = overlappingSettings.startSlope - settings.endSlope;
+            heightCorrection = float.MaxValue;
+        }
+        else if (topLine.Overlaps(overlappingRect))
+        {
+            heightCorrection = overlappingSettings.endHeight - settings.startHeight;
+            slopeCorrection = float.MaxValue;
+        }
+        else if (bottomLine.Overlaps(overlappingRect))
+        {
+            heightCorrection = overlappingSettings.startHeight - settings.endHeight;
+            slopeCorrection = float.MaxValue;
+        }
+
+        if ((Mathf.Abs(slopeCorrection) / 90f) < Mathf.Abs(heightCorrection))
+        {
+            settings.startSlope += slopeCorrection;
+            settings.endSlope += slopeCorrection;
+        }
+        else
+        {
+            settings.startHeight += heightCorrection;
+            settings.endHeight += heightCorrection;
+        }
     }
 
     private void LeftMouseUp(Rect biomeZoneRect)

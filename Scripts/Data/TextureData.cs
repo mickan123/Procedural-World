@@ -16,9 +16,6 @@ public class TextureData : ScriptableObject
 
     public float textureScale = 1f;
 
-    private readonly float minWidthHeight = 0.02f;
-    private readonly float minWidthSlope = 3f;
-
     public TextureData(float startHeight, float endHeight, float startSlope, float endSlope)
     {
         this.startHeight = startHeight;

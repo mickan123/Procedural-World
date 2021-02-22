@@ -11,7 +11,6 @@ public class RoadSettingsEditor : ScriptlessEditor
 
     private SerializedProperty roadTexture;
     private SerializedProperty width;
-    private SerializedProperty roadMaterial;
     private SerializedProperty stepSize;
     private SerializedProperty smoothness;
     private SerializedProperty blendFactor;
@@ -24,7 +23,6 @@ public class RoadSettingsEditor : ScriptlessEditor
 
         roadTexture = soTarget.FindProperty("roadTexture");
         width = soTarget.FindProperty("width");
-        roadMaterial = soTarget.FindProperty("roadMaterial");
         stepSize = soTarget.FindProperty("stepSize");
         smoothness = soTarget.FindProperty("smoothness");
         blendFactor = soTarget.FindProperty("blendFactor");
@@ -36,8 +34,8 @@ public class RoadSettingsEditor : ScriptlessEditor
         soTarget.Update();
         EditorGUI.BeginChangeCheck();
 
+        EditorGUILayout.PropertyField(roadTexture);
         EditorGUILayout.PropertyField(width);
-        EditorGUILayout.PropertyField(roadMaterial);
         EditorGUILayout.PropertyField(stepSize);
         EditorGUILayout.PropertyField(smoothness);
         EditorGUILayout.PropertyField(blendFactor);
