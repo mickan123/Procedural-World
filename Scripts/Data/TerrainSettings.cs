@@ -105,20 +105,7 @@ public class TerrainSettings : ScriptableObject
         int width = this.meshSettings.numVerticesPerLine;
         int height = this.meshSettings.numVerticesPerLine;
 
-        float[,] humidityMap = this.humidityMapGraph.GetHeightMap(
-            this,
-            centre,
-            width,
-            height
-        );
-
-        float[,] temperatureMap = this.temperatureMapGraph.GetHeightMap(
-            this,
-            centre,
-            width,
-            height
-        );
-
+        
         if (drawMode == DrawMode.NoiseMapTexture)
         {
             float[,] heightMap = this.biomeSettings[noiseMapBiomeIndex].biomeGraph.GetHeightMap(
@@ -135,23 +122,39 @@ public class TerrainSettings : ScriptableObject
         }
         else if (drawMode == DrawMode.BiomesMesh)
         {
-            DrawBiomeMesh(width, height, humidityMap);
-        }
-        else if (drawMode == DrawMode.BiomesTexture)
-        {
-            DrawBiomes(width, height, humidityMap, temperatureMap);
-        }
-        else if (drawMode == DrawMode.HumidityMapTexture)
-        {
-            DrawTexture(TextureGenerator.TextureFromHeightMap(humidityMap));
-        }
-        else if (drawMode == DrawMode.TemperatureMapTexture)
-        {
-            DrawTexture(TextureGenerator.TextureFromHeightMap(temperatureMap));
+            DrawBiomeMesh(width, height);
         }
         else if (drawMode == DrawMode.SingleBiomeMesh)
         {
-            DrawSingleBiome(width, height, humidityMap);
+            DrawSingleBiome(width, height);
+        }
+        else
+        {
+            float[,] humidityMap = this.humidityMapGraph.GetHeightMap(
+                this,
+                centre,
+                width,
+                height
+            );
+
+            float[,] temperatureMap = this.temperatureMapGraph.GetHeightMap(
+                this,
+                centre,
+                width,
+                height
+            );
+            if (drawMode == DrawMode.BiomesTexture)
+            {
+                DrawBiomes(width, height, humidityMap, temperatureMap);
+            }
+            else if (drawMode == DrawMode.HumidityMapTexture)
+            {
+                DrawTexture(TextureGenerator.TextureFromHeightMap(humidityMap));
+            }
+            else if (drawMode == DrawMode.TemperatureMapTexture)
+            {
+                DrawTexture(TextureGenerator.TextureFromHeightMap(temperatureMap));
+            }
         }
     }
 
@@ -164,7 +167,7 @@ public class TerrainSettings : ScriptableObject
         }
     }
 
-    private void DrawSingleBiome(int width, int height, float[,] humidityMap)
+    private void DrawSingleBiome(int width, int height)
     {
         BiomeSettings[] oldBiomes = new BiomeSettings[this.biomeSettings.Count];
         float oldTransitionDistance = this.transitionDistance;
@@ -190,7 +193,7 @@ public class TerrainSettings : ScriptableObject
             this.transitionDistance = 0f;
             this.ApplyToMaterial(this.previewMaterial);
 
-            DrawBiomeMesh(width, height, humidityMap);
+            DrawBiomeMesh(width, height);
 
         }
         finally
@@ -207,11 +210,11 @@ public class TerrainSettings : ScriptableObject
         }
     }
 
-    private void DrawBiomeMesh(int width, int height, float[,] humidityMap)
+    private void DrawBiomeMesh(int width, int height)
     {
 #if (PROFILE && UNITY_EDITOR)
 		float startTime = 0f;
-		if (terrainSettings.IsMainThread()) {
+		if (this.IsMainThread()) {
         	startTime = Time.realtimeSinceStartup;
 		}
 #endif
@@ -231,7 +234,7 @@ public class TerrainSettings : ScriptableObject
         this.chunk.meshObject.AddComponent<HideOnPlay>();
 
 #if (PROFILE && UNITY_EDITOR)
-		if (terrainSettings.IsMainThread()) {
+		if (this.IsMainThread()) {
 			float endTime = Time.realtimeSinceStartup;
 			float totalTimeTaken = endTime - startTime;
 			Debug.Log("Total time taken: " + totalTimeTaken + "s");

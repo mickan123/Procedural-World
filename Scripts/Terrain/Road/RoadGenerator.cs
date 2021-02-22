@@ -9,7 +9,23 @@ public static class RoadGenerator
 
         float mapSize = heightMap.GetLength(0);
         
-        List<RoadRoute> destinations = GetRoadDestinations(mapSize, chunkCentre);
+        bool generateRoads = false;
+        for (int i = 0; i < info.biomeStrengths.GetLength(0); i++)
+        {
+            for (int j = 0; j < info.biomeStrengths.GetLength(1); j++)
+            {
+                for (int k = 0; k < info.biomeStrengths.GetLength(2); k++)
+                {
+                    if (info.biomeStrengths[i, j, k] > 0 && terrainSettings.biomeSettings[k].allowRoads)
+                    {
+                        generateRoads = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        List<RoadRoute> destinations = (generateRoads) ? GetRoadDestinations(mapSize, chunkCentre) : new List<RoadRoute>();
         
         return new Road(terrainSettings, 
                         heightMap,

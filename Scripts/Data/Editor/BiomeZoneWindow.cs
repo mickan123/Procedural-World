@@ -85,13 +85,6 @@ public class BiomeZoneWindow : EditorWindow
         EditorGUI.PropertyField(pos, transitionDistance);
         pos.y += 2 * EditorGUIUtility.singleLineHeight;
 
-        // Other buttons
-        GUILayout.FlexibleSpace();
-        if (GUILayout.Button("Fill Biome Zone"))
-        {
-            this.FillBiomeZone();
-        }
-
         this.HandleEvents(biomeZoneRect);
 
         if (EditorGUI.EndChangeCheck())
@@ -551,10 +544,5 @@ public class BiomeZoneWindow : EditorWindow
     {
         this.curSelectedSettings = null;
         this.clickType = ClickType.Empty;
-    }
-
-    private void FillBiomeZone()
-    {
-        
     }
 }
