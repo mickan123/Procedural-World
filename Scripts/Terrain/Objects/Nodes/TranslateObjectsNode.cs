@@ -39,7 +39,7 @@ public class TranslateObjectsNode : BiomeGraphNode
         
         for (int i = 0; i < positionData.positions.Count; i++)
         {
-            positionData.positions[i].position = positionData.positions[i].position + this.GetTranslation(prng);
+            positionData.positions.positions[i] = positionData.positions.positions[i] + this.GetTranslation(prng);
         }
         return positionData;
     }

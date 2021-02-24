@@ -32,7 +32,7 @@ public class RotateObjectsNode : BiomeGraphNode
         System.Random prng = new System.Random(seed);
         for (int i = 0; i < positionDataIn.positions.Count; i++)
         {
-            positionDataIn.positions[i].rotation = this.GetRotation(prng);
+            positionDataIn.positions.rotations[i] = this.GetRotation(prng);
         }
         return positionDataIn;
     }

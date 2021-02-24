@@ -21,6 +21,8 @@ public class ScaleObjectsNode : BiomeGraphNode
     public float minScaleUniform = 1;
     public float maxScaleUniform = 1;
 
+    private int maxRandomNums = 1000;
+
     public override object GetValue(NodePort port)
     {
         if (port.fieldName == "positionDataOut")
@@ -40,34 +42,45 @@ public class ScaleObjectsNode : BiomeGraphNode
             return null;
         }
         System.Random prng = new System.Random(seed);
-        for (int i = 0; i < positionData.positions.Count; i++)
-        {
-            positionData.positions[i].scale = this.GetScale(prng);
-        }
-        return positionData;
-    }
-
-    public Vector3 GetScale(System.Random prng)
-    {
         if (this.uniformScale && !this.randomScale)
         {
-            return new Vector3(this.scale, this.scale, this.scale);
+            for (int i = 0; i < positionData.positions.Count; i++)
+            {
+                positionData.positions.scales[i] = new Vector3(this.scale, this.scale, this.scale);
+            }
         }
         else if (!this.uniformScale && !this.randomScale)
         {
-            return this.nonUniformScale;
+            for (int i = 0; i < positionData.positions.Count; i++)
+            {
+                positionData.positions.scales[i] = this.nonUniformScale;
+            }
         }
-        else if (this.uniformScale && this.randomScale)
+        else if (this.randomScale)
         {
-            float randomScale = Common.NextFloat(prng, this.minScaleUniform, this.maxScaleUniform);
-            return new Vector3(randomScale, randomScale, randomScale);
+            List<float> randNums = new List<float>(maxRandomNums);
+            for (int i = 0; i < maxRandomNums; i++) 
+            {
+                float value = (float)prng.NextDouble();
+
+                value = value * (this.maxScaleUniform - this.minScaleUniform) + this.minScaleUniform;
+                randNums.Add(value);
+            }
+            if (this.uniformScale)
+            {
+                for (int i = 0; i < positionData.positions.Count; i++)
+                {
+                    positionData.positions.scales[i] = new Vector3(randNums[i % maxRandomNums], randNums[i % maxRandomNums], randNums[i % maxRandomNums]);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < positionData.positions.Count; i++)
+                {
+                    positionData.positions.scales[i] = new Vector3(randNums[(i * 3) % maxRandomNums], randNums[(i * 3 + 1) % maxRandomNums], randNums[(i * 3 + 2) % maxRandomNums]);
+                }
+            }
         }
-        else
-        {
-            float randomX = Common.NextFloat(prng, this.minScaleNonUniform.x, this.maxScaleNonUniform.x);
-            float randomY = Common.NextFloat(prng, this.minScaleNonUniform.y, this.maxScaleNonUniform.y);
-            float randomZ = Common.NextFloat(prng, this.minScaleNonUniform.z, this.maxScaleNonUniform.z);
-            return new Vector3(randomX, randomY, randomZ);
-        }
+        return positionData;
     }
 }

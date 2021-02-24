@@ -38,11 +38,7 @@ public class PoissonPointsNode : BiomeGraphNode
 
         List<Vector3> points = PoissonDiskSampling.GeneratePoints(settings, biomeGraph.sampleCentre, biomeGraph.heightMap, prng, biomeGraph.terrainSettings);
 
-        List<ObjectPosition> positions = new List<ObjectPosition>(points.Count);
-        for (int i = 0; i < points.Count; i++)
-        {
-            positions.Add(new ObjectPosition(points[i]));
-        }
+        ObjectPositions positions = new ObjectPositions(points);
 
         if (this.isDetail)
         {

@@ -6,7 +6,7 @@ public class ObjectPositionData
 {
     public bool isDetail = false;
     
-    public List<ObjectPosition> positions;
+    public ObjectPositions positions;
     public float[,] heightMap;
 
     public GameObject[] terrainObjects;
@@ -14,7 +14,7 @@ public class ObjectPositionData
     public Material[] detailMaterials;
     public ObjectSpawner.DetailMode detailMode;
 
-    public ObjectPositionData(List<ObjectPosition> positions, float[,] heightMap, GameObject[] terrainObjects)
+    public ObjectPositionData(ObjectPositions positions, float[,] heightMap, GameObject[] terrainObjects)
     {
         this.positions = positions;
         this.heightMap = heightMap;
@@ -22,7 +22,7 @@ public class ObjectPositionData
         this.isDetail = false;
     }
 
-    public ObjectPositionData(List<ObjectPosition> positions, float[,] heightMap, Material[] detailMaterials, ObjectSpawner.DetailMode detailMode)
+    public ObjectPositionData(ObjectPositions positions, float[,] heightMap, Material[] detailMaterials, ObjectSpawner.DetailMode detailMode)
     {
         this.positions = positions;
         this.heightMap = heightMap;
@@ -32,24 +32,35 @@ public class ObjectPositionData
     }
 }
 
-public class ObjectPosition
+public class ObjectPositions
 {
-    public Vector3 position;
-    public Quaternion rotation;
-    public Vector3 scale;
+    public List<Vector3> positions;
+    public List<Quaternion> rotations;
+    public List<Vector3> scales;
 
-    public ObjectPosition(Vector3 position, Vector3 scale, Quaternion rotation)
+    public ObjectPositions(List<Vector3> positions, List<Vector3> scales, List<Quaternion> rotations)
     {
-        this.position = position;
-        this.rotation = rotation;
-        this.scale = scale;
+        this.positions = positions;
+        this.rotations = rotations;
+        this.scales = scales;
     }
 
-    public ObjectPosition(Vector3 position)
+    public ObjectPositions(List<Vector3> positions)
     {
-        this.position = position;
-        this.scale = new Vector3(1f, 1f, 1f);
-        this.rotation = Quaternion.identity;
+        this.positions = positions;
+        this.scales = new List<Vector3>(positions.Count);
+        this.rotations = new List<Quaternion>(positions.Count);
+        for (int i = 0; i < positions.Count; i++)
+        {
+            this.scales.Add(new Vector3(1f, 1f, 1f));
+            this.rotations.Add(Quaternion.identity);
+        }
+    }
+    
+    public int Count {
+        get {
+            return this.positions.Count;
+        } 
     }
 }
 
@@ -66,7 +77,7 @@ public class ObjectSpawner
     public GameObject[] terrainObjects;
 
     // Common settings
-    public List<ObjectPosition> positions;
+    public ObjectPositions positions;
     private System.Random prng;
     private bool hide;
 
@@ -76,7 +87,7 @@ public class ObjectSpawner
 
     public ObjectSpawner(
         GameObject[] terrainObjects,
-        List<ObjectPosition> positions,
+        ObjectPositions positions,
         System.Random prng,
         bool hide
     )
@@ -99,7 +110,7 @@ public class ObjectSpawner
     public ObjectSpawner(
         Material[] detailMaterials,
         DetailMode detailMode,
-        List<ObjectPosition> positions,
+        ObjectPositions positions,
         System.Random prng,
         bool hide
     )
@@ -142,9 +153,9 @@ public class ObjectSpawner
             int objIndex = (int)rand;
             GameObject obj = UnityEngine.Object.Instantiate(terrainObjects[objIndex].gameObject);
             obj.transform.parent = parent;
-            obj.transform.localPosition = positions[i].position;
-            obj.transform.rotation = positions[i].rotation;
-            obj.transform.localScale = positions[i].scale;
+            obj.transform.localPosition = positions.positions[i];
+            obj.transform.rotation = positions.rotations[i];
+            obj.transform.localScale = positions.scales[i];
             obj.SetActive(!hide);
             spawnedObjects.Add(obj);
         }
@@ -162,8 +173,6 @@ public class ObjectSpawner
             return;
         }
 
-        this.positions.Shuffle();
-
         int detailsInterval = this.positions.Count / this.detailMaterials.Length;
 
         for (int i = 0; i < this.detailMaterials.Length; i++)
@@ -179,7 +188,7 @@ public class ObjectSpawner
             Mesh mesh;
             if (this.detailMode == DetailMode.Billboard)
             {
-                mesh = this.GenerateBillboardDetailsMesh(this.positions.GetRange(i * detailsInterval, detailsInterval));
+                mesh = this.GenerateBillboardDetailsMesh(this.positions, i * detailsInterval, (i + 1) * detailsInterval);
             }
             else if (this.detailMode == DetailMode.Triangle)
             {
@@ -187,11 +196,11 @@ public class ObjectSpawner
             }
             else if (this.detailMode == DetailMode.Circle)
             {
-                mesh = this.GenerateCircleDetailsMesh(this.positions.GetRange(i * detailsInterval, detailsInterval));
+                mesh = this.GenerateCircleDetailsMesh(this.positions, i * detailsInterval, (i + 1) * detailsInterval);
             }
             else
             {
-                mesh = this.GenerateCircleDetailsMesh(this.positions.GetRange(i * detailsInterval, detailsInterval));
+                mesh = this.GenerateCircleDetailsMesh(this.positions, i * detailsInterval, (i + 1) * detailsInterval);
             }
 
             groupMeshFilter.sharedMesh = mesh;
@@ -211,7 +220,7 @@ public class ObjectSpawner
 
     }
 
-    private Mesh GenerateBillboardDetailsMesh(List<ObjectPosition> points)
+    private Mesh GenerateBillboardDetailsMesh(ObjectPositions points, int start, int end)
     {
         int verticesPerPosition = 4;
         int trianglesPerPosition = 6;
@@ -222,14 +231,14 @@ public class ObjectSpawner
         Vector2[] uvs = new Vector2[numObjects * verticesPerPosition];
         Vector3[] normals = new Vector3[numObjects * verticesPerPosition];
 
-        for (int i = 0; i < points.Count; i++)
+        for (int i = start; i < end; i++)
         {
-            float x = points[i].position.x;
-            float y = points[i].position.y;
-            float z = points[i].position.z;
+            float x = points.positions[i].x;
+            float y = points.positions[i].y;
+            float z = points.positions[i].z;
 
-            float scaleX = points[i].scale.x;
-            float scaleY = points[i].scale.y;
+            float scaleX = points.scales[i].x;
+            float scaleY = points.scales[i].y;
 
             Vector3 a = new Vector3(x - 0.5f * scaleX, y + 0.5f * scaleY, z); // Top left
             Vector3 b = new Vector3(x + 0.5f * scaleX, y + 0.5f * scaleY, z); // Top right
@@ -278,7 +287,7 @@ public class ObjectSpawner
         return new Mesh();
     }
 
-    private Mesh GenerateCircleDetailsMesh(List<ObjectPosition> points)
+    private Mesh GenerateCircleDetailsMesh(ObjectPositions points, int start, int end)
     {
         int verticesPerPosition = 24;
         int trianglesPerPosition = 36;
@@ -291,13 +300,13 @@ public class ObjectSpawner
 
         for (int pos = 0; pos < points.Count; pos++)
         {
-            float x = points[pos].position.x;
-            float y = points[pos].position.y;
-            float z = points[pos].position.z;
+            float x = points.positions[pos].x;
+            float y = points.positions[pos].y;
+            float z = points.positions[pos].z;
 
-            float scaleX = points[pos].scale.x;
-            float scaleY = points[pos].scale.y;
-            float scaleZ = points[pos].scale.z;
+            float scaleX = points.scales[pos].x;
+            float scaleY = points.scales[pos].y;
+            float scaleZ = points.scales[pos].z;
 
             // Horizontal quad
             Vector3 a = new Vector3(x - 0.5f * scaleX, y + 0.5f * scaleY, z); // Top left
