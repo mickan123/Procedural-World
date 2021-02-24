@@ -13,6 +13,22 @@ public class ObjectsOutputNode : BiomeGraphNode
     public ObjectSpawner GetValue()
     {
         ObjectPositionData positionData = GetInputValue<ObjectPositionData>("positionData");
+
+        List<Vector3> updatedPoints = new List<Vector3>();
+        List<Vector3> updatedScales = new List<Vector3>();
+        List<Quaternion> updatedRotations = new List<Quaternion>();
+        for (int i = 0; i < positionData.positions.Count; i++)
+        {
+            if (!positionData.positions.filtered[i])
+            {
+                updatedPoints.Add(positionData.positions.positions[i]);
+                updatedScales.Add(positionData.positions.scales[i]);
+                updatedRotations.Add(positionData.positions.rotations[i]);
+            }
+        }
+        ObjectPositions updatedPositions = new ObjectPositions(updatedPoints, updatedScales, updatedRotations);
+        positionData.positions = updatedPositions;
+
         if (positionData.isDetail)
         {
             return new ObjectSpawner(

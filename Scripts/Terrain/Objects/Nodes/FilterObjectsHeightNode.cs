@@ -38,7 +38,7 @@ public class FilterObjectsHeightNode : BiomeGraphNode
             float height = positionData.heightMap[(int)curPoint.x, (int)curPoint.z];
             if (height > maxHeight || height < minHeight)
             {
-                continue;
+                positionData.positions.filtered[i] = true;
             }
             else
             {
@@ -46,24 +46,10 @@ public class FilterObjectsHeightNode : BiomeGraphNode
                 float minProb = threadSafeCurve.Evaluate(percentage);
                 if (Common.NextFloat(prng, 0f, 1f) > minProb)
                 {
-                    continue;
+                    positionData.positions.filtered[i] = true;
                 }
             }
-            indices.Add(i);
         }
-
-        List<Vector3> updatedPoints = new List<Vector3>(indices.Count);
-        List<Vector3> updatedScales = new List<Vector3>(indices.Count);
-        List<Quaternion> updatedRotations = new List<Quaternion>(indices.Count);
-        for (int i = 0; i < indices.Count; i++)
-        {
-            updatedPoints.Add(positionData.positions.positions[indices[i]]);
-            updatedScales.Add(positionData.positions.scales[indices[i]]);
-            updatedRotations.Add(positionData.positions.rotations[indices[i]]);
-        }
-        ObjectPositions updatedPositions = new ObjectPositions(updatedPoints, updatedScales, updatedRotations);
-        positionData.positions = updatedPositions;
-
         
         return positionData;
     }

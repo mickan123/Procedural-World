@@ -37,12 +37,14 @@ public class ObjectPositions
     public List<Vector3> positions;
     public List<Quaternion> rotations;
     public List<Vector3> scales;
+    public bool[] filtered;
 
     public ObjectPositions(List<Vector3> positions, List<Vector3> scales, List<Quaternion> rotations)
     {
         this.positions = positions;
         this.rotations = rotations;
         this.scales = scales;
+        this.filtered = new bool[positions.Count];
     }
 
     public ObjectPositions(List<Vector3> positions)
@@ -55,6 +57,7 @@ public class ObjectPositions
             this.scales.Add(new Vector3(1f, 1f, 1f));
             this.rotations.Add(Quaternion.identity);
         }
+        this.filtered = new bool[positions.Count];
     }
     
     public int Count {
@@ -188,7 +191,7 @@ public class ObjectSpawner
             Mesh mesh;
             if (this.detailMode == DetailMode.Billboard)
             {
-                mesh = this.GenerateBillboardDetailsMesh(this.positions, i * detailsInterval, (i + 1) * detailsInterval);
+                mesh = this.GenerateBillboardDetailsMesh(i * detailsInterval, (i + 1) * detailsInterval);
             }
             else if (this.detailMode == DetailMode.Triangle)
             {
@@ -196,11 +199,11 @@ public class ObjectSpawner
             }
             else if (this.detailMode == DetailMode.Circle)
             {
-                mesh = this.GenerateCircleDetailsMesh(this.positions, i * detailsInterval, (i + 1) * detailsInterval);
+                mesh = this.GenerateCircleDetailsMesh(i * detailsInterval, (i + 1) * detailsInterval);
             }
             else
             {
-                mesh = this.GenerateCircleDetailsMesh(this.positions, i * detailsInterval, (i + 1) * detailsInterval);
+                mesh = this.GenerateCircleDetailsMesh(i * detailsInterval, (i + 1) * detailsInterval);
             }
 
             groupMeshFilter.sharedMesh = mesh;
@@ -220,25 +223,25 @@ public class ObjectSpawner
 
     }
 
-    private Mesh GenerateBillboardDetailsMesh(ObjectPositions points, int start, int end)
+    private Mesh GenerateBillboardDetailsMesh(int start, int end)
     {
         int verticesPerPosition = 4;
         int trianglesPerPosition = 6;
 
-        int numObjects = points.Count;
+        int numObjects = end - start;
         Vector3[] vertices = new Vector3[numObjects * verticesPerPosition];
         int[] triangles = new int[numObjects * trianglesPerPosition];
         Vector2[] uvs = new Vector2[numObjects * verticesPerPosition];
         Vector3[] normals = new Vector3[numObjects * verticesPerPosition];
 
-        for (int i = start; i < end; i++)
+        for (int i = 0; i < numObjects; i++)
         {
-            float x = points.positions[i].x;
-            float y = points.positions[i].y;
-            float z = points.positions[i].z;
+            float x = this.positions.positions[i].x;
+            float y = this.positions.positions[i].y;
+            float z = this.positions.positions[i].z;
 
-            float scaleX = points.scales[i].x;
-            float scaleY = points.scales[i].y;
+            float scaleX = this.positions.scales[i].x;
+            float scaleY = this.positions.scales[i].y;
 
             Vector3 a = new Vector3(x - 0.5f * scaleX, y + 0.5f * scaleY, z); // Top left
             Vector3 b = new Vector3(x + 0.5f * scaleX, y + 0.5f * scaleY, z); // Top right
@@ -287,26 +290,26 @@ public class ObjectSpawner
         return new Mesh();
     }
 
-    private Mesh GenerateCircleDetailsMesh(ObjectPositions points, int start, int end)
+    private Mesh GenerateCircleDetailsMesh(int start, int end)
     {
         int verticesPerPosition = 24;
         int trianglesPerPosition = 36;
 
-        int numObjects = positions.Count;
+        int numObjects = end - start;
         Vector3[] vertices = new Vector3[numObjects * verticesPerPosition];
         int[] triangles = new int[numObjects * trianglesPerPosition];
         Vector2[] uvs = new Vector2[numObjects * verticesPerPosition];
         Vector3[] normals = new Vector3[numObjects * verticesPerPosition];
-
-        for (int pos = 0; pos < points.Count; pos++)
+        
+        for (int pos = 0; pos < numObjects; pos++)
         {
-            float x = points.positions[pos].x;
-            float y = points.positions[pos].y;
-            float z = points.positions[pos].z;
+            float x = this.positions.positions[pos].x;
+            float y = this.positions.positions[pos].y;
+            float z = this.positions.positions[pos].z;
 
-            float scaleX = points.scales[pos].x;
-            float scaleY = points.scales[pos].y;
-            float scaleZ = points.scales[pos].z;
+            float scaleX = this.positions.scales[pos].x;
+            float scaleY = this.positions.scales[pos].y;
+            float scaleZ = this.positions.scales[pos].z;
 
             // Horizontal quad
             Vector3 a = new Vector3(x - 0.5f * scaleX, y + 0.5f * scaleY, z); // Top left

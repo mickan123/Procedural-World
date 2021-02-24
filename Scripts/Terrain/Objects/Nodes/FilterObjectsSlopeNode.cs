@@ -30,27 +30,15 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
         {
             return null;
         }
-        List<int> indices = new List<int>(positionData.positions.Count);
         for (int i = 0; i < positionData.positions.Count; i++)
         {
             Vector3 curPoint = positionData.positions.positions[i];
             float angle = Common.CalculateAngle(curPoint.x, curPoint.z, positionData.heightMap);
-            if (angle < maxAngle && angle > minAngle)
+            if (angle > maxAngle || angle < minAngle)
             {
-                indices.Add(i);
+                positionData.positions.filtered[i] = true;
             }
         }
-        List<Vector3> updatedPoints = new List<Vector3>(indices.Count);
-        List<Vector3> updatedScales = new List<Vector3>(indices.Count);
-        List<Quaternion> updatedRotations = new List<Quaternion>(indices.Count);
-        for (int i = 0; i < indices.Count; i++)
-        {
-            updatedPoints.Add(positionData.positions.positions[indices[i]]);
-            updatedScales.Add(positionData.positions.scales[indices[i]]);
-            updatedRotations.Add(positionData.positions.rotations[indices[i]]);
-        }
-        ObjectPositions updatedPositions = new ObjectPositions(updatedPoints, updatedScales, updatedRotations);
-        positionData.positions = updatedPositions;
 
         return positionData;
     }
