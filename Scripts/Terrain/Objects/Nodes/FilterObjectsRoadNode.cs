@@ -33,13 +33,11 @@ public class FilterObjectsRoadNode : BiomeGraphNode
         for (int i = 0; i < positionData.positions.Count; i++)
         {
             if (positionData.positions.filtered[i])
-            {   
-                continue;   
+            {
+                continue;
             }
 
-            Vector3 point = positionData.positions.positions[i];
-            float roadStrength = Common.HeightFromFloatCoord(point.x, point.z, biomeGraph.roadStrengthMap);
-
+            float roadStrength = Common.HeightFromFloatCoord(positionData.positions.xCoords[i], positionData.positions.zCoords[i], biomeGraph.roadStrengthMap);
 
             if ((float)prng.NextDouble() * 0.5f < roadStrength)
             {

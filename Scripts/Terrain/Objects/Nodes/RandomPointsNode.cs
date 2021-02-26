@@ -36,9 +36,35 @@ public class RandomPointsNode : BiomeGraphNode
             return null;
         }
 
-        List<Vector3> points = RandomPoints.GeneratePoints(numPoints, prng, biomeGraph.heightMap);
+        int increment = 10;
+        int mapSize = biomeGraph.heightMap.GetLength(0);
 
-        ObjectPositions positions = new ObjectPositions(points);
+        int totalRandomPoints = numPoints * (mapSize / increment + 1) * (mapSize / increment + 1);
+        List<float> xCoords = new List<float>(totalRandomPoints);
+        List<float> yCoords = new List<float>(totalRandomPoints);
+        List<float> zCoords = new List<float>(totalRandomPoints);
+
+        for (int x = 0; x <= mapSize - 3; x += increment)
+        {
+            for (int z = 0; z <= mapSize - 3; z += increment)
+            {
+                float maxRandVal = Mathf.Min(x + increment, mapSize - 3);
+                for (int spawn = 0; spawn < numPoints; spawn++)
+                {
+                    float xCoord = Common.NextFloat(prng, x, Mathf.Min(x + increment, mapSize - 3));
+                    float zCoord = Common.NextFloat(prng, z, Mathf.Min(z + increment, mapSize - 3));
+
+                    float offset = 1f;
+                    float yCoord = Common.HeightFromFloatCoord(xCoord + offset, zCoord + offset, biomeGraph.heightMap);
+
+                    xCoords.Add(xCoord);
+                    yCoords.Add(yCoord);
+                    zCoords.Add(zCoord);
+                }
+            }
+        }
+
+        ObjectPositions positions = new ObjectPositions(xCoords, yCoords, zCoords);
 
         if (this.isDetail)
         {

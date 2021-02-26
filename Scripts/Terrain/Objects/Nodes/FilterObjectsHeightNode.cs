@@ -34,8 +34,7 @@ public class FilterObjectsHeightNode : BiomeGraphNode
         List<int> indices = new List<int>(positionData.positions.Count);
         for (int i = 0; i < positionData.positions.Count; i++)
         {
-            Vector3 curPoint = positionData.positions.positions[i];
-            float height = positionData.heightMap[(int)curPoint.x, (int)curPoint.z];
+            float height = positionData.positions.yCoords[i];
             if (height > maxHeight || height < minHeight)
             {
                 positionData.positions.filtered[i] = true;

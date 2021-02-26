@@ -39,23 +39,19 @@ public class TranslateObjectsNode : BiomeGraphNode
         
         for (int i = 0; i < positionData.positions.Count; i++)
         {
-            positionData.positions.positions[i] = positionData.positions.positions[i] + this.GetTranslation(prng);
+            if (this.randomTranslation)
+            {
+                positionData.positions.xCoords[i] += Common.NextFloat(prng, this.minTranslation.x, this.maxTranslation.x);
+                positionData.positions.yCoords[i] += Common.NextFloat(prng, this.minTranslation.y, this.maxTranslation.y);
+                positionData.positions.zCoords[i] += Common.NextFloat(prng, this.minTranslation.z, this.maxTranslation.z);
+            }
+            else
+            {
+                positionData.positions.xCoords[i] += this.translation.x;
+                positionData.positions.yCoords[i] += this.translation.y;
+                positionData.positions.zCoords[i] += this.translation.z;
+            }
         }
         return positionData;
-    }
-
-    private Vector3 GetTranslation(System.Random prng)
-    {
-        if (this.randomTranslation)
-        {
-            float randomX = Common.NextFloat(prng, this.minTranslation.x, this.maxTranslation.x);
-            float randomY = Common.NextFloat(prng, this.minTranslation.y, this.maxTranslation.y);
-            float randomZ = Common.NextFloat(prng, this.minTranslation.z, this.maxTranslation.z);
-            return new Vector3(randomX, randomY, randomZ);
-        }
-        else
-        {
-            return this.translation;
-        }
     }
 }

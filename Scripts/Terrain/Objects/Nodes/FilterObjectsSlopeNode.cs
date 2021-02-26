@@ -56,10 +56,8 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
         // Iterate over points and filter those that don't match slope criteria
         for (int i = 0; i < positionData.positions.Count; i++)
         {
-            Vector3 curPoint = positionData.positions.positions[i];
-
-            float xIn = curPoint.x;
-            float yIn = curPoint.z;
+            float xIn = positionData.positions.xCoords[i];
+            float yIn = positionData.positions.zCoords[i];
 
             int coordX = (int)xIn;
             int coordZ = (int)yIn;

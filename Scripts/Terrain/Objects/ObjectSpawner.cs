@@ -34,35 +34,42 @@ public class ObjectPositionData
 
 public class ObjectPositions
 {
-    public List<Vector3> positions;
+    public List<float> xCoords;
+    public List<float> yCoords;
+    public List<float> zCoords;
+
     public List<Quaternion> rotations;
     public List<Vector3> scales;
     public bool[] filtered;
 
-    public ObjectPositions(List<Vector3> positions, List<Vector3> scales, List<Quaternion> rotations)
+    public ObjectPositions(List<float> xCoords, List<float> yCoords, List<float> zCoords, List<Vector3> scales, List<Quaternion> rotations)
     {
-        this.positions = positions;
+        this.xCoords = xCoords;
+        this.yCoords = yCoords;
+        this.zCoords = zCoords;
         this.rotations = rotations;
         this.scales = scales;
-        this.filtered = new bool[positions.Count];
+        this.filtered = new bool[this.xCoords.Count];
     }
 
-    public ObjectPositions(List<Vector3> positions)
+    public ObjectPositions(List<float> xCoords, List<float> yCoords, List<float> zCoords)
     {
-        this.positions = positions;
-        this.scales = new List<Vector3>(positions.Count);
-        this.rotations = new List<Quaternion>(positions.Count);
-        for (int i = 0; i < positions.Count; i++)
+        this.xCoords = xCoords;
+        this.yCoords = yCoords;
+        this.zCoords = zCoords;
+        this.scales = new List<Vector3>(this.xCoords.Count);
+        this.rotations = new List<Quaternion>(this.xCoords.Count);
+        for (int i = 0; i < this.xCoords.Count; i++)
         {
             this.scales.Add(new Vector3(1f, 1f, 1f));
             this.rotations.Add(Quaternion.identity);
         }
-        this.filtered = new bool[positions.Count];
+        this.filtered = new bool[this.xCoords.Count];
     }
     
     public int Count {
         get {
-            return this.positions.Count;
+            return this.xCoords.Count;
         } 
     }
 }
@@ -156,7 +163,7 @@ public class ObjectSpawner
             int objIndex = (int)rand;
             GameObject obj = UnityEngine.Object.Instantiate(terrainObjects[objIndex].gameObject);
             obj.transform.parent = parent;
-            obj.transform.localPosition = positions.positions[i];
+            obj.transform.localPosition = new Vector3(positions.xCoords[i], positions.yCoords[i], positions.zCoords[i]);
             obj.transform.rotation = positions.rotations[i];
             obj.transform.localScale = positions.scales[i];
             obj.SetActive(!hide);
@@ -236,9 +243,9 @@ public class ObjectSpawner
 
         for (int i = 0; i < numObjects; i++)
         {
-            float x = this.positions.positions[i].x;
-            float y = this.positions.positions[i].y;
-            float z = this.positions.positions[i].z;
+            float x = this.positions.xCoords[i];
+            float y = this.positions.yCoords[i];
+            float z = this.positions.zCoords[i];
 
             float scaleX = this.positions.scales[i].x;
             float scaleY = this.positions.scales[i].y;
@@ -303,9 +310,9 @@ public class ObjectSpawner
         
         for (int pos = 0; pos < numObjects; pos++)
         {
-            float x = this.positions.positions[pos].x;
-            float y = this.positions.positions[pos].y;
-            float z = this.positions.positions[pos].z;
+            float x = this.positions.xCoords[pos];
+            float y = this.positions.yCoords[pos];
+            float z = this.positions.zCoords[pos];
 
             float scaleX = this.positions.scales[pos].x;
             float scaleY = this.positions.scales[pos].y;
