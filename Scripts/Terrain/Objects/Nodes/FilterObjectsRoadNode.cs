@@ -30,14 +30,18 @@ public class FilterObjectsRoadNode : BiomeGraphNode
         var biomeGraph = this.graph as BiomeGraph;
 
         System.Random prng = new System.Random();
-
-        List<int> indices = new List<int>(positionData.positions.Count);
         for (int i = 0; i < positionData.positions.Count; i++)
         {
+            if (positionData.positions.filtered[i])
+            {   
+                continue;   
+            }
+
             Vector3 point = positionData.positions.positions[i];
             float roadStrength = Common.HeightFromFloatCoord(point.x, point.z, biomeGraph.roadStrengthMap);
 
-            if (Common.NextFloat(prng, 0f, 0.5f) > roadStrength)
+
+            if ((float)prng.NextDouble() * 0.5f < roadStrength)
             {
                 positionData.positions.filtered[i] = true;
             }
