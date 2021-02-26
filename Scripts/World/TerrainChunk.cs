@@ -114,15 +114,36 @@ public class TerrainChunk
         this.UpdateTerrainChunk();
         this.UpdateMaterial();
 
+#if (UNITY_EDITOR && PROFILE)
+        float spawnObjectsStartTime = 0f;
+        if (terrainSettings.IsMainThread()) {
+            spawnObjectsStartTime = Time.realtimeSinceStartup;
+        }
+#endif
         List<ObjectSpawner> spawnObjects = this.chunkData.objects;
         for (int i = 0; i < spawnObjects.Count; i++)
         {
             spawnObjects[i].Spawn(meshObject.transform);
         }
+#if (UNITY_EDITOR && PROFILE)
+        if (terrainSettings.IsMainThread()) {
+            float spawnObjectsEndTime = Time.realtimeSinceStartup;
+            float spawnObjectsTimeTaken = spawnObjectsEndTime - spawnObjectsStartTime;
+            Debug.Log("Time to spawn objects: " + spawnObjectsTimeTaken + "s");
+        }
+#endif
     }
 
     public void UpdateMaterial()
     {
+
+#if (UNITY_EDITOR && PROFILE)
+        float applyMaterialStartTime = 0f;
+        if (terrainSettings.IsMainThread()) {
+            applyMaterialStartTime = Time.realtimeSinceStartup;
+        }
+#endif
+
         BiomeInfo info = this.chunkData.biomeData.biomeInfo;
         int width = info.biomeMap.GetLength(0);
 
@@ -189,6 +210,15 @@ public class TerrainChunk
         matBlock.SetTexture("biomeMapTex", biomeMapTex);
 
         this.meshRenderer.SetPropertyBlock(matBlock);
+
+#if (UNITY_EDITOR && PROFILE)
+        if (terrainSettings.IsMainThread()) {
+            float applyMaterialEndTime = Time.realtimeSinceStartup;
+            float applyMaterialTimeTaken = applyMaterialEndTime - applyMaterialStartTime;
+            Debug.Log("Apply to material time taken: " + applyMaterialTimeTaken + "s");
+        }
+#endif
+
     }
 
     public static void SaveTextureAsPNG(Texture2D _texture, string _fullPath)
