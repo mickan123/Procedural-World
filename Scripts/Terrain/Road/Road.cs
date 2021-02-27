@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-public class Road 
+public class Road
 {
 
     private static readonly int[,] offsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1},
                                                { 1 , 1}, { 1 ,-1}, { -1, 1}, {-1 , -1},
                                                { 2 , 1}, { 2 ,-1}, { -2, 1}, {-2 , -1},
                                                { 1 , 2}, { 1 ,-2}, { -1, 2}, {-1 , -2}};
-                                               
+
     RoadSettings roadSettings;
     TerrainSettings terrainSettings;
 
@@ -21,7 +21,8 @@ public class Road
     private float[,] originalHeightMap;
     private BiomeInfo biomeInfo;
 
-    public Road(TerrainSettings terrainSettings, float[,] heightMap, BiomeInfo info, List<RoadRoute> roadRoutes, Vector2 chunkCentre) {
+    public Road(TerrainSettings terrainSettings, float[,] heightMap, BiomeInfo info, List<RoadRoute> roadRoutes, Vector2 chunkCentre)
+    {
         this.roadSettings = terrainSettings.roadSettings;
         this.terrainSettings = terrainSettings;
 
@@ -35,7 +36,8 @@ public class Road
 
         roadStrengthMap = new float[heightMap.GetLength(0), heightMap.GetLength(1)];
 
-        for (int i = 0; i < roadRoutes.Count; i++) {
+        for (int i = 0; i < roadRoutes.Count; i++)
+        {
             path = new List<Vector3>();
 
             Vector3 roadStart = new Vector3(roadRoutes[i].roadStart.x, Common.HeightFromFloatCoord(roadRoutes[i].roadStart, heightMap), roadRoutes[i].roadStart.y);
@@ -53,9 +55,10 @@ public class Road
         }
     }
 
-    
 
-    private void CreateRoad(Vector3 roadStart, Vector3 roadEnd, Vector3 roadStart2nd, Vector3 roadEnd2nd) {
+
+    private void CreateRoad(Vector3 roadStart, Vector3 roadEnd, Vector3 roadStart2nd, Vector3 roadEnd2nd)
+    {
 #if (UNITY_EDITOR && PROFILE)
         float pathFindStartTime = 0f;
         if (terrainSettings.IsMainThread()) {
@@ -74,7 +77,8 @@ public class Road
 #endif
 
         // The more times we add start and end points smoother end and start of path will be
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 5; i++)
+        {
             this.path.Insert(0, roadStart);
             this.path.Add(roadEnd);
         }
@@ -101,13 +105,16 @@ public class Road
         Common.CopyArrayValues(workingHeightMap, this.heightMap);
     }
 
-    private void FindPath(Vector3 roadStart, Vector3 roadEnd) {
-        
+    private void FindPath(Vector3 roadStart, Vector3 roadEnd)
+    {
+
         int mapSize = heightMap.GetLength(0);
 
         Node[,] nodeGrid = new Node[mapSize, mapSize];
-        for (int i = 0; i < mapSize; i++) {
-            for (int j = 0; j < mapSize; j++) {
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
                 nodeGrid[i, j] = new Node(i, j, this.heightMap[i, j]);
             }
         }
@@ -120,32 +127,40 @@ public class Road
         openSet.Add(startNode);
 
 
-        while (openSet.Count > 0) {
+        while (openSet.Count > 0)
+        {
             Node currentNode = openSet.RemoveFirst();
             closedSet.Add(currentNode);
 
-            if (currentNode == endNode) {
+            if (currentNode == endNode)
+            {
                 RetracePath(currentNode);
                 return;
             }
-            
+
             List<Node> neighbours = GetNeighbours(nodeGrid, currentNode, endNode);
-            for (int i = 0; i < neighbours.Count; i++) {
+            for (int i = 0; i < neighbours.Count; i++)
+            {
                 Node neighbour = neighbours[i];
 
-                if (closedSet.Contains(neighbour)) {
+                if (closedSet.Contains(neighbour))
+                {
                     continue;
                 }
 
                 float costToNeighbour = currentNode.gCost + GetCost(currentNode, neighbour, mapSize);
-                if (costToNeighbour < neighbour.gCost || !openSet.Contains(neighbour)) {
+                if (costToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
+                {
                     neighbour.gCost = costToNeighbour;
                     neighbour.hCost = GetCost(neighbour, endNode, mapSize);
                     neighbour.parent = currentNode;
 
-                    if (!openSet.Contains(neighbour)) {
+                    if (!openSet.Contains(neighbour))
+                    {
                         openSet.Add(neighbour);
-                    } else {
+                    }
+                    else
+                    {
                         openSet.UpdateItem(neighbour);
                     }
                 }
@@ -153,56 +168,63 @@ public class Road
         }
     }
 
-    private List<Node> GetNeighbours(Node[,] nodeGrid, Node node, Node endNode) {
+    private List<Node> GetNeighbours(Node[,] nodeGrid, Node node, Node endNode)
+    {
         List<Node> neighbours = new List<Node>();
         int mapSize = nodeGrid.GetLength(0);
-        
+
         float deltaXend = Mathf.Abs(endNode.x - node.x);
         float deltaYend = Mathf.Abs(endNode.y - node.y);
         float distanceToEndnode = deltaXend * deltaXend + deltaYend * deltaYend;
 
-        if (distanceToEndnode < roadSettings.stepSize * 2f) {
+        if (distanceToEndnode < roadSettings.stepSize * 2f)
+        {
             neighbours.Add(endNode);
         }
 
-        for (int i = 0; i < offsets.GetLength(0); i++) {
+        for (int i = 0; i < offsets.GetLength(0); i++)
+        {
             int neighbourX = node.x + offsets[i, 0] * roadSettings.stepSize;
             int neighbourY = node.y + offsets[i, 1] * roadSettings.stepSize;
 
             neighbourX = Mathf.Clamp(neighbourX, 0, mapSize - 1);
             neighbourY = Mathf.Clamp(neighbourY, 0, mapSize - 1);
-            
+
             neighbours.Add(nodeGrid[neighbourX, neighbourY]);
         }
 
         return neighbours;
     }
 
-    private float GetCost(Node a, Node b, int mapSize) {
+    private float GetCost(Node a, Node b, int mapSize)
+    {
 
         float deltaX = a.x - b.x;
         float deltaY = a.y - b.y;
-        float flatDist =  Mathf.Sqrt(deltaX * deltaX + deltaY * deltaY);
+        float flatDist = Mathf.Sqrt(deltaX * deltaX + deltaY * deltaY);
 
         float heightDiff = Mathf.Abs(a.height - b.height);
-        
+
         float slope = heightDiff / flatDist;
-        float slopeCost = slope; 
-        
+        float slopeCost = slope;
+
         // Penalize being close to edge of chunk
         float edgeCost = 0f;
         float halfWidth = roadSettings.width / 2f;
-        if (b.x < halfWidth || b.x > mapSize - 1 -  halfWidth  
-            || b.y < halfWidth || b.y > mapSize - 1 - halfWidth) {
+        if (b.x < halfWidth || b.x > mapSize - 1 - halfWidth
+            || b.y < halfWidth || b.y > mapSize - 1 - halfWidth)
+        {
             edgeCost = 100000f;
         }
 
         return slopeCost + edgeCost;
     }
 
-    private void RetracePath(Node node) {
+    private void RetracePath(Node node)
+    {
         Node currentNode = node;
-        while (currentNode != null) {
+        while (currentNode != null)
+        {
             path.Add(new Vector3(currentNode.x, this.heightMap[currentNode.x, currentNode.y], currentNode.y));
             currentNode = currentNode.parent;
         }
@@ -210,25 +232,29 @@ public class Road
         path.Reverse();
     }
 
-    private void SmoothPath() {
+    private void SmoothPath()
+    {
         List<Vector3> smoothedPoints;
         List<Vector3> points;
         int pointsLength = 0;
         int curvedLength = 0;
 
         pointsLength = this.path.Count;
-         
+
         curvedLength = (pointsLength * Mathf.RoundToInt(this.roadSettings.smoothness)) - 1;
         smoothedPoints = new List<Vector3>(curvedLength);
 
         float t = 0.0f;
-        for(int pointInTimeOnCurve = 0; pointInTimeOnCurve < curvedLength + 1; pointInTimeOnCurve++){
+        for (int pointInTimeOnCurve = 0; pointInTimeOnCurve < curvedLength + 1; pointInTimeOnCurve++)
+        {
             t = Mathf.InverseLerp(0, curvedLength, pointInTimeOnCurve);
-            
+
             points = new List<Vector3>(this.path);
-            
-            for(int j = pointsLength - 1; j > 0; j--){
-                for (int i = 0; i < j; i++){
+
+            for (int j = pointsLength - 1; j > 0; j--)
+            {
+                for (int i = 0; i < j; i++)
+                {
                     points[i] = (1 - t) * points[i] + t * points[i + 1];
                 }
             }
@@ -236,32 +262,40 @@ public class Road
             // Check to see if previous paths have edited the height map nearby
             bool averageWithCurrent = false;
             int range = 10;
-            for (int i = -range; i <= range; i++) {
-                for (int j = -range; j <= range; j++) {
+            for (int i = -range; i <= range; i++)
+            {
+                for (int j = -range; j <= range; j++)
+                {
                     float originalY = Common.HeightFromFloatCoord(points[0].x + i, points[0].z + j, this.originalHeightMap);
                     float currentY = Common.HeightFromFloatCoord(points[0].x + i, points[0].z + j, this.heightMap);
-                    if (originalY != currentY) {
+                    if (originalY != currentY)
+                    {
                         averageWithCurrent = true;
                     }
                 }
             }
-            
-            if (averageWithCurrent) {
-                float newY = (Common.HeightFromFloatCoord(points[0].x, points[0].z, this.heightMap) + points[0].y) /2f;
+
+            if (averageWithCurrent)
+            {
+                float newY = (Common.HeightFromFloatCoord(points[0].x, points[0].z, this.heightMap) + points[0].y) / 2f;
                 smoothedPoints.Add(new Vector3(points[0].x, newY, points[0].z));
             }
-            else {
+            else
+            {
                 smoothedPoints.Add(points[0]);
-            }   
+            }
         }
         this.path = smoothedPoints;
     }
 
-    private void CarvePath(float[,] workingHeightMap, float[,] referenceHeightMap) {
+    private void CarvePath(float[,] workingHeightMap, float[,] referenceHeightMap)
+    {
         int mapSize = referenceHeightMap.GetLength(0);
         int[,] closestPathIndexes = FindClosestPathIndexes(referenceHeightMap);
-        for (int x = 0; x < mapSize; x++) {
-            for (int y = 0; y < mapSize; y++) {
+        for (int x = 0; x < mapSize; x++)
+        {
+            for (int y = 0; y < mapSize; y++)
+            {
                 Vector3 closestPointOnLine = ClosestPointOnLine(x, y, referenceHeightMap, closestPathIndexes[x, y]);
                 Vector3 curPoint = new Vector3(x, referenceHeightMap[x, y], y);
                 CarvePoint(curPoint, closestPointOnLine, workingHeightMap, referenceHeightMap, x, y);
@@ -270,19 +304,24 @@ public class Road
     }
 
     // Finds closest point on path at every point
-    private int[,] FindClosestPathIndexes(float[,] referenceHeightMap) {
+    private int[,] FindClosestPathIndexes(float[,] referenceHeightMap)
+    {
         int mapSize = referenceHeightMap.GetLength(0);
 
         int[,] closestPathIndexes = new int[mapSize, mapSize];
-        for (int i = 0; i < mapSize; i++) {
-            for (int j = 0; j < mapSize; j++) {
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
                 Vector3 curPoint = new Vector3(i, referenceHeightMap[i, j], j);
 
                 float minDist = float.MaxValue;
                 int closestPointIndex = 0;
-                for (int k = 0; k < path.Count; k++) {
+                for (int k = 0; k < path.Count; k++)
+                {
                     float dist = (path[k] - curPoint).sqrMagnitude;
-                    if (dist < minDist) {
+                    if (dist < minDist)
+                    {
                         minDist = dist;
                         closestPointIndex = k;
                     }
@@ -294,21 +333,25 @@ public class Road
         return closestPathIndexes;
     }
 
-    private Vector3 ClosestPointOnLine(int x, int y, float[,] referenceHeightMap, int closestPointIndex) {
+    private Vector3 ClosestPointOnLine(int x, int y, float[,] referenceHeightMap, int closestPointIndex)
+    {
         Vector3 curPoint = new Vector3(x, referenceHeightMap[x, y], y);
         Vector2 curPoint2d = new Vector2(curPoint.x, curPoint.z);
 
-        Vector3 closestPointOnPath = path[closestPointIndex]; 
-        
+        Vector3 closestPointOnPath = path[closestPointIndex];
+
         // Get distance of 2nd closest point so we can form a line
         Vector3 secondClosestPoint;
-        if (closestPointIndex == path.Count - 1) {
+        if (closestPointIndex == path.Count - 1)
+        {
             secondClosestPoint = path[closestPointIndex - 1];
         }
-        else if (closestPointIndex == 0) {
+        else if (closestPointIndex == 0)
+        {
             secondClosestPoint = path[closestPointIndex + 1];
         }
-        else {
+        else
+        {
             float distPre = Vector2.Distance(new Vector2(path[closestPointIndex - 1].x, path[closestPointIndex - 1].z), curPoint2d);
             float distPost = Vector2.Distance(new Vector2(path[closestPointIndex + 1].x, path[closestPointIndex + 1].z), curPoint2d);
             secondClosestPoint = distPre < distPost ? path[closestPointIndex - 1] : path[closestPointIndex + 1];
@@ -325,15 +368,16 @@ public class Road
         Vector3 closestPoint = origin + direction * dotP;
 
         // Need to clamp closestpoint within roadwidth of the start and endpoints of the line
-        Vector3 clampedClosestPoint = new Vector3(Mathf.Clamp(closestPoint.x, origin.x - 2*roadSettings.width, origin.x + direction.x + 2*roadSettings.width),
-                                                  Mathf.Clamp(closestPoint.y, origin.y - 2*roadSettings.width, origin.y + direction.y + 2*roadSettings.width),
-                                                  Mathf.Clamp(closestPoint.z, origin.z - 2*roadSettings.width, origin.z + direction.z + 2*roadSettings.width));
+        Vector3 clampedClosestPoint = new Vector3(Mathf.Clamp(closestPoint.x, origin.x - 2 * roadSettings.width, origin.x + direction.x + 2 * roadSettings.width),
+                                                  Mathf.Clamp(closestPoint.y, origin.y - 2 * roadSettings.width, origin.y + direction.y + 2 * roadSettings.width),
+                                                  Mathf.Clamp(closestPoint.z, origin.z - 2 * roadSettings.width, origin.z + direction.z + 2 * roadSettings.width));
 
         return clampedClosestPoint;
     }
 
     // Carves out height map at x and y based on curPoint in path and closestPointOnLine of path
-    private void CarvePoint(Vector3 curPoint, Vector3 closestPointOnLine, float[,] workingHeightMap, float[,] referenceHeightMap, int x, int y) {
+    private void CarvePoint(Vector3 curPoint, Vector3 closestPointOnLine, float[,] workingHeightMap, float[,] referenceHeightMap, int x, int y)
+    {
         int mapSize = workingHeightMap.GetLength(0);
 
         float distance = Vector2.Distance(new Vector2(closestPointOnLine.x, closestPointOnLine.z), new Vector2(curPoint.x, curPoint.z));
@@ -346,19 +390,21 @@ public class Road
 
         // Calculate roadMultiplier dependent on which biomes have roads enabled
         float biomeRoadMultiplier = 0f;
-        for (int k = 0; k < terrainSettings.biomeSettings.Count; k++) {
-            if (terrainSettings.biomeSettings[k].allowRoads) {
+        for (int k = 0; k < terrainSettings.biomeSettings.Count; k++)
+        {
+            if (terrainSettings.biomeSettings[k].allowRoads)
+            {
                 biomeRoadMultiplier += biomeInfo.biomeStrengths[x, y, k];
             }
         }
-        
+
         // Calculate slope multiplier
         float angle = Common.CalculateAngle(x, y, workingHeightMap);
         float slopeMultiplier = Mathf.Max(0f, 1f - (angle / this.roadSettings.maxAngle));
 
         // Calculate edge multipler which we use to not applying terrain carving at edge of map
         float distFromEdgeChunk = Mathf.Min(
-                                    Mathf.Abs(Mathf.Max(x, y) - mapSize), 
+                                    Mathf.Abs(Mathf.Max(x, y) - mapSize),
                                     Mathf.Abs(Mathf.Min(x, y))
                                     );
         float edgeMultiplier = Common.SmoothRange(distFromEdgeChunk, 3f, 10f);
@@ -366,16 +412,18 @@ public class Road
 
         // If within half width of road then fully carve path, otherwise smooth outwards
         float halfRoadWidth = roadSettings.width / 2f;
-        if (distance < halfRoadWidth) {
-            
+        if (distance < halfRoadWidth)
+        {
+
             float percentage = distance / halfRoadWidth;
             float roadMultiplier = percentage * roadSettings.blendFactor;
             float newValue = (1f - roadMultiplier) * closestPointOnLine.y + roadMultiplier * curPoint.y;
-            
+
             workingHeightMap[x, y] = finalValueMultiplier * newValue + (1 - finalValueMultiplier) * workingHeightMap[x, y];
             roadStrengthMap[x, y] = Mathf.Max(roadStrengthMap[x, y], slopeMultiplier * biomeRoadMultiplier);
         }
-        else if (distance < roadSettings.width) {
+        else if (distance < roadSettings.width)
+        {
             float percentage = (distance - halfRoadWidth) / halfRoadWidth;
             float roadMultiplier = percentage * (1f - roadSettings.blendFactor) + roadSettings.blendFactor;
             float newValue = roadMultiplier * curPoint.y + (1f - roadMultiplier) * closestPointOnLine.y;
@@ -385,7 +433,8 @@ public class Road
         }
     }
 
-    private class Node : IHeapItem<Node> {
+    private class Node : IHeapItem<Node>
+    {
         public int x;
         public int y;
         public float height;
@@ -395,8 +444,9 @@ public class Road
         int heapIndex;
 
         public Node parent;
-        
-        public Node(int x, int y, float height) {
+
+        public Node(int x, int y, float height)
+        {
             this.x = x;
             this.y = y;
             this.height = height;
@@ -404,24 +454,31 @@ public class Road
             hCost = 0;
         }
 
-        public float fCost {
-            get {
+        public float fCost
+        {
+            get
+            {
                 return gCost + hCost;
             }
         }
 
-        public int HeapIndex {
-            get {
+        public int HeapIndex
+        {
+            get
+            {
                 return heapIndex;
             }
-            set {
+            set
+            {
                 heapIndex = value;
             }
         }
 
-        public int CompareTo(Node nodeToCompare) {
+        public int CompareTo(Node nodeToCompare)
+        {
             int compare = fCost.CompareTo(nodeToCompare.fCost);
-            if (compare == 0) {
+            if (compare == 0)
+            {
                 compare = hCost.CompareTo(nodeToCompare.hCost);
             }
             return -compare;
