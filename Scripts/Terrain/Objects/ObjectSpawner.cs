@@ -3,32 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class ObjectPositionData
-{
-    public bool isDetail = false;
-    
+{    
     public ObjectPositions positions;
     public float[,] heightMap;
 
-    public GameObject[] terrainObjects;
-
-    public Material[] detailMaterials;
-    public ObjectSpawner.DetailMode detailMode;
-
-    public ObjectPositionData(ObjectPositions positions, float[,] heightMap, GameObject[] terrainObjects)
+    public ObjectPositionData(ObjectPositions positions, float[,] heightMap)
     {
         this.positions = positions;
         this.heightMap = heightMap;
-        this.terrainObjects = terrainObjects;
-        this.isDetail = false;
-    }
-
-    public ObjectPositionData(ObjectPositions positions, float[,] heightMap, Material[] detailMaterials, ObjectSpawner.DetailMode detailMode)
-    {
-        this.positions = positions;
-        this.heightMap = heightMap;
-        this.detailMaterials = detailMaterials;
-        this.detailMode = detailMode;
-        this.isDetail = true;
     }
 }
 
@@ -90,6 +72,7 @@ public class ObjectSpawner
     public ObjectPositions positions;
     private System.Random prng;
     private bool hide;
+    private bool staticBatch;
 
     // Internal vars
     private List<GameObject> spawnedObjects;
@@ -99,6 +82,7 @@ public class ObjectSpawner
         GameObject[] terrainObjects,
         ObjectPositions positions,
         System.Random prng,
+        bool staticBatch,
         bool hide
     )
     {
@@ -114,6 +98,7 @@ public class ObjectSpawner
         this.positions = positions;
         this.prng = prng;
         this.spawnedObjects = new List<GameObject>();
+        this.staticBatch = staticBatch;
         this.hide = hide;
     }
 
@@ -169,7 +154,7 @@ public class ObjectSpawner
             obj.SetActive(!hide);
             spawnedObjects.Add(obj);
         }
-        if (spawnedObjects.Count > 0)
+        if (spawnedObjects.Count > 0 && staticBatch)
         {
             StaticBatchingUtility.Combine(spawnedObjects.ToArray(), spawnedObjects[0]);
         }
@@ -184,6 +169,10 @@ public class ObjectSpawner
         }
 
         int detailsInterval = this.positions.Count / this.detailMaterials.Length;
+
+        // Shuffle so we get even distribution of different detail materials as the order of
+        // positions are grouped (e.g. first x points in 0,0 square next x in 0,1 ...)
+        this.positions.xCoords.Shuffle(this.positions.yCoords, this.positions.zCoords);
 
         for (int i = 0; i < this.detailMaterials.Length; i++)
         {
@@ -308,7 +297,7 @@ public class ObjectSpawner
         Vector2[] uvs = new Vector2[numObjects * verticesPerPosition];
         Vector3[] normals = new Vector3[numObjects * verticesPerPosition];
         
-        for (int pos = 0; pos < numObjects; pos++)
+        for (int pos = start; pos < end; pos++)
         {
             float x = this.positions.xCoords[pos];
             float y = this.positions.yCoords[pos];
@@ -336,7 +325,7 @@ public class ObjectSpawner
             Vector3 k = new Vector3(x + 0.25f * scaleX, y - 0.5f * scaleY, z + 0.433f * scaleZ); // Bottom right
             Vector3 l = new Vector3(x - 0.25f * scaleX, y - 0.5f * scaleY, z - 0.433f * scaleZ); // Bottom left
 
-            int verticesOffset = pos * verticesPerPosition;
+            int verticesOffset = (pos - start) * verticesPerPosition;
 
             // Horizontal quad
             vertices[verticesOffset + 0] = a;
@@ -374,7 +363,7 @@ public class ObjectSpawner
             vertices[verticesOffset + 22] = k;
             vertices[verticesOffset + 23] = l;
 
-            int trianglesOffset = pos * trianglesPerPosition;
+            int trianglesOffset = (pos - start) * trianglesPerPosition;
 
             // Horizontal quad
             triangles[trianglesOffset + 0] = 0 + verticesOffset;

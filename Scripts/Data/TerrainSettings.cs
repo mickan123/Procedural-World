@@ -57,7 +57,6 @@ public class TerrainSettings : ScriptableObject
     // Keep reference of to these textures so that shader doesn't lose values 
     private TerrainChunk chunk;
     private Texture2DArray biomeBaseTexturesArray;
-    private Texture2DArray biomeSlopeTexturesArray;
     private Texture2DArray roadTextureArray;
 
     public float sqrTransitionDistance
@@ -279,7 +278,6 @@ public class TerrainSettings : ScriptableObject
         float[] textureScales = new float[biomeSettings.Count * maxTexturesPerBiome];
 
         this.biomeBaseTexturesArray = new Texture2DArray(textureSize, textureSize, maxTexturesPerBiome * maxBiomeCount, textureFormat, true);
-        this.biomeSlopeTexturesArray = new Texture2DArray(textureSize, textureSize, maxTexturesPerBiome * maxBiomeCount, textureFormat, true);
         this.roadTextureArray = new Texture2DArray(textureSize, textureSize, maxTexturesPerBiome, textureFormat, true);
 
         for (int i = 0; i < biomeSettings.Count; i++)
@@ -370,46 +368,6 @@ public class TerrainSettings : ScriptableObject
                 biomeSettings[i].OnValidate();
             }
         }
-    }
-
-    public void ValidateBiomeSpawnCriteria()
-    {
-        for (int i = 1; i < biomeSettings.Count; i++)
-        {
-            for (int j = 0; j < i; j++)
-            {
-                CompareBiomeSettingSpawnCriteria(biomeSettings[j], biomeSettings[i]);
-            }
-        }
-    }
-
-    public void CompareBiomeSettingSpawnCriteria(BiomeSettings a, BiomeSettings b)
-    {
-        // Placeholder
-    }
-
-    private bool Overlaps(float startA, float endA, float startB, float endB)
-    {
-        Debug.Log(startA + " " + endA);
-        Debug.Log(startB + " " + endB);
-
-        if (startB < startA && endB > startA)
-        {
-            return true;
-        }
-        if (startB < endA && endB > endA)
-        {
-            return true;
-        }
-        if (startA <= startB && endA >= endB)
-        {
-            return true;
-        }
-        if (startA >= startB && endA <= endB)
-        {
-            return true;
-        }
-        return false;
     }
 
 #endif

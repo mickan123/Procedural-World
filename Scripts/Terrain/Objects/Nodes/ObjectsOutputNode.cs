@@ -9,6 +9,12 @@ public class ObjectsOutputNode : BiomeGraphNode
     [Input(ShowBackingValue.Never, ConnectionType.Override)] public ObjectPositionData positionData;
 
     public bool hide = false;
+    public bool isDetail = false;
+    public bool staticBatch = false;
+
+    public GameObject[] terrainObjects;
+    public Material[] detailMaterials;
+    public ObjectSpawner.DetailMode detailMode;
 
     public ObjectSpawner GetValue()
     {
@@ -33,11 +39,11 @@ public class ObjectsOutputNode : BiomeGraphNode
         ObjectPositions updatedPositions = new ObjectPositions(updatedXCoords, updatedYCoords, updatedZCoords, updatedScales, updatedRotations);
         positionData.positions = updatedPositions;
 
-        if (positionData.isDetail)
+        if (this.isDetail)
         {
             return new ObjectSpawner(
-                positionData.detailMaterials,
-                positionData.detailMode,
+                this.detailMaterials,
+                this.detailMode,
                 positionData.positions,
                 new System.Random(seed),
                 this.hide
@@ -46,10 +52,11 @@ public class ObjectsOutputNode : BiomeGraphNode
         else
         {
             return new ObjectSpawner(
-                positionData.terrainObjects,
+                this.terrainObjects,
                 positionData.positions,
                 new System.Random(seed),
-                this.hide
+                this.hide,
+                this.staticBatch
             );
         }
     }

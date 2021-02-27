@@ -8,10 +8,6 @@ public class RandomPointsNode : BiomeGraphNode
 {
     [Output] public ObjectPositionData positionData;
 
-    public bool isDetail = false;
-    public GameObject[] terrainObjects;
-    public Material[] detailMaterials;
-    public ObjectSpawner.DetailMode detailMode;
     public int numPoints; // TODO convert this to density
 
     public override object GetValue(NodePort port)
@@ -64,15 +60,6 @@ public class RandomPointsNode : BiomeGraphNode
             }
         }
 
-        ObjectPositions positions = new ObjectPositions(xCoords, yCoords, zCoords);
-
-        if (this.isDetail)
-        {
-            return new ObjectPositionData(positions, biomeGraph.heightMap, detailMaterials, detailMode);
-        }
-        else
-        {
-            return new ObjectPositionData(positions, biomeGraph.heightMap, terrainObjects);
-        }
+        return new ObjectPositionData(new ObjectPositions(xCoords, yCoords, zCoords), biomeGraph.heightMap);
     }
 }

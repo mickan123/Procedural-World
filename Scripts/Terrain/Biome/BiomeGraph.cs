@@ -85,10 +85,6 @@ public class BiomeGraph : NodeGraph
                     ObjectsOutputNode typedNode = node as ObjectsOutputNode;
                     objectSpawners.Add(typedNode.GetValue());
                 }
-                else if (node is DetailsOutputNode) {
-                    DetailsOutputNode typedNode = node as DetailsOutputNode;
-                    objectSpawners.Add(typedNode.GetValue());
-                }
             }
 
             return objectSpawners;

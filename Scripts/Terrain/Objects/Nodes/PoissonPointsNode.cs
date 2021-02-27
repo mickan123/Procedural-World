@@ -8,10 +8,7 @@ public class PoissonPointsNode : BiomeGraphNode
 {
     [Output] public ObjectPositionData positionData;
 
-    public bool isDetail = false;
-    public GameObject[] terrainObjects;
-    public Material[] detailMaterials;
-    public ObjectSpawner.DetailMode detailMode;
+    
     public PoissonDiskSamplingSettings settings;
 
     public override object GetValue(NodePort port)
@@ -51,13 +48,6 @@ public class PoissonPointsNode : BiomeGraphNode
 
         ObjectPositions positions = new ObjectPositions(xCoords, yCoords, zCoords);
 
-        if (this.isDetail)
-        {
-            return new ObjectPositionData(positions, biomeGraph.heightMap, detailMaterials, detailMode);
-        }
-        else
-        {
-            return new ObjectPositionData(positions, biomeGraph.heightMap, terrainObjects);
-        }
+        return new ObjectPositionData(positions, biomeGraph.heightMap);
     }
 }

@@ -17,21 +17,6 @@ public class PoissonPointsNodeEditor : NodeEditor
 
         NodeEditorGUILayout.PortField(node.GetPort("heightMap"));
 
-        SerializedProperty isDetail = serializedObject.FindProperty("isDetail");
-        NodeEditorGUILayout.PropertyField(isDetail, true);
-        if (node.isDetail)
-        {
-            SerializedProperty detailMaterials = serializedObject.FindProperty("detailMaterials");
-            NodeEditorGUILayout.PropertyField(detailMaterials, true);
-            SerializedProperty detailMode = serializedObject.FindProperty("detailMode");
-            NodeEditorGUILayout.PropertyField(detailMode, true);
-        }
-        else
-        {
-            SerializedProperty terrainObjects = serializedObject.FindProperty("terrainObjects");
-            NodeEditorGUILayout.PropertyField(terrainObjects, true);
-        }
-
         SerializedProperty varyRadius = serializedObject.FindProperty("settings.varyRadius");
         NodeEditorGUILayout.PropertyField(varyRadius, true);
         if (node.settings.varyRadius) {

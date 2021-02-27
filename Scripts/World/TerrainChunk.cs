@@ -182,15 +182,15 @@ public class TerrainChunk
 
                 biomeMapTex.SetPixel(x, y, new Color(chunkData.road.roadStrengthMap[x, y], angle, 0f, 0f));
 
-                for (int w = 0; w < terrainSettings.maxBiomeCount; w += biomesPerTexture)
+                for (int k = 0; k < terrainSettings.maxBiomeCount; k += biomesPerTexture)
                 {
-                    int texIndex = w / biomesPerTexture;
+                    int texIndex = k / biomesPerTexture;
 
                     Color biomeStrengths = new Color(
-                        (w < numBiomes) ? info.biomeStrengths[x, y, w] : 0f,
-                        (w + 1 < numBiomes) ? info.biomeStrengths[x, y, w + 1] : 0f,
-                        (w + 2 < numBiomes) ? info.biomeStrengths[x, y, w + 2] : 0f,
-                        (w + 3 < numBiomes) ? info.biomeStrengths[x, y, w + 3] : 0f
+                        (k < numBiomes) ? info.biomeStrengths[x, y, k] : 0f,
+                        (k + 1 < numBiomes) ? info.biomeStrengths[x, y, k + 1] : 0f,
+                        (k + 2 < numBiomes) ? info.biomeStrengths[x, y, k + 2] : 0f,
+                        (k + 3 < numBiomes) ? info.biomeStrengths[x, y, k + 3] : 0f
                     );
                     biomeStrengthTextures[texIndex].SetPixel(x, y, biomeStrengths);
                 }

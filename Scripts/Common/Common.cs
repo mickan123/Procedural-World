@@ -105,19 +105,19 @@ public static class Common
                      + heightSE * x * y;
 
         float angleN = Mathf.Abs(Mathf.Rad2Deg * Mathf.Atan2(
-            heightN - height, 
+            heightN - height,
             (1 - y)
         ));
         float angleS = Mathf.Abs(Mathf.Rad2Deg * Mathf.Atan2(
-            heightS - height, 
+            heightS - height,
             y
         ));
         float angleE = Mathf.Abs(Mathf.Rad2Deg * Mathf.Atan2(
-            heightE - height, 
+            heightE - height,
             x
         ));
         float angleW = Mathf.Abs(Mathf.Rad2Deg * Mathf.Atan2(
-            heightW - height, 
+            heightW - height,
             (1 - x)
         ));
         float averageAngle = (angleW + angleE + angleS + angleN) / 4f;
@@ -125,7 +125,7 @@ public static class Common
         return averageAngle;
     }
 
-    private static readonly int[,] offsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1} };
+    private static readonly int[,] offsets = { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
 
     public static float CalculateAngle(int xIn, int yIn, float[,] heightMap)
     {
@@ -135,10 +135,10 @@ public static class Common
         for (int i = 0; i < 4; i++)
         {
             float angle = AngleBetweenTwoPoints(
-                xIn, 
-                yIn, 
-                Mathf.Min(Mathf.Max(xIn + offsets[i, 0], 0), maxIndex), 
-                Mathf.Min(Mathf.Max(yIn + offsets[i, 1], 0), maxIndex), 
+                xIn,
+                yIn,
+                Mathf.Min(Mathf.Max(xIn + offsets[i, 0], 0), maxIndex),
+                Mathf.Min(Mathf.Max(yIn + offsets[i, 1], 0), maxIndex),
                 heightMap
             );
             maxAngle = Mathf.Max(maxAngle, angle);
@@ -149,7 +149,7 @@ public static class Common
     private static float AngleBetweenTwoPoints(int x1, int y1, int x2, int y2, float[,] heightMap)
     {
         float angle = Mathf.Abs(Mathf.Rad2Deg * Mathf.Atan2(
-            heightMap[x1, y1] - heightMap[x2, y2], 
+            heightMap[x1, y1] - heightMap[x2, y2],
             1f
         ));
         return angle;
@@ -222,17 +222,40 @@ public static class Common
         return centre /= points.Count;
     }
 
-    public static void Shuffle<T>(this IList<T> list)  
-    {  
+    public static void Shuffle<T>(this IList<T> list)
+    {
         System.Random rng = new System.Random();
-        int n = list.Count;  
-        while (n > 1) {  
-            n--;  
-            int k = rng.Next(n + 1);  
-            T value = list[k];  
-            list[k] = list[n];  
-            list[n] = value;  
-        }  
+        int n = list.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = rng.Next(n + 1);
+            T value = list[k];
+            list[k] = list[n];
+            list[n] = value;
+        }
+    }
+
+    public static void Shuffle<T>(this IList<T> list, IList<T> listb, IList<T> listc)
+    {
+        System.Random rng = new System.Random();
+        int n = list.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = rng.Next(n + 1);
+            T value = list[k];
+            list[k] = list[n];
+            list[n] = value;
+
+            value = listb[k];
+            listb[k] = listb[n];
+            listb[n] = value;
+
+            value = listc[k];
+            listc[k] = listc[n];
+            listc[n] = value;
+        }
     }
 
 #if UNITY_EDITOR
