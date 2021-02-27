@@ -78,82 +78,51 @@ public static class HydraulicErosion
         int mapSize = values.GetLength(0);
         int numBiomes = terrainSettings.biomeSettings.Count;
 
-        // Check if we actually perform any erosion
-        bool performErosion = false;
+        float[] map = new float[mapSize * mapSize];
         for (int i = 0; i < mapSize; i++)
         {
             for (int j = 0; j < mapSize; j++)
             {
-                for (int k = 0; k < numBiomes; k++)
-                {
-                    if (info.biomeStrengths[i, j, k] != 0f && terrainSettings.biomeSettings[k].hydraulicErosion)
-                    {
-                        performErosion = true;
-                    }
-                }
+                map[i * mapSize + j] = values[i, j];
             }
         }
 
-        if (performErosion)
+        // Generate random indices to use
+        ErosionSettings settings = terrainSettings.erosionSettings;
+        int[] randomIndices = new int[settings.numHydraulicErosionIterations];
+        System.Random prng = new System.Random(settings.seed);
+        for (int i = 0; i < settings.numHydraulicErosionIterations; i++)
         {
-            float[] map = new float[mapSize * mapSize];
-            for (int i = 0; i < mapSize; i++)
-            {
-                for (int j = 0; j < mapSize; j++)
-                {
-                    map[i * mapSize + j] = values[i, j];
-                }
-            }
+            int randomX = prng.Next(settings.erosionBrushRadius, mapSize + settings.erosionBrushRadius);
+            int randomY = prng.Next(settings.erosionBrushRadius, mapSize + settings.erosionBrushRadius);
+            randomIndices[i] = randomY * mapSize + randomX;
+        }
 
-            // Generate random indices to use
-            ErosionSettings settings = terrainSettings.erosionSettings;
-            int[] randomIndices = new int[settings.numHydraulicErosionIterations];
-            System.Random prng = new System.Random(settings.seed);
-            for (int i = 0; i < settings.numHydraulicErosionIterations; i++)
-            {
-                int randomX = prng.Next(settings.erosionBrushRadius, mapSize + settings.erosionBrushRadius);
-                int randomY = prng.Next(settings.erosionBrushRadius, mapSize + settings.erosionBrushRadius);
-                randomIndices[i] = randomY * mapSize + randomX;
-            }
+        bool gpuDone = false;
+        if (terrainSettings.IsMainThread())
+        {
+            GPUErosion(settings, mapSize, map, randomIndices, ref gpuDone);
+        }
+        else
+        {
+            Dispatcher.RunOnMainThread(() => GPUErosion(settings, mapSize, map, randomIndices, ref gpuDone));
+        }
+        while (!gpuDone)
+        {
+            Thread.Sleep(1);
+        }
 
-            bool gpuDone = false;
-            if (terrainSettings.IsMainThread())
+        // Fade away erosion at edge
+        float blendDistance = 10f;
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
             {
-                GPUErosion(settings, mapSize, map, randomIndices, ref gpuDone);
-            }
-            else
-            {
-                Dispatcher.RunOnMainThread(() => GPUErosion(settings, mapSize, map, randomIndices, ref gpuDone));
-            }
-            while (!gpuDone)
-            {
-                Thread.Sleep(1);
-            }
-
-            // Weight erosion by biome strengths, whether erosion is enabled, and distance from edge
-            float blendDistance = 10f;
-            for (int i = 0; i < mapSize; i++)
-            {
-                for (int j = 0; j < mapSize; j++)
-                {
-                    float nearDist = Mathf.Min(i, j);
-                    float farDist = mapSize - 1 - Mathf.Max(i, j);
-                    float distFromEdge = Mathf.Min(nearDist, farDist);
-                    float edgeMultiplier = Mathf.Min(distFromEdge / blendDistance, 1f);
-                    float val = 0;
-                    for (int k = 0; k < numBiomes; k++)
-                    {
-                        if (terrainSettings.biomeSettings[k].hydraulicErosion)
-                        {
-                            val += info.biomeStrengths[i, j, k] * map[i * mapSize + j];
-                        }
-                        else
-                        {
-                            val += info.biomeStrengths[i, j, k] * values[i, j];
-                        }
-                    }
-                    values[i, j] = edgeMultiplier * map[i * mapSize + j]  + (1f - edgeMultiplier) * values[i, j];
-                }
+                float nearDist = Mathf.Min(i, j);
+                float farDist = mapSize - 1 - Mathf.Max(i, j);
+                float distFromEdge = Mathf.Min(nearDist, farDist);
+                float edgeMultiplier = Mathf.Min(distFromEdge / blendDistance, 1f);
+                values[i, j] = edgeMultiplier * map[i * mapSize + j]  + (1f - edgeMultiplier) * values[i, j];
             }
         }
 

@@ -18,7 +18,6 @@ public class BiomeSettingsEditor : ScriptlessEditor
     private SerializedProperty biomeGraph;
     private ReorderableList textureDataList;
 
-    private SerializedProperty hydraulicErosion;
     private SerializedProperty thermalErosion;
     private SerializedProperty allowRoads;
 
@@ -39,7 +38,6 @@ public class BiomeSettingsEditor : ScriptlessEditor
         heightMapSettings = soTarget.FindProperty("heightMapSettings");
         biomeGraph = soTarget.FindProperty("biomeGraph");
 
-        hydraulicErosion = soTarget.FindProperty("hydraulicErosion");
         thermalErosion = soTarget.FindProperty("thermalErosion");
         allowRoads = soTarget.FindProperty("allowRoads");
 
@@ -53,7 +51,6 @@ public class BiomeSettingsEditor : ScriptlessEditor
     {
         EditorGUI.BeginChangeCheck();
 
-        EditorGUILayout.PropertyField(hydraulicErosion, true);
         EditorGUILayout.PropertyField(thermalErosion, true);
         EditorGUILayout.PropertyField(allowRoads, true);
         EditorGUILayout.Space();

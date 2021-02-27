@@ -7,7 +7,7 @@ public static class ChunkDataGenerator
     public static ChunkData GenerateChunkData(TerrainSettings terrainSettings, Vector2 chunkCentre, WorldManager worldManager)
     {
         // Generate heightmap and biomestrength data
-#if (UNITY_EDITOR && PROFILE)
+#if UNITY_EDITOR
         float biomeDataStartTime = 0f;
         if (terrainSettings.IsMainThread()) {
             biomeDataStartTime = Time.realtimeSinceStartup;
@@ -20,7 +20,7 @@ public static class ChunkDataGenerator
             chunkCentre,
             worldManager
         );
-#if (UNITY_EDITOR && PROFILE)
+#if UNITY_EDITOR
         if (terrainSettings.IsMainThread()) {
             float biomeDataEndTime = Time.realtimeSinceStartup;
             float biomeDataGenTimeTaken = biomeDataEndTime - biomeDataStartTime;
@@ -29,7 +29,7 @@ public static class ChunkDataGenerator
 #endif
 
         // Generate roads
-#if (UNITY_EDITOR && PROFILE)
+#if UNITY_EDITOR
         float roadStartTime = 0f;
         if (terrainSettings.IsMainThread()) {
             roadStartTime = Time.realtimeSinceStartup;
@@ -38,7 +38,7 @@ public static class ChunkDataGenerator
 
         Road road = RoadGenerator.GenerateRoads(terrainSettings, chunkCentre, biomeData.heightNoiseMap, biomeData.biomeInfo);
 
-#if (UNITY_EDITOR && PROFILE)
+#if UNITY_EDITOR
         if (terrainSettings.IsMainThread()) {
             float roadEndTime = Time.realtimeSinceStartup;
             float roadGenTimeTaken = roadEndTime - roadStartTime;
@@ -47,7 +47,7 @@ public static class ChunkDataGenerator
 #endif
 
         // Generate objects for chunk
-#if (UNITY_EDITOR && PROFILE)
+#if UNITY_EDITOR
         float objectStartTime = 0f;
         if (terrainSettings.IsMainThread()) {
             objectStartTime = Time.realtimeSinceStartup;
@@ -62,7 +62,7 @@ public static class ChunkDataGenerator
 			chunkCentre
         );
 
-#if UNITY_EDITOR && PROFILE
+#if UNITY_EDITOR
         if (terrainSettings.IsMainThread()) {
             float objectEndTime = Time.realtimeSinceStartup;
             float objectGenTimeTaken = objectEndTime - objectStartTime;

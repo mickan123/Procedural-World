@@ -9,7 +9,6 @@ public class BiomeSettings : ScriptableObject
 
     public BiomeGraph biomeGraph;
 
-    public bool hydraulicErosion = true;
     public bool thermalErosion = true;
     public bool allowRoads = true;
 

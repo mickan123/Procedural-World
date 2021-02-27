@@ -229,7 +229,7 @@ public class ObjectSpawner
         int[] triangles = new int[numObjects * trianglesPerPosition];
         Vector2[] uvs = new Vector2[numObjects * verticesPerPosition];
         Vector3[] normals = new Vector3[numObjects * verticesPerPosition];
-
+        
         for (int i = 0; i < numObjects; i++)
         {
             float x = this.positions.xCoords[i];
@@ -296,7 +296,7 @@ public class ObjectSpawner
         int[] triangles = new int[numObjects * trianglesPerPosition];
         Vector2[] uvs = new Vector2[numObjects * verticesPerPosition];
         Vector3[] normals = new Vector3[numObjects * verticesPerPosition];
-        
+
         for (int pos = start; pos < end; pos++)
         {
             float x = this.positions.xCoords[pos];
@@ -362,8 +362,133 @@ public class ObjectSpawner
             vertices[verticesOffset + 21] = j;
             vertices[verticesOffset + 22] = k;
             vertices[verticesOffset + 23] = l;
+        }
 
-            int trianglesOffset = (pos - start) * trianglesPerPosition;
+        uvs[0] = new Vector2(0f, 1f);
+        uvs[1] = new Vector2(1f, 1f);
+        uvs[2] = new Vector2(1f, 0f);
+        uvs[3] = new Vector2(0f, 0f);
+
+        uvs[4] = new Vector2(0f, 1f);
+        uvs[5] = new Vector2(1f, 1f);
+        uvs[6] = new Vector2(1f, 0f);
+        uvs[7] = new Vector2(0f, 0f);
+
+        uvs[8] = new Vector2(0f, 1f);
+        uvs[9] = new Vector2(1f, 1f);
+        uvs[10] = new Vector2(1f, 0f);
+        uvs[11] = new Vector2(0f, 0f);
+
+        uvs[12] = new Vector2(0f, 1f);
+        uvs[13] = new Vector2(1f, 1f);
+        uvs[14] = new Vector2(1f, 0f);
+        uvs[15] = new Vector2(0f, 0f);
+
+        uvs[16] = new Vector2(0f, 1f);
+        uvs[17] = new Vector2(1f, 1f);
+        uvs[18] = new Vector2(1f, 0f);
+        uvs[19] = new Vector2(0f, 0f);
+        for (int i = 1; i < numObjects; i++)
+        {
+            int uvsOffset = i * verticesPerPosition;
+            uvs[uvsOffset + 0] = uvs[0];
+            uvs[uvsOffset + 1] = uvs[1];
+            uvs[uvsOffset + 2] = uvs[2];
+            uvs[uvsOffset + 3] = uvs[3];
+
+            uvs[uvsOffset + 4] = uvs[4];
+            uvs[uvsOffset + 5] = uvs[5];
+            uvs[uvsOffset + 6] = uvs[6];
+            uvs[uvsOffset + 7] = uvs[7];
+
+            uvs[uvsOffset + 8] = uvs[8];
+            uvs[uvsOffset + 9] = uvs[9];
+            uvs[uvsOffset + 10] = uvs[10];
+            uvs[uvsOffset + 11] = uvs[11];
+
+            uvs[uvsOffset + 12] = uvs[12];
+            uvs[uvsOffset + 13] = uvs[13];
+            uvs[uvsOffset + 14] = uvs[14];
+            uvs[uvsOffset + 15] = uvs[15];
+
+            uvs[uvsOffset + 16] = uvs[16];
+            uvs[uvsOffset + 17] = uvs[17];
+            uvs[uvsOffset + 18] = uvs[18];
+            uvs[uvsOffset + 19] = uvs[19];
+
+            uvs[uvsOffset + 20] = uvs[20];
+            uvs[uvsOffset + 21] = uvs[21];
+            uvs[uvsOffset + 22] = uvs[22];
+            uvs[uvsOffset + 23] = uvs[23];
+        }
+
+        normals[0] = new Vector3(0f, 0f, -1f);
+        normals[1] = new Vector3(0f, 0f, -1f);
+        normals[2] = new Vector3(0f, 0f, -1f);
+        normals[3] = new Vector3(0f, 0f, -1f);
+
+        normals[4] = new Vector3(-.866f, 0f, -0.5f);
+        normals[5] = new Vector3(-.866f, 0f, -0.5f);
+        normals[6] = new Vector3(-.866f, 0f, -0.5f);
+        normals[7] = new Vector3(-.866f, 0f, -0.5f);
+
+        normals[8] = new Vector3(.866f, 0f, -0.5f);
+        normals[9] = new Vector3(.866f, 0f, -0.5f);
+        normals[10] = new Vector3(.866f, 0f, -0.5f);
+        normals[11] = new Vector3(.866f, 0f, -0.5f);
+
+        normals[12] = new Vector3(0f, 0f, 1f);
+        normals[13] = new Vector3(0f, 0f, 1f);
+        normals[14] = new Vector3(0f, 0f, 1f);
+        normals[15] = new Vector3(0f, 0f, 1f);
+
+        normals[16] = new Vector3(.866f, 0f, 0.5f);
+        normals[17] = new Vector3(.866f, 0f, 0.5f);
+        normals[18] = new Vector3(.866f, 0f, 0.5f);
+        normals[19] = new Vector3(.866f, 0f, 0.5f);
+
+        normals[20] = new Vector3(-.866f, 0f, 0.5f);
+        normals[21] = new Vector3(-.866f, 0f, 0.5f);
+        normals[22] = new Vector3(-.866f, 0f, 0.5f);
+        normals[23] = new Vector3(-.866f, 0f, 0.5f);
+        for (int i = 1; i < numObjects; i++)
+        {
+            int normalsOffset = i * verticesPerPosition;
+            normals[normalsOffset + 0] = normals[0];
+            normals[normalsOffset + 1] = normals[1];
+            normals[normalsOffset + 2] = normals[2];
+            normals[normalsOffset + 3] = normals[3];
+
+            normals[normalsOffset + 4] = normals[4];
+            normals[normalsOffset + 5] = normals[5];
+            normals[normalsOffset + 6] = normals[6];
+            normals[normalsOffset + 7] = normals[7];
+
+            normals[normalsOffset + 8] = normals[8];
+            normals[normalsOffset + 9] = normals[9];
+            normals[normalsOffset + 10] = normals[10];
+            normals[normalsOffset + 11] = normals[11];
+
+            normals[normalsOffset + 12] = normals[12];
+            normals[normalsOffset + 13] = normals[13];
+            normals[normalsOffset + 14] = normals[14];
+            normals[normalsOffset + 15] = normals[15];
+
+            normals[normalsOffset + 16] = normals[16];
+            normals[normalsOffset + 17] = normals[17];
+            normals[normalsOffset + 18] = normals[18];
+            normals[normalsOffset + 19] = normals[19];
+
+            normals[normalsOffset + 20] = normals[20];
+            normals[normalsOffset + 21] = normals[21];
+            normals[normalsOffset + 22] = normals[22];
+            normals[normalsOffset + 23] = normals[23];
+        }
+
+        for (int i = 0; i < numObjects; i++)
+        {
+            int verticesOffset = i * verticesPerPosition;
+            int trianglesOffset = i * trianglesPerPosition;
 
             // Horizontal quad
             triangles[trianglesOffset + 0] = 0 + verticesOffset;
@@ -412,68 +537,6 @@ public class ObjectSpawner
             triangles[trianglesOffset + 33] = 20 + verticesOffset;
             triangles[trianglesOffset + 34] = 22 + verticesOffset;
             triangles[trianglesOffset + 35] = 21 + verticesOffset;
-
-            int uvsOffset = verticesOffset;
-            uvs[uvsOffset + 0] = new Vector2(0f, 1f);
-            uvs[uvsOffset + 1] = new Vector2(1f, 1f);
-            uvs[uvsOffset + 2] = new Vector2(1f, 0f);
-            uvs[uvsOffset + 3] = new Vector2(0f, 0f);
-
-            uvs[uvsOffset + 4] = new Vector2(0f, 1f);
-            uvs[uvsOffset + 5] = new Vector2(1f, 1f);
-            uvs[uvsOffset + 6] = new Vector2(1f, 0f);
-            uvs[uvsOffset + 7] = new Vector2(0f, 0f);
-
-            uvs[uvsOffset + 8] = new Vector2(0f, 1f);
-            uvs[uvsOffset + 9] = new Vector2(1f, 1f);
-            uvs[uvsOffset + 10] = new Vector2(1f, 0f);
-            uvs[uvsOffset + 11] = new Vector2(0f, 0f);
-
-            uvs[uvsOffset + 12] = new Vector2(0f, 1f);
-            uvs[uvsOffset + 13] = new Vector2(1f, 1f);
-            uvs[uvsOffset + 14] = new Vector2(1f, 0f);
-            uvs[uvsOffset + 15] = new Vector2(0f, 0f);
-
-            uvs[uvsOffset + 16] = new Vector2(0f, 1f);
-            uvs[uvsOffset + 17] = new Vector2(1f, 1f);
-            uvs[uvsOffset + 18] = new Vector2(1f, 0f);
-            uvs[uvsOffset + 19] = new Vector2(0f, 0f);
-
-            uvs[uvsOffset + 20] = new Vector2(0f, 1f);
-            uvs[uvsOffset + 21] = new Vector2(1f, 1f);
-            uvs[uvsOffset + 22] = new Vector2(1f, 0f);
-            uvs[uvsOffset + 23] = new Vector2(0f, 0f);
-
-            int normalsOffset = verticesOffset;
-            normals[normalsOffset + 0] = new Vector3(0f, 0f, -1f);
-            normals[normalsOffset + 1] = new Vector3(0f, 0f, -1f);
-            normals[normalsOffset + 2] = new Vector3(0f, 0f, -1f);
-            normals[normalsOffset + 3] = new Vector3(0f, 0f, -1f);
-
-            normals[normalsOffset + 4] = new Vector3(-.866f, 0f, -0.5f);
-            normals[normalsOffset + 5] = new Vector3(-.866f, 0f, -0.5f);
-            normals[normalsOffset + 6] = new Vector3(-.866f, 0f, -0.5f);
-            normals[normalsOffset + 7] = new Vector3(-.866f, 0f, -0.5f);
-
-            normals[normalsOffset + 8] = new Vector3(.866f, 0f, -0.5f);
-            normals[normalsOffset + 9] = new Vector3(.866f, 0f, -0.5f);
-            normals[normalsOffset + 10] = new Vector3(.866f, 0f, -0.5f);
-            normals[normalsOffset + 11] = new Vector3(.866f, 0f, -0.5f);
-
-            normals[normalsOffset + 12] = new Vector3(0f, 0f, 1f);
-            normals[normalsOffset + 13] = new Vector3(0f, 0f, 1f);
-            normals[normalsOffset + 14] = new Vector3(0f, 0f, 1f);
-            normals[normalsOffset + 15] = new Vector3(0f, 0f, 1f);
-
-            normals[normalsOffset + 16] = new Vector3(.866f, 0f, 0.5f);
-            normals[normalsOffset + 17] = new Vector3(.866f, 0f, 0.5f);
-            normals[normalsOffset + 18] = new Vector3(.866f, 0f, 0.5f);
-            normals[normalsOffset + 19] = new Vector3(.866f, 0f, 0.5f);
-
-            normals[normalsOffset + 20] = new Vector3(-.866f, 0f, 0.5f);
-            normals[normalsOffset + 21] = new Vector3(-.866f, 0f, 0.5f);
-            normals[normalsOffset + 22] = new Vector3(-.866f, 0f, 0.5f);
-            normals[normalsOffset + 23] = new Vector3(-.866f, 0f, 0.5f);
         }
 
         Mesh finalMesh = new Mesh();
