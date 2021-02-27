@@ -109,8 +109,6 @@ public class BiomeSettingsWindow : EditorWindow
         this.textureDataList.DoLayoutList();
 
         EditorGUILayout.PropertyField(soTarget.FindProperty("biomeGraph"));
-        EditorGUILayout.PropertyField(soTarget.FindProperty("hydraulicErosion"));
-        EditorGUILayout.PropertyField(soTarget.FindProperty("thermalErosion"));
         EditorGUILayout.PropertyField(soTarget.FindProperty("allowRoads"));
 
         EditorGUILayout.EndScrollView();

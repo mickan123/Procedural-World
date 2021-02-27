@@ -18,8 +18,6 @@ public class BiomeSettingsDrawer : PropertyDrawer
         var slopeBlendRange = serializedObject.FindProperty("slopeBlendRange");
         var heightMapSettings = serializedObject.FindProperty("heightMapSettings");
 
-        var hydraulicErosion = serializedObject.FindProperty("hydraulicErosion");
-        var thermalErosion = serializedObject.FindProperty("thermalErosion");
         var allowRoads = serializedObject.FindProperty("allowRoads");
 
         var startHumidity = serializedObject.FindProperty("startHumidity");
@@ -38,10 +36,6 @@ public class BiomeSettingsDrawer : PropertyDrawer
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), endTemperature, true);
         position.y += 2 * EditorGUIUtility.singleLineHeight;
 
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), hydraulicErosion, true);
-        position.y += EditorGUIUtility.singleLineHeight;
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), thermalErosion, true);
-        position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), allowRoads, true);
         position.y += 2 * EditorGUIUtility.singleLineHeight;
 

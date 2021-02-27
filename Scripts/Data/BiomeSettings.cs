@@ -9,7 +9,6 @@ public class BiomeSettings : ScriptableObject
 
     public BiomeGraph biomeGraph;
 
-    public bool thermalErosion = true;
     public bool allowRoads = true;
 
     [Range(0, 1)] public float startHumidity;

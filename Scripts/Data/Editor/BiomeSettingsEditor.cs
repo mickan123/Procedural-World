@@ -38,7 +38,6 @@ public class BiomeSettingsEditor : ScriptlessEditor
         heightMapSettings = soTarget.FindProperty("heightMapSettings");
         biomeGraph = soTarget.FindProperty("biomeGraph");
 
-        thermalErosion = soTarget.FindProperty("thermalErosion");
         allowRoads = soTarget.FindProperty("allowRoads");
 
         startHumidity = soTarget.FindProperty("startHumidity");
