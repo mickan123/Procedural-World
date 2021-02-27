@@ -96,7 +96,26 @@ public class TerrainChunk
 
     public void LoadInEditor()
     {
+
+#if (UNITY_EDITOR)
+        float startTime = 0f;
+        if (terrainSettings.IsMainThread())
+        {
+            startTime = Time.realtimeSinceStartup;
+        }
+#endif
+
         this.terrainSettings.ApplyToMaterial(this.material);
+
+#if (UNITY_EDITOR)
+        if (terrainSettings.IsMainThread())
+        {
+            float endTime = Time.realtimeSinceStartup;
+            float timeTaken = endTime - startTime;
+            Debug.Log("Apply to material time taken: " + timeTaken + "s");
+        }
+#endif
+
         this.chunkData = ChunkDataGenerator.GenerateChunkData(this.terrainSettings, sampleCentre, null);
 
         for (int i = 0; i < lodMeshes.GetLength(0); i++)
@@ -109,24 +128,46 @@ public class TerrainChunk
     void OnChunkDataReceived(object chunkData)
     {
         this.chunkData = (ChunkData)chunkData;
-        this.heightMap = this.chunkData.biomeData.heightNoiseMap;  
+        this.heightMap = this.chunkData.biomeData.heightNoiseMap;
         heightMapReceived = true;
         this.UpdateTerrainChunk();
+
+#if (UNITY_EDITOR)
+        float startTime = 0f;
+        if (terrainSettings.IsMainThread())
+        {
+            startTime = Time.realtimeSinceStartup;
+        }
+#endif
+
         this.UpdateMaterial();
 
-#if (UNITY_EDITOR && PROFILE)
+#if (UNITY_EDITOR)
+        if (terrainSettings.IsMainThread())
+        {
+            float endTime = Time.realtimeSinceStartup;
+            float timeTaken = endTime - startTime;
+            Debug.Log("Update material time taken: " + timeTaken + "s");
+        }
+#endif
+
+#if (UNITY_EDITOR)
         float spawnObjectsStartTime = 0f;
-        if (terrainSettings.IsMainThread()) {
+        if (terrainSettings.IsMainThread())
+        {
             spawnObjectsStartTime = Time.realtimeSinceStartup;
         }
 #endif
+
         List<ObjectSpawner> spawnObjects = this.chunkData.objects;
         for (int i = 0; i < spawnObjects.Count; i++)
         {
             spawnObjects[i].Spawn(meshObject.transform);
         }
-#if (UNITY_EDITOR && PROFILE)
-        if (terrainSettings.IsMainThread()) {
+
+#if (UNITY_EDITOR)
+        if (terrainSettings.IsMainThread())
+        {
             float spawnObjectsEndTime = Time.realtimeSinceStartup;
             float spawnObjectsTimeTaken = spawnObjectsEndTime - spawnObjectsStartTime;
             Debug.Log("Time to spawn objects: " + spawnObjectsTimeTaken + "s");
@@ -137,12 +178,6 @@ public class TerrainChunk
     public void UpdateMaterial()
     {
 
-#if (UNITY_EDITOR && PROFILE)
-        float applyMaterialStartTime = 0f;
-        if (terrainSettings.IsMainThread()) {
-            applyMaterialStartTime = Time.realtimeSinceStartup;
-        }
-#endif
 
         BiomeInfo info = this.chunkData.biomeData.biomeInfo;
         int width = info.biomeMap.GetLength(0);
@@ -210,15 +245,6 @@ public class TerrainChunk
         matBlock.SetTexture("biomeMapTex", biomeMapTex);
 
         this.meshRenderer.SetPropertyBlock(matBlock);
-
-#if (UNITY_EDITOR && PROFILE)
-        if (terrainSettings.IsMainThread()) {
-            float applyMaterialEndTime = Time.realtimeSinceStartup;
-            float applyMaterialTimeTaken = applyMaterialEndTime - applyMaterialStartTime;
-            Debug.Log("Apply to material time taken: " + applyMaterialTimeTaken + "s");
-        }
-#endif
-
     }
 
     public static void SaveTextureAsPNG(Texture2D _texture, string _fullPath)
@@ -242,7 +268,7 @@ public class TerrainChunk
         {
             float viewerDstFromNearestEdge = Mathf.Sqrt(bounds.SqrDistance(viewerPosition));
 
-            bool wasVisible = IsVisible();
+            bool wasVisible = meshObject.activeSelf;
             bool visible = viewerDstFromNearestEdge <= maxViewDst;
 
             if (visible)
@@ -322,11 +348,6 @@ public class TerrainChunk
     public void SetVisible(bool visible)
     {
         meshObject.SetActive(visible);
-    }
-
-    public bool IsVisible()
-    {
-        return meshObject.activeSelf;
     }
 }
 
