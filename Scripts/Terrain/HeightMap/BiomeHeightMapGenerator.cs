@@ -142,9 +142,9 @@ public static class BiomeHeightMapGenerator
                 float temperature = temperatureNoiseMap[i, j];
 
                 // Get current biome
-                for (int w = 0; w < numBiomes; w++)
+                for (int k = 0; k < numBiomes; k++)
                 {
-                    BiomeSettings curBiome = settings.biomeSettings[w];
+                    BiomeSettings curBiome = settings.biomeSettings[k];
 
                     if (humidity > curBiome.startHumidity
                         && humidity < curBiome.endHumidity
@@ -152,9 +152,9 @@ public static class BiomeHeightMapGenerator
                         && temperature < curBiome.endTemperature)
                     {
 
-                        biomeMap[i, j] = w;
-                        biomeStrengths[i, j, w] = 1f;
-                        w = numBiomes;
+                        biomeMap[i, j] = k;
+                        biomeStrengths[i, j, k] = 1f;
+                        k = numBiomes;
                     }
                 }
 
@@ -163,11 +163,11 @@ public static class BiomeHeightMapGenerator
                 float actualBiomeTransitionDist = Mathf.Max(settings.sqrTransitionDistance, 0.00001f);
                 float totalBiomeStrength = 1f; // Start at 1 for base biome
 
-                for (int w = 0; w < numBiomes; w++)
+                for (int k = 0; k < numBiomes; k++)
                 {
-                    if (w != actualBiomeIndex)
+                    if (k != actualBiomeIndex)
                     {
-                        BiomeSettings curBiome = settings.biomeSettings[w];
+                        BiomeSettings curBiome = settings.biomeSettings[k];
                         float humidityDist = Mathf.Min(Mathf.Abs(humidity - curBiome.startHumidity),
                                                        Mathf.Abs(humidity - curBiome.endHumidity));
                         float tempDist = Mathf.Min(Mathf.Abs(temperature - curBiome.startTemperature),
@@ -185,17 +185,17 @@ public static class BiomeHeightMapGenerator
 
                         if (distToBiome <= actualBiomeTransitionDist)
                         {
-                            biomeStrengths[i, j, w] = (1f - (distToBiome / actualBiomeTransitionDist));
-                            biomeStrengths[i, j, w] *= biomeStrengths[i, j, w]; // Square values for smoother transition
-                            totalBiomeStrength += biomeStrengths[i, j, w];
+                            biomeStrengths[i, j, k] = (1f - (distToBiome / actualBiomeTransitionDist));
+                            biomeStrengths[i, j, k] *= biomeStrengths[i, j, k]; // Square values for smoother transition
+                            totalBiomeStrength += biomeStrengths[i, j, k];
                         }
                     }
                 }
 
                 // Normalize by biome strengths in range [0, 1]
-                for (int w = 0; w < numBiomes; w++)
+                for (int k = 0; k < numBiomes; k++)
                 {
-                    biomeStrengths[i, j, w] /= totalBiomeStrength;
+                    biomeStrengths[i, j, k] /= totalBiomeStrength;
                 }
             }
         }
@@ -218,9 +218,9 @@ public static class BiomeHeightMapGenerator
         {
             for (int j = 0; j < height; j++)
             {
-                for (int w = 0; w < numBiomes; w++)
+                for (int k = 0; k < numBiomes; k++)
                 {
-                    totalBiomeStrenths[w] += biomeStrengths[i, j, w];
+                    totalBiomeStrenths[k] += biomeStrengths[i, j, k];
                 }
             }
         }

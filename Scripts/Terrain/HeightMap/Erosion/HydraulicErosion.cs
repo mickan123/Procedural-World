@@ -84,9 +84,9 @@ public static class HydraulicErosion
         {
             for (int j = 0; j < mapSize; j++)
             {
-                for (int w = 0; w < numBiomes; w++)
+                for (int k = 0; k < numBiomes; k++)
                 {
-                    if (info.biomeStrengths[i, j, w] != 0f && terrainSettings.biomeSettings[w].hydraulicErosion)
+                    if (info.biomeStrengths[i, j, k] != 0f && terrainSettings.biomeSettings[k].hydraulicErosion)
                     {
                         performErosion = true;
                     }
@@ -141,15 +141,15 @@ public static class HydraulicErosion
                     float distFromEdge = Mathf.Min(nearDist, farDist);
                     float edgeMultiplier = Mathf.Min(distFromEdge / blendDistance, 1f);
                     float val = 0;
-                    for (int w = 0; w < numBiomes; w++)
+                    for (int k = 0; k < numBiomes; k++)
                     {
-                        if (terrainSettings.biomeSettings[w].hydraulicErosion)
+                        if (terrainSettings.biomeSettings[k].hydraulicErosion)
                         {
-                            val += info.biomeStrengths[i, j, w] * map[i * mapSize + j];
+                            val += info.biomeStrengths[i, j, k] * map[i * mapSize + j];
                         }
                         else
                         {
-                            val += info.biomeStrengths[i, j, w] * values[i, j];
+                            val += info.biomeStrengths[i, j, k] * values[i, j];
                         }
                     }
                     values[i, j] = edgeMultiplier * map[i * mapSize + j]  + (1f - edgeMultiplier) * values[i, j];

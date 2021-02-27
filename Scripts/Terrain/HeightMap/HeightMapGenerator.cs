@@ -313,9 +313,9 @@ public static class HeightMapGenerator
 
         SandDuneSettings sandDuneSettings = noiseSettings.sandDuneSettings;
 
-        for (int w = 0; w < noiseSettings.sandDuneSettings.sandDunePeriods.Length; w++)
+        for (int k = 0; k < noiseSettings.sandDuneSettings.sandDunePeriods.Length; k++)
         {
-            SandDunePeriod settings = noiseSettings.sandDuneSettings.sandDunePeriods[w];
+            SandDunePeriod settings = noiseSettings.sandDuneSettings.sandDunePeriods[k];
             float duneHeight = ((2 * sandDuneSettings.sigma * settings.duneWidth) / Mathf.PI) * Mathf.Max(1 - sandDuneSettings.xm, 0.01f);
 
             float[,] noiseValues = Noise.GenerateNoiseMap(
@@ -324,7 +324,7 @@ public static class HeightMapGenerator
                 noiseSettings.simplexNoiseSettings,
                 sampleCentre,
                 NoiseMapSettings.NoiseType.Simplex,
-                seed + w
+                seed + k
             );
             for (int i = 0; i < width; i++)
             {

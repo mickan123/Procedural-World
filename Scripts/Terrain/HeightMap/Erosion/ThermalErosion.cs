@@ -79,15 +79,15 @@ public static class ThermalErosion
             for (int j = 2; j < mapSize - 3; j++)
             {
                 float val = 0;
-                for (int w = 0; w < numBiomes; w++)
+                for (int k = 0; k < numBiomes; k++)
                 {
-                    if (terrainSettings.biomeSettings[w].thermalErosion)
+                    if (terrainSettings.biomeSettings[k].thermalErosion)
                     {
-                        val += info.biomeStrengths[i, j, w] * erodedVals[i, j];
+                        val += info.biomeStrengths[i, j, k] * erodedVals[i, j];
                     }
                     else
                     {
-                        val += info.biomeStrengths[i, j, w] * values[i, j];
+                        val += info.biomeStrengths[i, j, k] * values[i, j];
                     }
                 }
                 values[i, j] = val;
