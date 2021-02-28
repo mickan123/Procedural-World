@@ -308,26 +308,47 @@ public class Road
     {
         int mapSize = referenceHeightMap.GetLength(0);
 
+        // Check whether a coordinate is approx within roadSettings.width range of 
+        // a point on path to determine whether we bother getting the closest path index
+        // Points not within this distance dont' matter
+        bool[,] getClosestPathIndex = new bool[mapSize, mapSize];
+        for (int i = 0; i < path.Count; i++)
+        {
+            int startX = (int)Mathf.Max(path[i].x - roadSettings.width, 0);
+            int endX = (int)Mathf.Min(mapSize - 1, Mathf.CeilToInt(path[i].x + roadSettings.width));
+            int startZ = (int)Mathf.Max(path[i].z - roadSettings.width, 0);
+            int endZ = (int)Mathf.Min(mapSize - 1, Mathf.CeilToInt(path[i].z + roadSettings.width));
+            for (int x = startX; x <= endX; x++)
+            {
+                for (int z = startZ; z <= endZ; z++)
+                {
+                    getClosestPathIndex[x, z] = true;
+                }
+            }
+        }
+        
+
         int[,] closestPathIndexes = new int[mapSize, mapSize];
         for (int i = 0; i < mapSize; i++)
         {
             for (int j = 0; j < mapSize; j++)
             {
-                Vector3 curPoint = new Vector3(i, referenceHeightMap[i, j], j);
+                if (getClosestPathIndex[i, j]) {
+                    Vector3 curPoint = new Vector3(i, referenceHeightMap[i, j], j);
 
-                float minDist = float.MaxValue;
-                int closestPointIndex = 0;
-                for (int k = 0; k < path.Count; k++)
-                {
-                    float dist = (path[k] - curPoint).sqrMagnitude;
-                    if (dist < minDist)
+                    float minDist = float.MaxValue;
+                    int closestPointIndex = 0;
+                    for (int k = 0; k < path.Count; k++)
                     {
-                        minDist = dist;
-                        closestPointIndex = k;
+                        float dist = (path[k] - curPoint).sqrMagnitude;
+                        if (dist < minDist)
+                        {
+                            minDist = dist;
+                            closestPointIndex = k;
+                        }
                     }
+                    closestPathIndexes[i, j] = closestPointIndex;
                 }
-
-                closestPathIndexes[i, j] = closestPointIndex;
             }
         }
         return closestPathIndexes;
