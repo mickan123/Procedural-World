@@ -35,13 +35,11 @@
 		float textureScales[maxTexturesPerBiome * maxBiomeCount];
 		
 		// Road texture variables
-		// UNITY_DECLARE_TEX2DARRAY(roadTextures);
-		// int roadLayerCount;
-		// float3 roadColours[maxLayerCount];
-		// float roadStartHeights[maxLayerCount];
-		// float roadBlends[maxLayerCount];
-		// float roadColourStrengths[maxLayerCount];
-		// float roadTextureScales[maxLayerCount];
+		UNITY_DECLARE_TEX2D(roadTextures);
+		float3 roadTint; 
+		float roadBlends[maxTexturesPerBiome];
+		float roadColourStrengths[maxTexturesPerBiome];
+		float roadTextureScales[maxTexturesPerBiome];
 
 		// Per chunk vars
 		UNITY_DECLARE_TEX2D(biomeMapTex);
@@ -88,12 +86,17 @@
 			for (int i = 0; i < maxTexturesPerBiome; i++) {
 				int idx = maxTexturesPerBiome * biomeIndex + i;
 
-				if (heightPercent > startHeights[idx] - blendStrength[idx] && heightPercent < endHeights[idx] + blendStrength[idx] 
-				&& slope > startSlopes[idx] - blendStrength[idx] && slope < endSlopes[idx] + blendStrength[idx]) {
-					float drawStrengthHeight = inverseLerp(-blendStrength[idx] / 2, blendStrength[idx] / 2, heightPercent - startHeights[idx]);
-					float drawStrengthSlope = inverseLerp(-blendStrength[idx] / 2, blendStrength[idx] / 2, slope - startSlopes[idx]);
+				if (heightPercent > startHeights[idx] - blendStrength[idx] / 2 && heightPercent < endHeights[idx] + blendStrength[idx] / 2
+				&& slope > startSlopes[idx] - blendStrength[idx] / 2 && slope < endSlopes[idx] + blendStrength[idx] / 2) {
+					float drawStrengthHeightStart = inverseLerp(-blendStrength[idx] / 2, blendStrength[idx] / 2, heightPercent - startHeights[idx]);
+					float drawStrengthHeightEnd = inverseLerp(-blendStrength[idx] / 2, blendStrength[idx] / 2, endHeights[idx] - heightPercent);
+					float drawStrengthHeight = min(drawStrengthHeightStart, drawStrengthHeightEnd);
 
-					float drawStrength = min(drawStrengthHeight, drawStrengthSlope);
+					float drawStrengthSlopeStart = inverseLerp(-blendStrength[idx] / 2, blendStrength[idx] / 2, slope - startSlopes[idx]);
+					float drawStrengthSlopeEnd = inverseLerp(-blendStrength[idx] / 2, blendStrength[idx] / 2, endSlopes[idx] - slope);
+					float drawStrengthSlope = min(drawStrengthSlopeStart, drawStrengthSlopeEnd);
+
+					float drawStrength = min(drawStrengthSlope, drawStrengthHeight);
 
 					float3 baseColour = tints[idx] * tintStrengths[idx];
 					float3 textureColour = triplanar(worldPos, blendAxes, idx) * (1 - tintStrengths[idx]);
