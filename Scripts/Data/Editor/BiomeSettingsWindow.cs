@@ -261,17 +261,17 @@ public class BiomeSettingsWindow : EditorWindow
         }
         if (this.clickType == ClickType.TopEdge || this.clickType == ClickType.TopLeftCorner || this.clickType == ClickType.TopRightCorner)
         {
-            this.curSelectedData.startHeight = Mathf.Min(height, this.curSelectedData.endHeight - minWidthHeight);
+            this.curSelectedData.endHeight = Mathf.Max(height, this.curSelectedData.startHeight + minWidthHeight);
         }
         if (this.clickType == ClickType.BottomEdge || this.clickType == ClickType.BottomLeftCorner || this.clickType == ClickType.BottomRightCorner)
         {
-            this.curSelectedData.endHeight = Mathf.Max(height, this.curSelectedData.startHeight + minWidthHeight);
+            this.curSelectedData.startHeight = Mathf.Min(height, this.curSelectedData.endHeight - minWidthHeight);
         }
         if (this.clickType == ClickType.Pan)
         {
             Vector2 panDelta = Event.current.mousePosition - this.previousMousePos;
             float deltaSlope = 90f * panDelta.x / textureSettingsRect.width;
-            float deltaHeight = panDelta.y / textureSettingsRect.height;
+            float deltaHeight = -panDelta.y / textureSettingsRect.height;
 
             // Clamp it so we can't move out of bounds
             if (this.curSelectedData.endSlope + deltaSlope > 90f)
@@ -308,7 +308,7 @@ public class BiomeSettingsWindow : EditorWindow
     private Vector2 MousePosToSlopeHeight(Vector2 mousePos, Rect biomeZoneRect)
     {
         float slope = 90f * (mousePos.x - biomeZoneRect.x) / biomeZoneRect.width;
-        float height = (mousePos.y - biomeZoneRect.y) / biomeZoneRect.height;
+        float height = 1f - (mousePos.y - biomeZoneRect.y) / biomeZoneRect.height;
 
         slope = Mathf.Clamp(slope, 0f, 90f);
         height = Mathf.Clamp01(height);
@@ -321,8 +321,8 @@ public class BiomeSettingsWindow : EditorWindow
         float biomeX = biomeZoneRect.x + (settings.startSlope / 90f) * biomeZoneRect.width;
         float biomeWidth = biomeZoneRect.x + (settings.endSlope / 90f) * biomeZoneRect.width - biomeX;
 
-        float biomeY = biomeZoneRect.y + settings.startHeight * biomeZoneRect.height;
-        float biomeHeight = biomeZoneRect.y + settings.endHeight * biomeZoneRect.height - biomeY;
+        float biomeY = biomeZoneRect.y + (1f - settings.endHeight) * biomeZoneRect.height;
+        float biomeHeight = biomeZoneRect.y + (1f - settings.startHeight) * biomeZoneRect.height - biomeY;
 
         Rect rect = new Rect(biomeX, biomeY, biomeWidth, biomeHeight);
 
@@ -348,52 +348,39 @@ public class BiomeSettingsWindow : EditorWindow
                 }
                 else if (this.clickType == ClickType.TopEdge)
                 {
-                    settings.startHeight = overlappingSettings.endHeight;
+                    settings.endHeight = overlappingSettings.startHeight;
                 }
                 else if (this.clickType == ClickType.BottomEdge)
                 {
-                    settings.endHeight = overlappingSettings.startHeight;
+                    settings.startHeight = overlappingSettings.endHeight;
                 }
                 else if (this.clickType == ClickType.TopRightCorner)
                 {
                     float deltaSlope = (settings.endSlope - overlappingSettings.startSlope) / 90f;
-                    float deltaHeight = overlappingSettings.endHeight - settings.startHeight;
+                    float deltaHeight = settings.endHeight - overlappingSettings.startHeight;
                     if (deltaSlope < deltaHeight)
                     {
                         settings.endSlope = overlappingSettings.startSlope;
                     }
                     else
                     {
-                        settings.startHeight = overlappingSettings.endHeight;
+                        settings.endHeight = overlappingSettings.startHeight;
                     }
                 }
                 else if (this.clickType == ClickType.BottomRightCorner)
                 {
                     float deltaSlope = (settings.endSlope - overlappingSettings.startSlope) / 90f;
-                    float deltaHeight = settings.endHeight - overlappingSettings.startHeight;
+                    float deltaHeight = overlappingSettings.endHeight - settings.startHeight;
                     if (deltaSlope < deltaHeight)
                     {
                         settings.endSlope = overlappingSettings.startSlope;
                     }
                     else
                     {
-                        settings.endHeight = overlappingSettings.startHeight;
+                        settings.startHeight = overlappingSettings.endHeight;
                     }
                 }
                 else if (this.clickType == ClickType.BottomLeftCorner)
-                {
-                    float deltaSlope = (overlappingSettings.endSlope - settings.startSlope) / 90f;
-                    float deltaHeight = settings.endHeight - overlappingSettings.startHeight;
-                    if (deltaSlope < deltaHeight)
-                    {
-                        settings.startSlope = overlappingSettings.endSlope;
-                    }
-                    else
-                    {
-                        settings.endHeight = overlappingSettings.startHeight;
-                    }
-                }
-                else if (this.clickType == ClickType.TopLeftCorner)
                 {
                     float deltaSlope = (overlappingSettings.endSlope - settings.startSlope) / 90f;
                     float deltaHeight = overlappingSettings.endHeight - settings.startHeight;
@@ -404,6 +391,19 @@ public class BiomeSettingsWindow : EditorWindow
                     else
                     {
                         settings.startHeight = overlappingSettings.endHeight;
+                    }
+                }
+                else if (this.clickType == ClickType.TopLeftCorner)
+                {
+                    float deltaSlope = (overlappingSettings.endSlope - settings.startSlope) / 90f;
+                    float deltaHeight = settings.endHeight - overlappingSettings.startHeight;
+                    if (deltaSlope < deltaHeight)
+                    {
+                        settings.startSlope = overlappingSettings.endSlope;
+                    }
+                    else
+                    {
+                        settings.endHeight = overlappingSettings.startHeight;
                     }
                 }
                 else if (this.clickType == ClickType.Pan)
@@ -443,7 +443,7 @@ public class BiomeSettingsWindow : EditorWindow
         }
         else if (leftLine.Overlaps(overlappingRect) && topLine.Overlaps(overlappingRect) && rightLine.Overlaps(overlappingRect))
         {
-            heightCorrection = overlappingSettings.endHeight - settings.startHeight;
+            heightCorrection = overlappingSettings.startHeight - settings.endHeight;
             slopeCorrection = float.MaxValue;
         }
         else if (topLine.Overlaps(overlappingRect) && rightLine.Overlaps(overlappingRect) && bottomLine.Overlaps(overlappingRect))
@@ -453,27 +453,27 @@ public class BiomeSettingsWindow : EditorWindow
         }
         else if (rightLine.Overlaps(overlappingRect) && bottomLine.Overlaps(overlappingRect) && leftLine.Overlaps(overlappingRect))
         {
-            heightCorrection = overlappingSettings.startHeight - settings.endHeight;
+            heightCorrection = overlappingSettings.endHeight - settings.startHeight;
             slopeCorrection = float.MaxValue;
         }
         else if (leftLine.Overlaps(overlappingRect) && topLine.Overlaps(overlappingRect))
         {
             slopeCorrection = overlappingSettings.endSlope - settings.startSlope;
-            heightCorrection = overlappingSettings.endHeight - settings.startHeight;
+            heightCorrection = overlappingSettings.startHeight - settings.endHeight;
         }
         else if (topLine.Overlaps(overlappingRect) && rightLine.Overlaps(overlappingRect))
         {
-            heightCorrection = overlappingSettings.endHeight - settings.startHeight;
+            heightCorrection = overlappingSettings.startHeight - settings.endHeight;
             slopeCorrection = overlappingSettings.startSlope - settings.endSlope;
         }
         else if (rightLine.Overlaps(overlappingRect) && bottomLine.Overlaps(overlappingRect))
         {
-            heightCorrection = overlappingSettings.startHeight - settings.endHeight;
+            heightCorrection = overlappingSettings.endHeight - settings.startHeight;
             slopeCorrection = overlappingSettings.startSlope - settings.endSlope;
         }
         else if (bottomLine.Overlaps(overlappingRect) && leftLine.Overlaps(overlappingRect))
         {
-            heightCorrection = overlappingSettings.startHeight - settings.endHeight;
+            heightCorrection = overlappingSettings.endHeight - settings.startHeight;
             slopeCorrection = overlappingSettings.endSlope - settings.startSlope;
         }
         else if (leftLine.Overlaps(overlappingRect))
@@ -488,12 +488,12 @@ public class BiomeSettingsWindow : EditorWindow
         }
         else if (topLine.Overlaps(overlappingRect))
         {
-            heightCorrection = overlappingSettings.endHeight - settings.startHeight;
+            heightCorrection = overlappingSettings.startHeight - settings.endHeight;
             slopeCorrection = float.MaxValue;
         }
         else if (bottomLine.Overlaps(overlappingRect))
         {
-            heightCorrection = overlappingSettings.startHeight - settings.endHeight;
+            heightCorrection = overlappingSettings.endHeight - settings.startHeight;
             slopeCorrection = float.MaxValue;
         }
 
@@ -528,8 +528,8 @@ public class BiomeSettingsWindow : EditorWindow
             float biomeX = textureSettingsRect.x + (textureData.startSlope / 90f) * textureSettingsRect.width;
             float biomeWidth = textureSettingsRect.x + (textureData.endSlope / 90f) * textureSettingsRect.width - biomeX;
 
-            float biomeY = textureSettingsRect.y + textureData.startHeight * textureSettingsRect.height;
-            float biomeHeight = textureSettingsRect.y + textureData.endHeight * textureSettingsRect.height - biomeY;
+            float biomeY = textureSettingsRect.y + (1f - textureData.endHeight) * textureSettingsRect.height;
+            float biomeHeight = textureSettingsRect.y + (1f - textureData.startHeight) * textureSettingsRect.height - biomeY;
 
             this.areaRect = new Rect(biomeX, biomeY, biomeWidth, biomeHeight);
 
