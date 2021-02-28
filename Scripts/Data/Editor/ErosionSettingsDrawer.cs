@@ -37,11 +37,6 @@ public class ErosionSettingsDrawer : PropertyDrawer
 
         var inertia = serializedObject.FindProperty("inertia");
 
-        var numThermalErosionIterations = serializedObject.FindProperty("numThermalErosionIterations");
-        var talusAngle = serializedObject.FindProperty("talusAngle");
-        var thermalErosionRate = serializedObject.FindProperty("thermalErosionRate");
-        var hardness = serializedObject.FindProperty("hardness");
-
         EditorGUI.BeginChangeCheck();
 
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), gravity, true);
@@ -82,17 +77,6 @@ public class ErosionSettingsDrawer : PropertyDrawer
 
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), inertia, true);
         position.y += 2 * EditorGUIUtility.singleLineHeight;
-
-        EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Thermal Erosion Settings", EditorStyles.boldLabel);
-        position.y += EditorGUIUtility.singleLineHeight;
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), numThermalErosionIterations, true);
-        position.y += EditorGUIUtility.singleLineHeight;
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), talusAngle, true);
-        position.y += EditorGUIUtility.singleLineHeight;
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), thermalErosionRate, true);
-        position.y += EditorGUIUtility.singleLineHeight;
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), hardness, true);
-        position.y += EditorGUIUtility.singleLineHeight;
 
         if (EditorGUI.EndChangeCheck())
         {

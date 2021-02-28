@@ -11,7 +11,6 @@ public class MeshSettings : ScriptableObject
     public static readonly int[] supportedChunkSizes = { 48, 72, 96, 120, 144, 168, 192, 216, 240, 480, 960 };
 
     public int meshScale = 1;
-    public bool useFlatShading;
 
     [Range(0, numSupportedChunkSizes - 1)]
     public int chunkSizeIndex;
@@ -32,7 +31,7 @@ public class MeshSettings : ScriptableObject
     {
         get
         {
-            return supportedChunkSizes[(useFlatShading) ? flatshadedChunkSizeIndex : chunkSizeIndex] + 5; // +2 for correct normal +2 for high res border +1 as we dealing with squares
+            return supportedChunkSizes[chunkSizeIndex] + 5; // +2 for correct normal +2 for high res border +1 as we dealing with squares
         }
     }
 

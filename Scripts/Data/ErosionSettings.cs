@@ -30,11 +30,6 @@ public class ErosionSettings : ScriptableObject
     [Range(0, 1)]
     public float inertia = 0.5f;
 
-    public int numThermalErosionIterations = 10;
-    public float talusAngle = 1;
-    public float thermalErosionRate = 1;
-    public float hardness = 1;
-
     [HideInInspector]
     public int seed;  // Set by global seed
 

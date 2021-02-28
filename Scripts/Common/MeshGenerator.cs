@@ -9,7 +9,7 @@ public static class MeshGenerator
         int skipIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
         int numVertsPerLine = meshSettings.numVerticesPerLine;
 
-        MeshData meshData = new MeshData(numVertsPerLine, skipIncrement, meshSettings.useFlatShading);
+        MeshData meshData = new MeshData(numVertsPerLine, skipIncrement);
 
         int[,] vertexIndicesMap = new int[numVertsPerLine, numVertsPerLine];
         int meshVertexIndex = 0;
@@ -137,12 +137,8 @@ public class MeshData
     int triangleIndex;
     int outOfMeshTriangleIndex;
 
-    bool useFlatShading;
-
-    public MeshData(int numVertsPerLine, int skipIncrement, bool useFlatShading)
+    public MeshData(int numVertsPerLine, int skipIncrement)
     {
-        this.useFlatShading = useFlatShading;
-
         int numMeshEdgeVertices = (numVertsPerLine - 2) * 4 - 4;
         int numEdgeConnectionVertices = (skipIncrement - 1) * (numVertsPerLine - 5) / skipIncrement * 4;
         int numMainVerticesPerLine = (numVertsPerLine - 5) / skipIncrement + 1;
@@ -250,35 +246,7 @@ public class MeshData
 
     public void ProcessMesh()
     {
-        if (useFlatShading)
-        {
-            FlatShading();
-        }
-        else
-        {
-            BakeNormals();
-        }
-    }
-
-    void BakeNormals()
-    {
         bakedNormals = CalculateNormals();
-    }
-
-    void FlatShading()
-    {
-        Vector3[] flatShadedVertices = new Vector3[triangles.Length];
-        Vector2[] flatShadedUvs = new Vector2[triangles.Length];
-
-        for (int i = 0; i < triangles.Length; i++)
-        {
-            flatShadedVertices[i] = vertices[triangles[i]];
-            flatShadedUvs[i] = uvs[triangles[i]];
-            triangles[i] = i;
-        }
-
-        vertices = flatShadedVertices;
-        uvs = flatShadedUvs;
     }
 
     public Mesh CreateMesh()
@@ -288,15 +256,7 @@ public class MeshData
         mesh.vertices = vertices;
         mesh.triangles = triangles;
         mesh.uv = uvs;
-
-        if (useFlatShading)
-        {
-            mesh.RecalculateNormals();
-        }
-        else
-        {
-            mesh.normals = bakedNormals;
-        }
+        mesh.normals = bakedNormals;
 
         return mesh;
     }

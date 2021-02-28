@@ -18,7 +18,6 @@ public class BiomeSettingsEditor : ScriptlessEditor
     private SerializedProperty biomeGraph;
     private ReorderableList textureDataList;
 
-    private SerializedProperty thermalErosion;
     private SerializedProperty allowRoads;
 
     private SerializedProperty startHumidity;
@@ -50,7 +49,6 @@ public class BiomeSettingsEditor : ScriptlessEditor
     {
         EditorGUI.BeginChangeCheck();
 
-        EditorGUILayout.PropertyField(thermalErosion, true);
         EditorGUILayout.PropertyField(allowRoads, true);
         EditorGUILayout.Space();
 
