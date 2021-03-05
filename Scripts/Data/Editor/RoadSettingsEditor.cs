@@ -23,8 +23,6 @@ public class RoadSettingsEditor : ScriptlessEditor
 
         roadTexture = soTarget.FindProperty("roadTexture");
         width = soTarget.FindProperty("width");
-        stepSize = soTarget.FindProperty("stepSize");
-        smoothness = soTarget.FindProperty("smoothness");
         blendFactor = soTarget.FindProperty("blendFactor");
         maxAngle = soTarget.FindProperty("maxAngle");
     }
@@ -36,8 +34,6 @@ public class RoadSettingsEditor : ScriptlessEditor
 
         EditorGUILayout.PropertyField(roadTexture);
         EditorGUILayout.PropertyField(width);
-        EditorGUILayout.PropertyField(stepSize);
-        EditorGUILayout.PropertyField(smoothness);
         EditorGUILayout.PropertyField(blendFactor);
         EditorGUILayout.PropertyField(maxAngle);
 

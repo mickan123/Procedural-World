@@ -6,7 +6,7 @@ public static class ObjectGenerator
     public static List<ObjectSpawner> GenerateObjectSpawners(
         float[,] heightMap, 
         BiomeInfo info, 
-        Road road, 
+        float[,] roadStrengthMap, 
         TerrainSettings settings, 
         Vector2 sampleCentre
     )
@@ -20,7 +20,7 @@ public static class ObjectGenerator
             if (HeightMapContainesBiome(info, biome))
             {
                 BiomeGraph graph = settings.biomeSettings[biome].biomeGraph;
-                List<ObjectSpawner> spawners = graph.GetObjectSpawners(heightMap, road.roadStrengthMap);
+                List<ObjectSpawner> spawners = graph.GetObjectSpawners(heightMap, roadStrengthMap);
                 biomeObjectSpawners.AddRange(spawners);
             }
         }

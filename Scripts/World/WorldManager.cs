@@ -103,7 +103,7 @@ public class WorldManager
         );
         terrainChunkDictionary.Add(coord, new TerrainChunkData(newChunk));
         newChunk.onVisibilityChanged += OnTerrainChunkVisibilityChanged;
-        newChunk.Load(this);
+        newChunk.Load();
     }
 
     void OnTerrainChunkVisibilityChanged(TerrainChunk chunk, bool isVisible)

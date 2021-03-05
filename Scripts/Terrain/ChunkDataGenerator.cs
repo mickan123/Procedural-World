@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class ChunkDataGenerator
 {
-    public static ChunkData GenerateChunkData(TerrainSettings terrainSettings, Vector2 chunkCentre, WorldManager worldManager)
+    public static ChunkData GenerateChunkData(TerrainSettings terrainSettings, Vector2 chunkCentre)
     {
         // Generate heightmap and biomestrength data
 #if UNITY_EDITOR
@@ -17,8 +17,7 @@ public static class ChunkDataGenerator
             terrainSettings.meshSettings.numVerticesPerLine,
             terrainSettings.meshSettings.numVerticesPerLine,
             terrainSettings,
-            chunkCentre,
-            worldManager
+            chunkCentre
         );
 #if UNITY_EDITOR
         if (terrainSettings.IsMainThread()) {
@@ -36,7 +35,8 @@ public static class ChunkDataGenerator
         }
 #endif
 
-        Road road = RoadGenerator.GenerateRoads(terrainSettings, chunkCentre, biomeData.heightNoiseMap, biomeData.biomeInfo);
+        RoadData roadData = RoadGenerator.GenerateRoads(terrainSettings, chunkCentre, biomeData.heightNoiseMap, biomeData.biomeInfo);
+        biomeData.heightNoiseMap = roadData.heightMap;
 
 #if UNITY_EDITOR
         if (terrainSettings.IsMainThread()) {
@@ -57,7 +57,7 @@ public static class ChunkDataGenerator
         List<ObjectSpawner> objects = ObjectGenerator.GenerateObjectSpawners(
 			biomeData.heightNoiseMap,
 			biomeData.biomeInfo,
-			road,
+			roadData.roadStrengthMap,
 			terrainSettings,
 			chunkCentre
         );
@@ -70,7 +70,7 @@ public static class ChunkDataGenerator
         }
 #endif
 
-        return new ChunkData(biomeData, objects, road);
+        return new ChunkData(biomeData, objects, roadData.roadStrengthMap);
     }
 }
 
@@ -78,12 +78,12 @@ public class ChunkData
 {
     public BiomeData biomeData;
     public List<ObjectSpawner> objects;
-    public Road road;
+    public float[,] roadStrengthMap;
 
-    public ChunkData(BiomeData biomeData, List<ObjectSpawner> objects, Road road)
+    public ChunkData(BiomeData biomeData, List<ObjectSpawner> objects, float[,] roadStrengthMap)
     {
         this.biomeData = biomeData;
         this.objects = objects;
-        this.road = road;
+        this.roadStrengthMap = roadStrengthMap;
     }
 }

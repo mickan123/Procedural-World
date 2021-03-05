@@ -6,10 +6,10 @@ using System.Collections.Generic;
 [Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/BiomeGraph")]
 public class BiomeGraph : NodeGraph
 {
-    public WorldManager worldManager;
     public BiomeInfo biomeInfo;
     public TerrainSettings terrainSettings;
     public Vector2 sampleCentre;
+    public int biome;
     public int width;
     public int height;
 
@@ -42,10 +42,10 @@ public class BiomeGraph : NodeGraph
     }
 
     public float[,] GetHeightMap(
-        WorldManager manager, 
         BiomeInfo info, 
         TerrainSettings terrainSettings, 
         Vector2 sampleCentre, 
+        int biome,
         int width, 
         int height
     )
@@ -53,9 +53,9 @@ public class BiomeGraph : NodeGraph
         lock(obj)
         {
             this.biomeInfo = info;
-            this.worldManager = manager;
             this.terrainSettings = terrainSettings;
             this.sampleCentre = sampleCentre;
+            this.biome = biome;
             this.width = width;
             this.height = height;
 
@@ -88,6 +88,22 @@ public class BiomeGraph : NodeGraph
             }
 
             return objectSpawners;
+        }
+    }
+
+    public RoadSettings GetRoadSettings()
+    {
+        lock(obj)
+        {
+            foreach (Node node in this.nodes)
+            {
+                if (node is RoadOutputNode)
+                {
+                    var typedNode = node as RoadOutputNode;
+                    return typedNode.roadSettings;
+                }
+            }
+            return null;
         }
     }
 
@@ -183,5 +199,24 @@ public class BiomeGraph : NodeGraph
             }
         }
         return maxHeight;
+    }
+
+    public float GetMaxRoadWidth()
+    {
+        float maxWidth = 0f;
+        foreach (Node node in this.nodes)
+        {
+            if (node is RoadOutputNode)
+            {
+                var typedNode = node as RoadOutputNode;
+                float width = typedNode.roadSettings.width;
+
+                if (width > maxWidth)
+                {
+                    maxWidth = width;
+                }
+            }
+        }
+        return maxWidth;
     }
 }

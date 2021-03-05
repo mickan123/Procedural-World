@@ -63,7 +63,6 @@ public static class HydraulicErosion
         float[,] values, 
         TerrainSettings terrainSettings, 
         BiomeInfo info, 
-        WorldManager worldGenerator, 
         Vector2 chunkCentre
     )
     {
@@ -182,7 +181,7 @@ public static class HydraulicErosion
     }
 
     // CPU Erosion below
-    public static void ErodeDrop(Drop drop, TerrainSettings terrainSettings, float[,] map, int mapSize, WorldManager worldGenerator)
+    public static void ErodeDrop(Drop drop, TerrainSettings terrainSettings, float[,] map, int mapSize)
     {
         ErosionSettings settings = terrainSettings.erosionSettings;
 

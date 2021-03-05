@@ -292,6 +292,11 @@ public class ObjectSpawner
         int trianglesPerPosition = 36;
 
         int numObjects = end - start;
+        if (numObjects == 0)
+        {
+            return new Mesh();
+        }
+
         Vector3[] vertices = new Vector3[numObjects * verticesPerPosition];
         int[] triangles = new int[numObjects * trianglesPerPosition];
         Vector2[] uvs = new Vector2[numObjects * verticesPerPosition];
@@ -388,6 +393,12 @@ public class ObjectSpawner
         uvs[17] = new Vector2(1f, 1f);
         uvs[18] = new Vector2(1f, 0f);
         uvs[19] = new Vector2(0f, 0f);
+
+        uvs[20] = new Vector2(0f, 1f);
+        uvs[21] = new Vector2(1f, 1f);
+        uvs[22] = new Vector2(1f, 0f);
+        uvs[23] = new Vector2(0f, 0f);
+
         for (int i = 1; i < numObjects; i++)
         {
             int uvsOffset = i * verticesPerPosition;

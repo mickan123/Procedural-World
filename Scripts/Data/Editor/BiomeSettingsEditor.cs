@@ -11,14 +11,8 @@ public class BiomeSettingsEditor : ScriptlessEditor
     private SerializedObject soTarget;
 
     private SerializedProperty textureData;
-    private SerializedProperty slopeTextureData;
-    private SerializedProperty angleThreshold;
-    private SerializedProperty angleBlendRange;
-    private SerializedProperty heightMapSettings;
     private SerializedProperty biomeGraph;
     private ReorderableList textureDataList;
-
-    private SerializedProperty allowRoads;
 
     private SerializedProperty startHumidity;
     private SerializedProperty endHumidity;
@@ -31,13 +25,7 @@ public class BiomeSettingsEditor : ScriptlessEditor
         soTarget = new SerializedObject(target);
 
         textureData = soTarget.FindProperty("textureData");
-        slopeTextureData = soTarget.FindProperty("slopeTextureData");
-        angleThreshold = soTarget.FindProperty("angleThreshold");
-        angleBlendRange = soTarget.FindProperty("angleBlendRange");
-        heightMapSettings = soTarget.FindProperty("heightMapSettings");
         biomeGraph = soTarget.FindProperty("biomeGraph");
-
-        allowRoads = soTarget.FindProperty("allowRoads");
 
         startHumidity = soTarget.FindProperty("startHumidity");
         endHumidity = soTarget.FindProperty("endHumidity");
@@ -49,11 +37,13 @@ public class BiomeSettingsEditor : ScriptlessEditor
     {
         EditorGUI.BeginChangeCheck();
 
-        EditorGUILayout.PropertyField(allowRoads, true);
+        EditorGUILayout.PropertyField(startHumidity, true);
         EditorGUILayout.Space();
-
-        EditorGUILayout.PropertyField(angleThreshold, true);
-        EditorGUILayout.PropertyField(angleBlendRange, true);
+        EditorGUILayout.PropertyField(endHumidity, true);
+        EditorGUILayout.Space();
+        EditorGUILayout.PropertyField(startTemperature, true);
+        EditorGUILayout.Space();
+        EditorGUILayout.PropertyField(endTemperature, true);
         EditorGUILayout.Space();
 
         EditorGUILayout.PropertyField(biomeGraph, true);

@@ -13,7 +13,9 @@ public class FilterObjectsRoadNode : BiomeGraphNode
     {
         if (port.fieldName == "positionDataOut")
         {
-            return FilterOnRoad(GetInputValue<ObjectPositionData>("positionDataIn", this.positionDataIn));
+            ObjectPositionData data = GetInputValue<ObjectPositionData>("positionDataIn", this.positionDataIn);
+            FilterOnRoad(data);
+            return data;
         }
         else
         {
@@ -21,11 +23,11 @@ public class FilterObjectsRoadNode : BiomeGraphNode
         }
     }
 
-    private ObjectPositionData FilterOnRoad(ObjectPositionData positionData)
+    private void FilterOnRoad(ObjectPositionData positionData)
     {
         if (positionData == null)
         {
-            return null;
+            return;
         }
         var biomeGraph = this.graph as BiomeGraph;
 
@@ -44,7 +46,5 @@ public class FilterObjectsRoadNode : BiomeGraphNode
                 positionData.positions.filtered[i] = true;
             }
         }
-
-        return positionData;
     }
 }

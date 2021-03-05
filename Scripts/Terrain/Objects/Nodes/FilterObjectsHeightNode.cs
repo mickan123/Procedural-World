@@ -18,7 +18,9 @@ public class FilterObjectsHeightNode : BiomeGraphNode
     {
         if (port.fieldName == "positionDataOut")
         {
-            return GetPositionData(GetInputValue<ObjectPositionData>("positionDataIn", this.positionDataIn));
+            ObjectPositionData data = GetInputValue<ObjectPositionData>("positionDataIn", this.positionDataIn);
+            FilterByHeight(data);
+            return data;
         }
         else
         {
@@ -26,7 +28,7 @@ public class FilterObjectsHeightNode : BiomeGraphNode
         }
     }
 
-    private ObjectPositionData GetPositionData(ObjectPositionData positionData)
+    private void FilterByHeight(ObjectPositionData positionData)
     {
         System.Random prng = new System.Random();
         AnimationCurve threadSafeCurve = new AnimationCurve(this.heightProbabilityCurve.keys);
@@ -49,7 +51,5 @@ public class FilterObjectsHeightNode : BiomeGraphNode
                 }
             }
         }
-        
-        return positionData;
     }
 }

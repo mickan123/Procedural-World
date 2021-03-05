@@ -16,7 +16,9 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
     {
         if (port.fieldName == "positionDataOut")
         {
-            return FilterBySlope(GetInputValue<ObjectPositionData>("positionDataIn", this.positionDataIn));
+            ObjectPositionData data = GetInputValue<ObjectPositionData>("positionDataIn", this.positionDataIn);
+            FilterBySlope(data);
+            return data;
         }
         else
         {
@@ -24,11 +26,11 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
         }
     }
 
-    private ObjectPositionData FilterBySlope(ObjectPositionData positionData)
+    private void FilterBySlope(ObjectPositionData positionData)
     {
         if (positionData == null)
         {
-            return null;
+            return;
         }
 
         // Generate slope at every point
@@ -49,7 +51,7 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
                 slopeMap[x, y] = Mathf.Rad2Deg * Mathf.Atan2(
                     dMax, 
                     1
-                );;
+                );
             }
         }
 
@@ -76,7 +78,5 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
                 positionData.positions.filtered[i] = true;
             }
         }
-
-        return positionData;
     }
 }

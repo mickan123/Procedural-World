@@ -9,8 +9,7 @@ public static class BiomeHeightMapGenerator
         int width, 
         int height, 
         TerrainSettings terrainSettings, 
-        Vector2 chunkCentre, 
-        WorldManager worldManager
+        Vector2 chunkCentre
     )
     {
         Vector2 paddedChunkCentre = new Vector2(chunkCentre.x, chunkCentre.y);
@@ -68,8 +67,7 @@ public static class BiomeHeightMapGenerator
             humidityNoiseMap,
             temperatureNoiseMap,
             paddedChunkCentre,
-            biomeInfo,
-            worldManager
+            biomeInfo
         );
 
 #if (PROFILE && UNITY_EDITOR)
@@ -89,8 +87,7 @@ public static class BiomeHeightMapGenerator
         float[,] humidityNoiseMap,
         float[,] temperatureNoiseMap,
         Vector2 sampleCentre,
-        BiomeInfo biomeInfo,
-        WorldManager manager
+        BiomeInfo biomeInfo
     )
     {
         // Generate noise maps for all nearby and present biomes
@@ -101,10 +98,10 @@ public static class BiomeHeightMapGenerator
             BiomeGraph graph = terrainSettings.biomeSettings[i].biomeGraph;
             biomeNoiseMaps.Add(
                 graph.GetHeightMap(
-                    manager,
                     biomeInfo,
                     terrainSettings,
                     sampleCentre,
+                    i,
                     width,
                     height
                 )
@@ -160,7 +157,7 @@ public static class BiomeHeightMapGenerator
 
                 // Get strengths of all other biomes for blending
                 int actualBiomeIndex = biomeMap[i, j];
-                float actualBiomeTransitionDist = Mathf.Max(settings.sqrTransitionDistance, 0.00001f);
+                float actualBiomeTransitionDist = Mathf.Max(settings.transitionDistance, 0.00001f);
                 float totalBiomeStrength = 1f; // Start at 1 for base biome
 
                 for (int k = 0; k < numBiomes; k++)
@@ -186,7 +183,6 @@ public static class BiomeHeightMapGenerator
                         if (distToBiome <= actualBiomeTransitionDist)
                         {
                             biomeStrengths[i, j, k] = (1f - (distToBiome / actualBiomeTransitionDist));
-                            biomeStrengths[i, j, k] *= biomeStrengths[i, j, k]; // Square values for smoother transition
                             totalBiomeStrength += biomeStrengths[i, j, k];
                         }
                     }
@@ -242,8 +238,8 @@ public static class BiomeHeightMapGenerator
 [System.Serializable]
 public struct BiomeData
 {
-    public readonly float[,] heightNoiseMap;
-    public readonly BiomeInfo biomeInfo;
+    public float[,] heightNoiseMap;
+    public BiomeInfo biomeInfo;
 
     public BiomeData(float[,] heightNoiseMap, BiomeInfo biomeInfo)
     {
@@ -254,9 +250,9 @@ public struct BiomeData
 
 public struct BiomeInfo
 {
-    public readonly int[,] biomeMap; // Holds index of biome at each point
-    public readonly float[,,] biomeStrengths; // E.g. 0.75 means 75-25 main biome nearest biome blend, has values in range [0, 1]
-    public readonly int mainBiome;
+    public int[,] biomeMap; // Holds index of biome at each point
+    public float[,,] biomeStrengths; // E.g. 0.75 means 75-25 main biome nearest biome blend, has values in range [0, 1]
+    public int mainBiome;
 
     public BiomeInfo(int[,] biomeMap, float[,,] biomeStrengths, int mainBiome)
     {

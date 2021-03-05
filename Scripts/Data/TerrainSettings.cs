@@ -26,9 +26,6 @@ public class TerrainSettings : ScriptableObject
     // Mesh settings
     public MeshSettings meshSettings;
 
-    // Road settings
-    public RoadSettings roadSettings;
-
     // Always display these settings
     public int seed;
 
@@ -46,7 +43,7 @@ public class TerrainSettings : ScriptableObject
     // Preview settings
     public enum DrawMode { SingleBiomeMesh, BiomesMesh, NoiseMapTexture, FalloffMapTexture, BiomesTexture, HumidityMapTexture, TemperatureMapTexture };
     public DrawMode drawMode;
-    public Vector2 centre;
+    public Vector2 offset;
     public LODInfo[] detailLevels;
     [Range(0, MeshSettings.numSupportedLODs - 1)] public int editorPreviewLOD;
     public int singleBiomeIndex = 0;
@@ -109,7 +106,7 @@ public class TerrainSettings : ScriptableObject
         {
             float[,] heightMap = this.biomeSettings[noiseMapBiomeIndex].biomeGraph.GetHeightMap(
                 this,
-                this.centre,
+                this.offset,
                 width,
                 height
             );
@@ -131,14 +128,14 @@ public class TerrainSettings : ScriptableObject
         {
             float[,] humidityMap = this.humidityMapGraph.GetHeightMap(
                 this,
-                centre,
+                offset,
                 width,
                 height
             );
 
             float[,] temperatureMap = this.temperatureMapGraph.GetHeightMap(
                 this,
-                centre,
+                offset,
                 width,
                 height
             );
@@ -321,6 +318,23 @@ public class TerrainSettings : ScriptableObject
         material.SetFloatArray("tintStrengths", tintStrengths);
         material.SetFloatArray("blendStrength", blendStrength);
         material.SetFloatArray("textureScales", textureScales);
+    }
+
+    public float maxRoadWidth 
+    {
+        get
+        {
+            float maxRoadWidth = 0f;
+            for (int i = 0; i < biomeSettings.Count; i++)
+            {
+                float width = biomeSettings[i].biomeGraph.GetMaxRoadWidth();
+                if (width > maxRoadWidth)
+                {
+                    maxRoadWidth = width;
+                }
+            }
+            return maxRoadWidth;
+        }
     }
 
     public float minHeight

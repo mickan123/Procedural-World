@@ -23,13 +23,12 @@ public class TerrainSettingsEditor : Editor
     private Editor meshSettingsEditor;
 
     // Road settings
-    private SerializedProperty roadSettings;
     private Editor roadSettingsEditor;
 
     // Preview settings
     private SerializedProperty previewMaterial;
     private SerializedProperty drawMode;
-    private SerializedProperty centre;
+    private SerializedProperty offset;
     private SerializedProperty editorPreviewLOD;
     private SerializedProperty singleBiomeIndex;
     private SerializedProperty noiseMapBiomeIndex;
@@ -54,14 +53,10 @@ public class TerrainSettingsEditor : Editor
         meshSettings = soTarget.FindProperty("meshSettings");
         meshSettingsEditor = null;
 
-        // Road settings
-        roadSettings = soTarget.FindProperty("roadSettings");
-        roadSettingsEditor = null;
-
         // Preview settings
         previewMaterial = soTarget.FindProperty("previewMaterial");
         drawMode = soTarget.FindProperty("drawMode");
-        centre = soTarget.FindProperty("centre");
+        offset = soTarget.FindProperty("offset");
         editorPreviewLOD = soTarget.FindProperty("editorPreviewLOD");
         singleBiomeIndex = soTarget.FindProperty("singleBiomeIndex");
         noiseMapBiomeIndex = soTarget.FindProperty("noiseMapBiomeIndex");
@@ -129,7 +124,7 @@ public class TerrainSettingsEditor : Editor
 
         CommonOptions();
 
-        myTarget.toolbarTop = GUILayout.Toolbar(myTarget.toolbarTop, new string[] { "Biomes", "Mesh", "Roads", "Rivers" });
+        myTarget.toolbarTop = GUILayout.Toolbar(myTarget.toolbarTop, new string[] { "Biomes", "Mesh", "Rivers", "Preview" });
         switch (myTarget.toolbarTop)
         {
             case 0:
@@ -143,20 +138,11 @@ public class TerrainSettingsEditor : Editor
                 break;
             case 2:
                 myTarget.toolbarBottom = -1;
-                myTarget.currentTab = "Roads";
+                myTarget.currentTab = "Rivers";
                 break;
             case 3:
                 myTarget.toolbarBottom = -1;
-                myTarget.currentTab = "Rivers";
-                break;
-        }
-
-        myTarget.toolbarBottom = GUILayout.Toolbar(myTarget.toolbarBottom, new string[] { "Preview" });
-        switch (myTarget.toolbarBottom)
-        {
-            case 0:
-                myTarget.toolbarTop = -1;
-                myTarget.currentTab = "Rivers";
+                myTarget.currentTab = "Preview";
                 break;
         }
 
@@ -175,9 +161,6 @@ public class TerrainSettingsEditor : Editor
                 break;
             case "Mesh":
                 MeshTab();
-                break;
-            case "Roads":
-                RoadsTab();
                 break;
             case "Rivers":
                 RiversTab();
@@ -224,11 +207,6 @@ public class TerrainSettingsEditor : Editor
         Common.DisplayScriptableObjectEditor(meshSettings, myTarget.meshSettings, meshSettingsEditor);
     }
 
-    private void RoadsTab()
-    {
-        Common.DisplayScriptableObjectEditor(roadSettings, myTarget.roadSettings, roadSettingsEditor);
-    }
-
     private void RiversTab()
     {
 
@@ -239,7 +217,7 @@ public class TerrainSettingsEditor : Editor
         EditorGUILayout.LabelField("Preview Settings", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(previewMaterial);
         EditorGUILayout.PropertyField(drawMode, true);
-        EditorGUILayout.PropertyField(centre, true);
+        EditorGUILayout.PropertyField(offset, true);
         EditorGUILayout.PropertyField(editorPreviewLOD, true);
         if (drawMode.enumValueIndex == (int)TerrainSettings.DrawMode.SingleBiomeMesh)
         {

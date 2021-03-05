@@ -9,8 +9,6 @@ public class BiomeSettings : ScriptableObject
 
     public BiomeGraph biomeGraph;
 
-    public bool allowRoads = true;
-
     [Range(0, 1)] public float startHumidity;
     [Range(0, 1)] public float endHumidity;
     [Range(0, 1)] public float startTemperature;

@@ -19,6 +19,7 @@ public class ObjectsOutputNode : BiomeGraphNode
     public ObjectSpawner GetValue()
     {
         ObjectPositionData positionData = GetInputValue<ObjectPositionData>("positionData");
+        FilterByBiome(positionData);
 
         List<float> updatedXCoords = new List<float>();
         List<float> updatedYCoords = new List<float>();
@@ -59,5 +60,26 @@ public class ObjectsOutputNode : BiomeGraphNode
                 this.staticBatch
             );
         }
+    }
+
+    private void FilterByBiome(ObjectPositionData positionData)
+    {
+        var biomeGraph = this.graph as BiomeGraph;
+        System.Random prng = new System.Random(this.seed);
+
+        for (int i = 0; i < positionData.positions.Count; i++)
+        {
+            float rand = (float)prng.NextDouble();
+
+            int coordX = (int)positionData.positions.xCoords[i];
+            int coordZ = (int)positionData.positions.zCoords[i];
+            float biomeStrength = biomeGraph.biomeInfo.biomeStrengths[coordX, coordZ, biomeGraph.biome];
+
+            if (rand > biomeStrength * biomeStrength * biomeStrength)
+            {
+                positionData.positions.filtered[i] = true;
+            }
+        }
+
     }
 }

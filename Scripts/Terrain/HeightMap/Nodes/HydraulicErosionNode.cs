@@ -35,6 +35,6 @@ public class HydraulicErosionNode : BiomeGraphNode
         int width = heightMap.GetLength(0);
         int height = heightMap.GetLength(1);
 
-        return HydraulicErosion.Erode(heightMap, biomeGraph.terrainSettings, biomeGraph.biomeInfo, biomeGraph.worldManager, biomeGraph.sampleCentre);
+        return HydraulicErosion.Erode(heightMap, biomeGraph.terrainSettings, biomeGraph.biomeInfo, biomeGraph.sampleCentre);
     }
 }

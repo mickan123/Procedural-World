@@ -42,14 +42,16 @@ public class TerrainChunk
     private Texture2D[] biomeStrengthTextures;
     private Texture2DArray biomeStrengthTexArray;
 
-    public TerrainChunk(ChunkCoord coord,
-                        TerrainSettings terrainSettings,
-                        LODInfo[] detailLevels,
-                        int colliderLODIndex,
-                        Transform parent,
-                        Material material,
-                        Transform viewer,
-                        String name = "Terrain Chunk")
+    public TerrainChunk(
+        ChunkCoord coord,
+        TerrainSettings terrainSettings,
+        LODInfo[] detailLevels,
+        int colliderLODIndex,
+        Transform parent,
+        Material material,
+        Transform viewer,
+        String name = "Terrain Chunk"
+    )
     {
         this.coord = coord;
         this.detailLevels = detailLevels;
@@ -57,8 +59,9 @@ public class TerrainChunk
         this.terrainSettings = terrainSettings;
         this.meshSettings = terrainSettings.meshSettings;
         this.material = material;
-        sampleCentre = new Vector2(coord.x * meshSettings.meshWorldSize / meshSettings.meshScale,
-                                   coord.y * meshSettings.meshWorldSize / meshSettings.meshScale);
+        sampleCentre = new Vector2(coord.x * meshSettings.meshWorldSize / meshSettings.meshScale + terrainSettings.offset.x,
+                                   coord.y * meshSettings.meshWorldSize / meshSettings.meshScale + terrainSettings.offset.x);
+
         Vector2 position = new Vector2(coord.x * meshSettings.meshWorldSize, coord.y * meshSettings.meshWorldSize);
         bounds = new Bounds(position, Vector2.one * meshSettings.meshWorldSize);
 
@@ -89,9 +92,9 @@ public class TerrainChunk
         maxViewDst = detailLevels[detailLevels.Length - 1].chunkDistanceThreshold * meshWorldSize;
     }
 
-    public void Load(WorldManager worldManager)
+    public void Load()
     {
-        ThreadedDataRequester.RequestData(() => ChunkDataGenerator.GenerateChunkData(terrainSettings, sampleCentre, worldManager), OnChunkDataReceived);
+        ThreadedDataRequester.RequestData(() => ChunkDataGenerator.GenerateChunkData(terrainSettings, sampleCentre), OnChunkDataReceived);
     }
 
     public void LoadInEditor()
@@ -116,7 +119,7 @@ public class TerrainChunk
         }
 #endif
 
-        this.chunkData = ChunkDataGenerator.GenerateChunkData(this.terrainSettings, sampleCentre, null);
+        this.chunkData = ChunkDataGenerator.GenerateChunkData(this.terrainSettings, sampleCentre);
 
         for (int i = 0; i < lodMeshes.GetLength(0); i++)
         {
@@ -211,11 +214,11 @@ public class TerrainChunk
         {
             for (int y = 0; y < width; y++)
             {
-                float roadStrength = chunkData.road.roadStrengthMap[x, y];
+                float roadStrength = chunkData.roadStrengthMap[x, y];
                 float angle = Common.CalculateAngle(x, y, heightMap);
                 angle /= 90f; // Normalize 0 to 1 range
 
-                biomeMapTex.SetPixel(x, y, new Color(chunkData.road.roadStrengthMap[x, y], angle, 0f, 0f));
+                biomeMapTex.SetPixel(x, y, new Color(chunkData.roadStrengthMap[x, y], angle, 0f, 0f));
 
                 for (int k = 0; k < terrainSettings.maxBiomeCount; k += biomesPerTexture)
                 {
