@@ -486,7 +486,7 @@ public static class RoadGenerator
                                     Mathf.Abs(Mathf.Max(x, y) - mapSize),
                                     Mathf.Abs(Mathf.Min(x, y))
                                     );
-        float edgeMultiplier = Common.SmoothRange(distFromEdgeChunk, 2f, 7f);
+        float edgeMultiplier = Common.SmoothRange(distFromEdgeChunk, 3f, 10f);
 
         // If within half width of road then fully carve path, otherwise smooth outwards
         float halfRoadWidth = averageRoadSettings.width / 2f;

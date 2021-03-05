@@ -44,18 +44,22 @@ public class RandomPointsNode : BiomeGraphNode
         {
             for (int z = 0; z <= mapSize - 3; z += increment)
             {
-                float maxRandVal = Mathf.Min(x + increment, mapSize - 3);
                 for (int spawn = 0; spawn < numPoints; spawn++)
                 {
-                    float xCoord = Common.NextFloat(prng, x, Mathf.Min(x + increment, mapSize - 3));
-                    float zCoord = Common.NextFloat(prng, z, Mathf.Min(z + increment, mapSize - 3));
+                    // Don't optimize this random value generation to ensure we don't have to check if its within
+                    // range as otherwise we add too many points to edge of chunk
+                    float xCoord = Common.NextFloat(prng, x, x + increment);
+                    float zCoord = Common.NextFloat(prng, z, z + increment);
 
                     float offset = 1f;
                     float yCoord = Common.HeightFromFloatCoord(xCoord + offset, zCoord + offset, biomeGraph.heightMap);
 
-                    xCoords.Add(xCoord);
-                    yCoords.Add(yCoord);
-                    zCoords.Add(zCoord);
+                    if (xCoord <= mapSize - 3 && zCoord <= mapSize - 3)
+                    {
+                        xCoords.Add(xCoord);
+                        yCoords.Add(yCoord);
+                        zCoords.Add(zCoord);
+                    }
                 }
             }
         }
