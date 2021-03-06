@@ -120,6 +120,7 @@ public static class HydraulicErosion
                 float nearDist = Mathf.Min(i, j);
                 float farDist = mapSize - 1 - Mathf.Max(i, j);
                 float distFromEdge = Mathf.Min(nearDist, farDist);
+                distFromEdge = Mathf.Max(distFromEdge - 3f, 0f);
                 float edgeMultiplier = Mathf.Min(distFromEdge / blendDistance, 1f);
                 values[i, j] = edgeMultiplier * map[i * mapSize + j]  + (1f - edgeMultiplier) * values[i, j];
             }
