@@ -340,7 +340,7 @@ public class TerrainSettings : ScriptableObject
         float[] roadBlendStrength = new float[biomeSettings.Count * maxTexturesPerBiome];
         float[] roadTextureScales = new float[biomeSettings.Count * maxTexturesPerBiome];
 
-        this.roadTextureArray = new Texture2DArray(textureSize, textureSize, maxTexturesPerBiome, textureFormat, true);
+        this.roadTextureArray = new Texture2DArray(textureSize, textureSize, maxTexturesPerBiome * maxBiomeCount, textureFormat, true);
 
         for (int i = 0; i < biomeSettings.Count; i++)
         {
