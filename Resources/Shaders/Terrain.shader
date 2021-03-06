@@ -35,11 +35,16 @@
 		float textureScales[maxTexturesPerBiome * maxBiomeCount];
 		
 		// Road texture variables
-		UNITY_DECLARE_TEX2D(roadTextures);
-		float3 roadTint; 
-		float roadBlends[maxTexturesPerBiome];
-		float roadColourStrengths[maxTexturesPerBiome];
-		float roadTextureScales[maxTexturesPerBiome];
+		UNITY_DECLARE_TEX2DARRAY(roadTextures);
+		int numRoadTexturesPerBiome[maxBiomeCount];
+		float roadStartHeights[maxTexturesPerBiome * maxBiomeCount];
+		float roadEndHeights[maxTexturesPerBiome * maxBiomeCount];
+		float roadStartSlopes[maxTexturesPerBiome * maxBiomeCount];
+		float roadEndSlopes[maxTexturesPerBiome * maxBiomeCount];
+		float3 roadTints[maxTexturesPerBiome * maxBiomeCount]; 
+		float roadTintStrengths[maxTexturesPerBiome * maxBiomeCount];
+		float roadBlendStrength[maxTexturesPerBiome * maxBiomeCount];
+		float roadTextureScales[maxTexturesPerBiome * maxBiomeCount];
 
 		// Per chunk vars
 		UNITY_DECLARE_TEX2D(biomeMapTex);
@@ -73,6 +78,16 @@
 			float3 xProjection = UNITY_SAMPLE_TEX2DARRAY(textures, float3(texturePos.y, texturePos.z, texIndex)) * blendAxes.x;
 			float3 yProjection = UNITY_SAMPLE_TEX2DARRAY(textures, float3(texturePos.x, texturePos.z, texIndex)) * blendAxes.y;
 			float3 zProjection = UNITY_SAMPLE_TEX2DARRAY(textures, float3(texturePos.x, texturePos.y, texIndex)) * blendAxes.z;
+
+			return xProjection + yProjection + zProjection;
+		}
+
+		float3 triplanarRoad(float3 worldPos, float3 blendAxes, int texIndex) {
+			float3 texturePos = worldPos / roadTextureScales[texIndex];
+			
+			float3 xProjection = UNITY_SAMPLE_TEX2DARRAY(roadTextures, float3(texturePos.y, texturePos.z, texIndex)) * blendAxes.x;
+			float3 yProjection = UNITY_SAMPLE_TEX2DARRAY(roadTextures, float3(texturePos.x, texturePos.z, texIndex)) * blendAxes.y;
+			float3 zProjection = UNITY_SAMPLE_TEX2DARRAY(roadTextures, float3(texturePos.x, texturePos.y, texIndex)) * blendAxes.z;
 
 			return xProjection + yProjection + zProjection;
 		}
@@ -124,17 +139,44 @@
 
 			// Calculate road texture
 			float3 roadTexture = float3(0, 0, 0);
+			for (int i = 0; i < maxTexturesPerBiome; i++) {
+				int idx = maxTexturesPerBiome * biomeIndex + i;
 
-			// for (int i = 0; i < roadLayerCount; i++) {
-			// 	int idx = i;
+				if (heightPercent > roadStartHeights[idx] - roadBlendStrength[idx] / 2 && heightPercent < roadEndHeights[idx] + roadBlendStrength[idx] / 2
+				&& slope > roadStartSlopes[idx] - roadBlendStrength[idx] / 2 && slope < roadEndSlopes[idx] + roadBlendStrength[idx] / 2) {
+					float drawStrengthHeightStart = inverseLerp(
+						-roadBlendStrength[idx] / 2, 
+						roadBlendStrength[idx] / 2, 
+						max(heightPercent, roadBlendStrength[idx] / 2) - roadStartHeights[idx] // Take max since otherwise values at max height would blend to nothing
+					);
+					float drawStrengthHeightEnd = inverseLerp(
+						-roadBlendStrength[idx] / 2, 
+						roadBlendStrength[idx] / 2, 
+						roadEndHeights[idx] - min(1 - roadBlendStrength[idx] / 2, heightPercent) // Take min since otherwise values at max height would blend to nothing
+					);
+					float drawStrengthHeight = min(drawStrengthHeightStart, drawStrengthHeightEnd);
 
-			// 	float drawStrength = inverseLerp(-roadBlends[idx] / 2, roadBlends[idx] / 2, heightPercent - roadStartHeights[idx]);
+					float drawStrengthSlopeStart = inverseLerp(
+						-roadBlendStrength[idx] / 2, 
+						roadBlendStrength[idx] / 2, 
+						max(slope, roadBlendStrength[idx] / 2) - roadStartSlopes[idx]
+					);
+					float drawStrengthSlopeEnd = inverseLerp(
+						-roadBlendStrength[idx] / 2, 
+						roadBlendStrength[idx] / 2, 
+						roadEndSlopes[idx] - min(1 - roadBlendStrength[idx] / 2, slope)
+					);
+					float drawStrengthSlope = min(drawStrengthSlopeStart, drawStrengthSlopeEnd);
 
-			// 	float3 roadColour = roadColours[idx] * roadColourStrengths[idx];
-			// 	float3 textureColour = triplanarRoad(worldPos, blendAxes, idx) * (1 - roadColourStrengths[idx]);
+					float drawStrength = min(drawStrengthSlope, drawStrengthHeight);
 
-			// 	roadTexture = roadTexture * (1 - drawStrength) + (roadColour + textureColour) * drawStrength;
-			// }
+					float3 baseColour = roadTints[idx] * roadTintStrengths[idx];
+					float3 textureColour = triplanarRoad(worldPos, blendAxes, idx) * (1 - roadTintStrengths[idx]);
+
+					roadTexture = roadTexture * (1 - drawStrength) + (textureColour + baseColour) * drawStrength;
+				}
+			}
+
 			return roadStrength * roadTexture + (1 - roadStrength) * heightSlopeTexture; 
 		}
 

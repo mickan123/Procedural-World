@@ -101,7 +101,7 @@ public class TerrainSettings : ScriptableObject
         int width = this.meshSettings.numVerticesPerLine;
         int height = this.meshSettings.numVerticesPerLine;
 
-        
+
         if (drawMode == DrawMode.NoiseMapTexture)
         {
             float[,] heightMap = this.biomeSettings[noiseMapBiomeIndex].biomeGraph.GetHeightMap(
@@ -209,10 +209,11 @@ public class TerrainSettings : ScriptableObject
     private void DrawBiomeMesh(int width, int height)
     {
 #if (UNITY_EDITOR)
-		float startTime = 0f;
-		if (this.IsMainThread()) {
-        	startTime = Time.realtimeSinceStartup;
-		}
+        float startTime = 0f;
+        if (this.IsMainThread())
+        {
+            startTime = Time.realtimeSinceStartup;
+        }
 #endif
 
         this.chunk = new TerrainChunk(
@@ -230,11 +231,12 @@ public class TerrainSettings : ScriptableObject
         this.chunk.meshObject.AddComponent<HideOnPlay>();
 
 #if (UNITY_EDITOR)
-		if (this.IsMainThread()) {
-			float endTime = Time.realtimeSinceStartup;
-			float totalTimeTaken = endTime - startTime;
-			Debug.Log("Total time taken: " + totalTimeTaken + "s");
-		}
+        if (this.IsMainThread())
+        {
+            float endTime = Time.realtimeSinceStartup;
+            float totalTimeTaken = endTime - startTime;
+            Debug.Log("Total time taken: " + totalTimeTaken + "s");
+        }
 #endif
     }
 
@@ -263,9 +265,19 @@ public class TerrainSettings : ScriptableObject
 
     public void ApplyToMaterial(Material material)
     {
+        material.SetInt("chunkWidth", meshSettings.meshWorldSize);
+        material.SetFloat("minHeight", minHeight);
+        material.SetFloat("maxHeight", maxHeight);
+
+        this.ApplyHeightSlopeToMaterial(material);
+        this.ApplyRoadToMaterial(material);
+    }
+
+    private void ApplyHeightSlopeToMaterial(Material material)
+    {
         // Slope height texture settings
         float[] numTexturesPerBiome = new float[biomeSettings.Count];
-		float[] startHeights = new float[biomeSettings.Count * maxTexturesPerBiome];
+        float[] startHeights = new float[biomeSettings.Count * maxTexturesPerBiome];
         float[] endHeights = new float[biomeSettings.Count * maxTexturesPerBiome];
         float[] startSlopes = new float[biomeSettings.Count * maxTexturesPerBiome];
         float[] endSlopes = new float[biomeSettings.Count * maxTexturesPerBiome];
@@ -275,7 +287,6 @@ public class TerrainSettings : ScriptableObject
         float[] textureScales = new float[biomeSettings.Count * maxTexturesPerBiome];
 
         this.biomeBaseTexturesArray = new Texture2DArray(textureSize, textureSize, maxTexturesPerBiome * maxBiomeCount, textureFormat, true);
-        this.roadTextureArray = new Texture2DArray(textureSize, textureSize, maxTexturesPerBiome, textureFormat, true);
 
         for (int i = 0; i < biomeSettings.Count; i++)
         {
@@ -294,7 +305,7 @@ public class TerrainSettings : ScriptableObject
                 tintStrengths[i * maxTexturesPerBiome + j] = curData.tintStrength;
                 blendStrength[i * maxTexturesPerBiome + j] = curData.blendStrength;
                 textureScales[i * maxTexturesPerBiome + j] = curData.textureScale;
-    
+
                 if (curData.texture != null)
                 {
                     this.biomeBaseTexturesArray.SetPixels(curData.texture.GetPixels(0, 0, textureSize, textureSize), i * maxTexturesPerBiome + j);
@@ -302,10 +313,6 @@ public class TerrainSettings : ScriptableObject
             }
         }
         this.biomeBaseTexturesArray.Apply();
-
-        material.SetInt("chunkWidth", meshSettings.meshWorldSize);
-        material.SetFloat("minHeight", minHeight);
-        material.SetFloat("maxHeight", maxHeight);		
 
         // Apply base biome texture settings
         material.SetTexture("textures", this.biomeBaseTexturesArray);
@@ -320,7 +327,63 @@ public class TerrainSettings : ScriptableObject
         material.SetFloatArray("textureScales", textureScales);
     }
 
-    public float maxRoadWidth 
+    private void ApplyRoadToMaterial(Material material)
+    {
+        // Slope height texture settings
+        float[] numRoadTexturesPerBiome = new float[biomeSettings.Count];
+        float[] roadStartHeights = new float[biomeSettings.Count * maxTexturesPerBiome];
+        float[] roadEndHeights = new float[biomeSettings.Count * maxTexturesPerBiome];
+        float[] roadStartSlopes = new float[biomeSettings.Count * maxTexturesPerBiome];
+        float[] roadEndSlopes = new float[biomeSettings.Count * maxTexturesPerBiome];
+        Color[] roadTints = new Color[biomeSettings.Count * maxTexturesPerBiome];
+        float[] roadTintStrengths = new float[biomeSettings.Count * maxTexturesPerBiome];
+        float[] roadBlendStrength = new float[biomeSettings.Count * maxTexturesPerBiome];
+        float[] roadTextureScales = new float[biomeSettings.Count * maxTexturesPerBiome];
+
+        this.roadTextureArray = new Texture2DArray(textureSize, textureSize, maxTexturesPerBiome, textureFormat, true);
+
+        for (int i = 0; i < biomeSettings.Count; i++)
+        {
+            numRoadTexturesPerBiome[i] = 1;
+            RoadSettings roadSettings = biomeSettings[i].biomeGraph.GetRoadSettings();
+            if (roadSettings == null)
+            {
+                continue;
+            }
+            TextureData curData = roadSettings.roadTexture;
+            roadStartHeights[i * maxTexturesPerBiome] = curData.startHeight;
+            roadEndHeights[i * maxTexturesPerBiome] = curData.endHeight;
+
+            // Normalize slopes into [0, 1] range
+            roadStartSlopes[i * maxTexturesPerBiome] = curData.startSlope / 90f;
+            roadEndSlopes[i * maxTexturesPerBiome] = curData.endSlope / 90f;
+
+            roadTints[i * maxTexturesPerBiome] = curData.tint;
+            roadTintStrengths[i * maxTexturesPerBiome] = curData.tintStrength;
+            roadBlendStrength[i * maxTexturesPerBiome] = curData.blendStrength;
+            roadTextureScales[i * maxTexturesPerBiome] = curData.textureScale;
+
+            if (curData.texture != null)
+            {
+                this.roadTextureArray.SetPixels(curData.texture.GetPixels(0, 0, textureSize, textureSize), i * maxTexturesPerBiome);
+            }
+        }
+        this.roadTextureArray.Apply();
+
+        // Apply base biome texture settings
+        material.SetTexture("roadTextures", this.roadTextureArray);
+        material.SetFloatArray("numTexturesPerBiome", numRoadTexturesPerBiome);
+        material.SetFloatArray("roadStartHeights", roadStartHeights);
+        material.SetFloatArray("roadEndHeights", roadEndHeights);
+        material.SetFloatArray("roadStartSlopes", roadStartSlopes);
+        material.SetFloatArray("roadEndSlopes", roadEndSlopes);
+        material.SetColorArray("roadTints", roadTints);
+        material.SetFloatArray("roadTintStrengths", roadTintStrengths);
+        material.SetFloatArray("roadBlendStrength", roadBlendStrength);
+        material.SetFloatArray("roadTextureScales", roadTextureScales);
+    }
+
+    public float maxRoadWidth
     {
         get
         {
