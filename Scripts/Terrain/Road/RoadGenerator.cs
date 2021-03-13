@@ -331,13 +331,15 @@ public static class RoadGenerator
     struct AverageRoadSettings
     {
         public float maxAngle;
-        public float blendFactor;
+        public float distanceBlendFactor;
+        public float angleBlendFactor;
         public float width;
 
-        public AverageRoadSettings(float maxAngle, float blendFactor, float width)
+        public AverageRoadSettings(float maxAngle, float distanceBlendFactor, float angleBlendFactor, float width)
         {
             this.maxAngle = maxAngle;
-            this.blendFactor = blendFactor;
+            this.distanceBlendFactor = distanceBlendFactor;
+            this.angleBlendFactor = angleBlendFactor;
             this.width = width;
         }
     }
@@ -345,7 +347,8 @@ public static class RoadGenerator
     private static AverageRoadSettings CalculateAverageRoadSettings(int x, int y, List<RoadSettings> roadSettingsList, BiomeInfo info)
     {
         float maxAngle = 0f;
-        float blendFactor = 0f;
+        float distanceBlendFactor = 0f;
+        float angleBlendFactor = 0f;
         float width = 0f;
 
         for (int biome = 0; biome < info.biomeStrengths.GetLength(2); biome++)
@@ -353,11 +356,12 @@ public static class RoadGenerator
             if (roadSettingsList[biome] != null)
             {
                 maxAngle += info.biomeStrengths[x, y, biome] * roadSettingsList[biome].maxAngle;
-                blendFactor += info.biomeStrengths[x, y, biome] * roadSettingsList[biome].blendFactor;
+                distanceBlendFactor += info.biomeStrengths[x, y, biome] * roadSettingsList[biome].distanceBlendFactor;
+                angleBlendFactor += info.biomeStrengths[x, y, biome] * roadSettingsList[biome].angleBlendFactor;
                 width += info.biomeStrengths[x, y, biome] * roadSettingsList[biome].width;
             }
         }
-        return new AverageRoadSettings(maxAngle, blendFactor, width);
+        return new AverageRoadSettings(maxAngle, distanceBlendFactor, angleBlendFactor, width);
     }
 
     // Finds closest point on path at every point
@@ -481,7 +485,7 @@ public static class RoadGenerator
 
         // Calculate slope multiplier
         float angle = Common.CalculateAngle(x, y, workingHeightMap);
-        float slopeMultiplier = Mathf.Max(0f, 1f - (angle / averageRoadSettings.maxAngle));
+        float slopeMultiplier = Mathf.Min(Mathf.Max(0f, 1f - averageRoadSettings.angleBlendFactor * angle / averageRoadSettings.maxAngle), 1f);
 
         // Calculate edge multipler which we use to not applying terrain carving at edge of map
         float distFromEdgeChunk = Mathf.Min(
@@ -490,23 +494,25 @@ public static class RoadGenerator
         );
         float edgeMultiplier = Common.SmoothRange(distFromEdgeChunk, 3f, 10f);
 
+        float finalMultiplier = edgeMultiplier * slopeMultiplier;
+
         // If within half width of road then fully carve path, otherwise smooth outwards
         float halfRoadWidth = averageRoadSettings.width / 2f;
         if (distance < halfRoadWidth)
         {
             float percentage = distance / halfRoadWidth;
-            float roadMultiplier = percentage * averageRoadSettings.blendFactor;
+            float roadMultiplier = percentage * averageRoadSettings.distanceBlendFactor;
             float newValue = (1f - roadMultiplier) * closestPointOnLine.y + roadMultiplier * curPoint.y;
 
-            workingHeightMap[x, y] = edgeMultiplier * newValue + (1 - edgeMultiplier) * workingHeightMap[x, y];
+            workingHeightMap[x, y] = finalMultiplier * newValue + (1 - finalMultiplier) * workingHeightMap[x, y];
         }
         else if (distance < averageRoadSettings.width)
         {
             float percentage = (distance - halfRoadWidth) / halfRoadWidth;
-            float roadMultiplier = percentage * (1f - averageRoadSettings.blendFactor) + averageRoadSettings.blendFactor;
+            float roadMultiplier = percentage * (1f - averageRoadSettings.distanceBlendFactor) + averageRoadSettings.distanceBlendFactor;
             float newValue = roadMultiplier * curPoint.y + (1f - roadMultiplier) * closestPointOnLine.y;
 
-            workingHeightMap[x, y] = edgeMultiplier * newValue + (1 - edgeMultiplier) * workingHeightMap[x, y];
+            workingHeightMap[x, y] = finalMultiplier * newValue + (1 - finalMultiplier) * workingHeightMap[x, y];
         }
     }
 
@@ -529,7 +535,7 @@ public static class RoadGenerator
 
         // Calculate slope multiplier
         float angle = Common.CalculateAngle(x, y, workingHeightMap);
-        float slopeMultiplier = Mathf.Max(0f, 1f - (angle / averageRoadSettings.maxAngle));
+        float slopeMultiplier = Mathf.Max(0f, 1f - averageRoadSettings.angleBlendFactor * angle / averageRoadSettings.maxAngle);
 
         // If within half width of road then fully carve path, otherwise smooth outwards
         float halfRoadWidth = averageRoadSettings.width / 2f;

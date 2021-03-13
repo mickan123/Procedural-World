@@ -14,7 +14,8 @@ public class RoadSettingsDrawer : PropertyDrawer
 
         var roadTexture = serializedObject.FindProperty("roadTexture");
         var width = serializedObject.FindProperty("width");
-        var blendFactor = serializedObject.FindProperty("blendFactor");
+        var distanceBlendFactor = serializedObject.FindProperty("distanceBlendFactor");
+        var angleBlendFactor = serializedObject.FindProperty("angleBlendFactor");
         var maxAngle = serializedObject.FindProperty("maxAngle");
 
         EditorGUI.BeginChangeCheck();
@@ -33,7 +34,9 @@ public class RoadSettingsDrawer : PropertyDrawer
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), width, true);
         position.y += EditorGUIUtility.singleLineHeight;
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), blendFactor, true);
+        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), distanceBlendFactor, true);
+        position.y += EditorGUIUtility.singleLineHeight;
+        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), angleBlendFactor, true);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), maxAngle, true);
         position.y += EditorGUIUtility.singleLineHeight;
@@ -58,7 +61,7 @@ public class RoadSettingsDrawer : PropertyDrawer
         var roadTexture = serializedObject.FindProperty("roadTexture");
         height += EditorGUI.GetPropertyHeight(roadTexture, true);
 
-        height += 8 * EditorGUIUtility.singleLineHeight;
+        height += 9 * EditorGUIUtility.singleLineHeight;
 
         return height;
     }

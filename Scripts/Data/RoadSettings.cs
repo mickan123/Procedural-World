@@ -10,8 +10,14 @@ public class RoadSettings : ScriptableObject
 
     public TextureData roadTexture;
     public float width = 1f;
-    [Range(0, 1)] public float blendFactor = 0.2f; // How much to blend road with existing terrain
+    
     public float maxAngle = 45; // Max allowed angle for road to be textured on
+    
+    // How much to blend road with existing terrain as distance increases from centre of road
+    [Range(0, 1)] public float distanceBlendFactor = 0.2f; // How much to blend road with existing terrain
+
+    // How much to blend road with existing terrain as distance increases from centre of road
+    [Range(0, 1)] public float angleBlendFactor = 0.2f; 
 
 #if UNITY_EDITOR
 
