@@ -183,7 +183,7 @@ public class TerrainChunk
 
 
         BiomeInfo info = this.chunkData.biomeData.biomeInfo;
-        int width = info.biomeMap.GetLength(0);
+        int width = info.biomeMap.GetLength(0) - 3;
 
         // Create texture to pass in biome maps and biome strengths
         int numBiomes = this.terrainSettings.biomeSettings.Count;
@@ -206,29 +206,36 @@ public class TerrainChunk
         );
 
         biomeMapTex.filterMode = FilterMode.Trilinear;
-        biomeStrengthTexArray.filterMode = FilterMode.Point; // TODO: Should this be bilinear
+        biomeStrengthTexArray.filterMode = FilterMode.Trilinear; // TODO: Should this be bilinear
 
         float[,] heightMap = this.chunkData.biomeData.heightNoiseMap;
 
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < width; y++)
-            {
-                float roadStrength = chunkData.roadStrengthMap[x, y];
+            {   
+                // Average 4 corners of a point to get the pixel road strength
+                // Offset of 1 due to having out of mesh vertices for normal calculations
+                int offset = 1;
+                float roadStrength = (chunkData.roadStrengthMap[x + offset, y + offset] 
+                    + chunkData.roadStrengthMap[x + offset + 1, y + offset] 
+                    + chunkData.roadStrengthMap[x + offset + 1, y + offset + 1]
+                    + chunkData.roadStrengthMap[x + offset, y + offset + 1]) / 4f;
+
                 float angle = Common.CalculateAngle(x, y, heightMap);
                 angle /= 90f; // Normalize 0 to 1 range
 
-                biomeMapTex.SetPixel(x, y, new Color(chunkData.roadStrengthMap[x, y], angle, 0f, 0f));
+                biomeMapTex.SetPixel(x, y, new Color(chunkData.roadStrengthMap[x + offset, y + offset], angle, 0f, 0f));
 
                 for (int k = 0; k < terrainSettings.maxBiomeCount; k += biomesPerTexture)
                 {
                     int texIndex = k / biomesPerTexture;
 
                     Color biomeStrengths = new Color(
-                        (k < numBiomes) ? info.biomeStrengths[x, y, k] : 0f,
-                        (k + 1 < numBiomes) ? info.biomeStrengths[x, y, k + 1] : 0f,
-                        (k + 2 < numBiomes) ? info.biomeStrengths[x, y, k + 2] : 0f,
-                        (k + 3 < numBiomes) ? info.biomeStrengths[x, y, k + 3] : 0f
+                        (k < numBiomes) ? info.biomeStrengths[x + offset, y + 1, k] : 0f,
+                        (k + 1 < numBiomes) ? info.biomeStrengths[x + offset, y + offset, k + 1] : 0f,
+                        (k + 2 < numBiomes) ? info.biomeStrengths[x + offset, y + offset, k + 2] : 0f,
+                        (k + 3 < numBiomes) ? info.biomeStrengths[x + offset, y + offset, k + 3] : 0f
                     );
                     biomeStrengthTextures[texIndex].SetPixel(x, y, biomeStrengths);
                 }

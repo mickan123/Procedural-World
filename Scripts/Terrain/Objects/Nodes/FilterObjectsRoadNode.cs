@@ -39,7 +39,15 @@ public class FilterObjectsRoadNode : BiomeGraphNode
                 continue;
             }
 
-            float roadStrength = Common.HeightFromFloatCoord(positionData.positions.xCoords[i], positionData.positions.zCoords[i], biomeGraph.roadStrengthMap);
+            // 1 Offset due to out of mesh vertice at edge of heightmap, subtract half since
+            // road strength corresponds to centre of square rather than corners
+            float offset = 0.5f;
+
+            float roadStrength = Common.HeightFromFloatCoord(
+                positionData.positions.xCoords[i] + offset, 
+                positionData.positions.zCoords[i] + offset, 
+                biomeGraph.roadStrengthMap
+            );
 
             if ((float)prng.NextDouble() * 0.5f < roadStrength)
             {

@@ -434,7 +434,6 @@ public class TerrainSettings : ScriptableObject
 
     public void OnValidate()
     {
-        // TODO ensure no overlapping biome values
         erosionSettings.OnValidate();
         meshSettings.OnValidate();
 
