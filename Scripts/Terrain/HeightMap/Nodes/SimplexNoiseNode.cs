@@ -31,13 +31,15 @@ public class SimplexNoiseNode : BiomeGraphNode
 
     public float[,] GetHeightMap()
     {
-        var biomeGraph = this.graph as BiomeGraph;
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
+
         float[,] heightMap = HeightMapGenerator.GenerateHeightMap(
-            biomeGraph.width,
-            biomeGraph.height,
+            heightMapData.width,
+            heightMapData.height,
             this.noiseMapSettings,
-            biomeGraph.terrainSettings,
-            biomeGraph.sampleCentre,
+            heightMapData.terrainSettings,
+            heightMapData.sampleCentre,
             normalizeMode,
             this.noiseMapSettings.seed
         );

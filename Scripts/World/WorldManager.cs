@@ -5,24 +5,24 @@ using System;
 
 public class WorldManager
 {
-    LODInfo[] detailLevels;
-    int colliderLODIndex;
-    TerrainSettings terrainSettings;
-    Transform viewer;
-    Transform parent;
-    Material mapMaterial;
+    private TerrainSettings terrainSettings;
+    private Transform viewer;
+    private LODInfo[] detailLevels;
+    private int colliderLODIndex;
+    private Transform parent;
+    private Material mapMaterial;
 
-    const float viewerMoveThresholdForChunkUpdate = 25f;
-    const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
+    private const float viewerMoveThresholdForChunkUpdate = 5f;
+    private const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
 
-    float meshWorldSize;
-    int maxChunkViewDist;
+    private float meshWorldSize;
+    private int maxChunkViewDist;
 
-    Vector2 viewerPosition;
-    Vector2 viewerPositionOld;
+    private Vector2 viewerPosition;
+    private Vector2 viewerPositionOld;
 
-    Dictionary<ChunkCoord, TerrainChunkData> terrainChunkDictionary = new Dictionary<ChunkCoord, TerrainChunkData>();
-    List<TerrainChunk> visibleTerrainChunks = new List<TerrainChunk>();
+    private Dictionary<ChunkCoord, TerrainChunkData> terrainChunkDictionary = new Dictionary<ChunkCoord, TerrainChunkData>();
+    private List<TerrainChunk> visibleTerrainChunks = new List<TerrainChunk>();
 
     public bool destroyed = false;
 

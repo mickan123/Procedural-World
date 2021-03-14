@@ -25,15 +25,16 @@ public class RandomPointsNode : BiomeGraphNode
     public ObjectPositionData GetPositionData()
     {
         System.Random prng = new System.Random(this.seed);
-        var biomeGraph = this.graph as BiomeGraph;
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
         
-        if (biomeGraph.heightMap == null)
+        if (heightMapData.heightMap == null)
         {
             return null;
         }
 
         int increment = 10;
-        int mapSize = biomeGraph.heightMap.GetLength(0);
+        int mapSize = heightMapData.heightMap.GetLength(0);
 
         int totalRandomPoints = numPoints * (mapSize / increment + 1) * (mapSize / increment + 1);
         List<float> xCoords = new List<float>(totalRandomPoints);
@@ -52,7 +53,7 @@ public class RandomPointsNode : BiomeGraphNode
                     float zCoord = Common.NextFloat(prng, z, z + increment);
 
                     float offset = 1f;
-                    float yCoord = Common.HeightFromFloatCoord(xCoord + offset, zCoord + offset, biomeGraph.heightMap);
+                    float yCoord = Common.HeightFromFloatCoord(xCoord + offset, zCoord + offset, heightMapData.heightMap);
 
                     if (xCoord <= mapSize - 3 && zCoord <= mapSize - 3)
                     {
@@ -64,6 +65,6 @@ public class RandomPointsNode : BiomeGraphNode
             }
         }
 
-        return new ObjectPositionData(new ObjectPositions(xCoords, yCoords, zCoords), biomeGraph.heightMap);
+        return new ObjectPositionData(new ObjectPositions(xCoords, yCoords, zCoords), heightMapData.heightMap);
     }
 }

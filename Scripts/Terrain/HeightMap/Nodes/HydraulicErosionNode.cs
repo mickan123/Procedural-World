@@ -30,11 +30,12 @@ public class HydraulicErosionNode : BiomeGraphNode
     {
         float[,] heightMap = GetInputValue<float[,]>("heightMapIn", this.heightMapIn);
 
-        var biomeGraph = this.graph as BiomeGraph;
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
 
         int width = heightMap.GetLength(0);
-        int height = heightMap.GetLength(1);
+        int height = heightMap.GetLength(1);        
 
-        return HydraulicErosion.Erode(heightMap, biomeGraph.terrainSettings, biomeGraph.biomeInfo, biomeGraph.sampleCentre);
+        return HydraulicErosion.Erode(heightMap, heightMapData.terrainSettings, heightMapData.biomeInfo, heightMapData.sampleCentre);
     }
 }

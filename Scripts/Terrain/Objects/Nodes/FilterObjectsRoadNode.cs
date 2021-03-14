@@ -29,7 +29,8 @@ public class FilterObjectsRoadNode : BiomeGraphNode
         {
             return;
         }
-        var biomeGraph = this.graph as BiomeGraph;
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
 
         System.Random prng = new System.Random();
         for (int i = 0; i < positionData.positions.Count; i++)
@@ -46,7 +47,7 @@ public class FilterObjectsRoadNode : BiomeGraphNode
             float roadStrength = Common.HeightFromFloatCoord(
                 positionData.positions.xCoords[i] + offset, 
                 positionData.positions.zCoords[i] + offset, 
-                biomeGraph.roadStrengthMap
+                heightMapData.roadStrengthMap
             );
 
             if ((float)prng.NextDouble() * 0.5f < roadStrength)

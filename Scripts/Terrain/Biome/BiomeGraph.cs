@@ -6,108 +6,103 @@ using System.Collections.Generic;
 [Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/BiomeGraph")]
 public class BiomeGraph : NodeGraph
 {
-    public BiomeInfo biomeInfo;
-    public TerrainSettings terrainSettings;
-    public Vector2 sampleCentre;
-    public int biome;
-    public int width;
-    public int height;
-
-    public float[,] heightMap;
-    public float[,] roadStrengthMap;
-
-    private static readonly System.Object obj = new System.Object();
+    public Dictionary<System.Threading.Thread, HeightMapGraphData> heightMapData;
 
     public bool initialized = false;
 
     public float[,] GetHeightMap(TerrainSettings terrainSettings, Vector2 sampleCentre, int width, int height)
     {
-        lock(obj)
-        {
-            this.terrainSettings = terrainSettings;
-            this.sampleCentre = sampleCentre;
-            this.width = width;
-            this.height = height;
+        this.heightMapData[System.Threading.Thread.CurrentThread] = new HeightMapGraphData(
+            terrainSettings, sampleCentre, width, height
+        );
 
-            foreach (Node node in this.nodes)
+        foreach (Node node in this.nodes)
+        {
+            if (node is HeightMapOutputNode)
             {
-                if (node is HeightMapOutputNode)
-                {
-                    var typedNode = node as HeightMapOutputNode;
-                    return typedNode.GetValue();
-                }
+                var typedNode = node as HeightMapOutputNode;
+                float[,] heightMap = typedNode.GetValue();
+                heightMapData.Remove(System.Threading.Thread.CurrentThread);
+                return heightMap;
             }
-            return null;
         }
+        heightMapData.Remove(System.Threading.Thread.CurrentThread);
+        return null;
     }
 
     public float[,] GetHeightMap(
-        BiomeInfo info, 
-        TerrainSettings terrainSettings, 
-        Vector2 sampleCentre, 
+        BiomeInfo info,
+        TerrainSettings terrainSettings,
+        Vector2 sampleCentre,
         int biome,
-        int width, 
+        int width,
         int height
     )
     {
-        lock(obj)
-        {
-            this.biomeInfo = info;
-            this.terrainSettings = terrainSettings;
-            this.sampleCentre = sampleCentre;
-            this.biome = biome;
-            this.width = width;
-            this.height = height;
+        heightMapData[System.Threading.Thread.CurrentThread] = new HeightMapGraphData(
+            terrainSettings, sampleCentre, width, height, biome, info
+        );
 
-            foreach (Node node in this.nodes)
+        foreach (Node node in this.nodes)
+        {
+            if (node is HeightMapOutputNode)
             {
-                if (node is HeightMapOutputNode)
-                {
-                    var typedNode = node as HeightMapOutputNode;
-                    return typedNode.GetValue();
-                }
+                var typedNode = node as HeightMapOutputNode;
+                float[,] heightMap = typedNode.GetValue();
+                heightMapData.Remove(System.Threading.Thread.CurrentThread);
+                return heightMap;
             }
-            return null;
         }
+        heightMapData.Remove(System.Threading.Thread.CurrentThread);
+        return null;
     }
 
-    public List<ObjectSpawner> GetObjectSpawners(float[,] heightMap, float[,] roadStrengthMap) {
-        lock(obj)
+    public List<ObjectSpawner> GetObjectSpawners(
+        TerrainSettings terrainSettings, 
+        Vector2 sampleCentre, 
+        BiomeInfo biomeInfo, 
+        int biome, 
+        float[,] heightMap, 
+        float[,] roadStrengthMap
+    )
+    {
+        heightMapData[System.Threading.Thread.CurrentThread] = new HeightMapGraphData(
+            terrainSettings, sampleCentre, biomeInfo, biome, heightMap, roadStrengthMap
+        );
+
+        List<ObjectSpawner> objectSpawners = new List<ObjectSpawner>();
+
+        foreach (Node node in this.nodes)
         {
-            List<ObjectSpawner> objectSpawners = new List<ObjectSpawner>();
-
-            this.heightMap = heightMap;
-            this.roadStrengthMap = roadStrengthMap;
-
-            foreach (Node node in this.nodes)
+            if (node is ObjectsOutputNode)
             {
-                if (node is ObjectsOutputNode) {
-                    ObjectsOutputNode typedNode = node as ObjectsOutputNode;
-                    objectSpawners.Add(typedNode.GetValue());
-                }
+                ObjectsOutputNode typedNode = node as ObjectsOutputNode;
+                objectSpawners.Add(typedNode.GetValue());
             }
-
-            return objectSpawners;
         }
+
+        heightMapData.Remove(System.Threading.Thread.CurrentThread);
+
+        return objectSpawners;
     }
 
     public RoadSettings GetRoadSettings()
     {
-        lock(obj)
+        foreach (Node node in this.nodes)
         {
-            foreach (Node node in this.nodes)
+            if (node is RoadOutputNode)
             {
-                if (node is RoadOutputNode)
-                {
-                    var typedNode = node as RoadOutputNode;
-                    return typedNode.roadSettings;
-                }
+                var typedNode = node as RoadOutputNode;
+                return typedNode.roadSettings;
             }
-            return null;
         }
+        return null;
     }
 
-    public void Init(System.Random prng) {
+    public void Init(System.Random prng)
+    {
+        heightMapData = new Dictionary<System.Threading.Thread, HeightMapGraphData>();
+
         foreach (BiomeGraphNode node in this.nodes)
         {
             node.seed = prng.Next(-100000, 100000);
@@ -218,5 +213,58 @@ public class BiomeGraph : NodeGraph
             }
         }
         return maxWidth;
+    }
+}
+
+// Contains all the data needed to calculate the heightmap
+public class HeightMapGraphData
+{
+    public TerrainSettings terrainSettings;
+    public Vector2 sampleCentre;
+    public int width;
+    public int height;
+
+    public int biome;
+    public BiomeInfo biomeInfo;
+
+    public float[,] heightMap;
+    public float[,] roadStrengthMap;
+
+    public HeightMapGraphData(TerrainSettings terrainSettings, Vector2 sampleCentre, int width, int height)
+    {
+        this.terrainSettings = terrainSettings;
+        this.sampleCentre = sampleCentre;
+        this.width = width;
+        this.height = height;
+
+        this.heightMap = new float[width, height];
+        this.roadStrengthMap = new float[width, height];
+    }
+
+    public HeightMapGraphData(TerrainSettings terrainSettings, Vector2 sampleCentre, int width, int height, int biome, BiomeInfo biomeInfo)
+    {
+        this.terrainSettings = terrainSettings;
+        this.sampleCentre = sampleCentre;
+        this.width = width;
+        this.height = height;
+
+        this.biome = biome;
+        this.biomeInfo = biomeInfo;
+
+        this.heightMap = new float[width, height];
+        this.roadStrengthMap = new float[width, height];
+    }
+
+    public HeightMapGraphData(TerrainSettings terrainSettings, Vector2 sampleCentre, BiomeInfo biomeInfo, int biome, float[,] heightMap, float[,] roadStrengthMap)
+    {
+        this.terrainSettings = terrainSettings;
+        this.sampleCentre = sampleCentre;
+        this.biomeInfo = biomeInfo;
+        this.biome = biome;
+        this.heightMap = heightMap;
+        this.roadStrengthMap = roadStrengthMap;
+
+        this.width = heightMap.GetLength(0);
+        this.height = heightMap.GetLength(0);
     }
 }

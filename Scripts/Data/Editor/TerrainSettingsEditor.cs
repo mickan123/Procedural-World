@@ -20,10 +20,6 @@ public class TerrainSettingsEditor : Editor
 
     // Mesh settings
     private SerializedProperty meshSettings;
-    private Editor meshSettingsEditor;
-
-    // Road settings
-    private Editor roadSettingsEditor;
 
     // Preview settings
     private SerializedProperty previewMaterial;
@@ -51,7 +47,6 @@ public class TerrainSettingsEditor : Editor
 
         // Mesh settings
         meshSettings = soTarget.FindProperty("meshSettings");
-        meshSettingsEditor = null;
 
         // Preview settings
         previewMaterial = soTarget.FindProperty("previewMaterial");
@@ -131,7 +126,7 @@ public class TerrainSettingsEditor : Editor
                 myTarget.toolbarBottom = -1;
                 myTarget.currentTab = "Biomes";
                 break;
-            
+
             case 1:
                 myTarget.toolbarBottom = -1;
                 myTarget.currentTab = "Mesh";
@@ -204,7 +199,9 @@ public class TerrainSettingsEditor : Editor
 
     private void MeshTab()
     {
-        Common.DisplayScriptableObjectEditor(meshSettings, myTarget.meshSettings, meshSettingsEditor);
+        EditorGUILayout.ObjectField(meshSettings);
+        EditorGUILayout.Space();
+        EditorGUILayout.PropertyField(meshSettings);
     }
 
     private void RiversTab()
@@ -228,6 +225,4 @@ public class TerrainSettingsEditor : Editor
             EditorGUILayout.PropertyField(noiseMapBiomeIndex, true);
         }
     }
-
-
 }

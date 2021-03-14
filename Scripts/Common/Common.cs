@@ -257,32 +257,4 @@ public static class Common
             listc[n] = value;
         }
     }
-
-#if UNITY_EDITOR
-
-    public static Editor DisplayScriptableObjectEditor(SerializedProperty property, Object targetObject, Editor targetEditor)
-    {
-        EditorGUILayout.PropertyField(property);
-        if (property.objectReferenceValue != null)
-        {
-            property.isExpanded = EditorGUILayout.Foldout(property.isExpanded, GUIContent.none, true, EditorStyles.foldout);
-        }
-
-        if (property.isExpanded && targetObject != null)
-        {
-            if (targetEditor == null)
-            {
-                targetEditor = Editor.CreateEditor(targetObject);
-            }
-            EditorGUI.indentLevel++;
-
-            targetEditor.OnInspectorGUI();
-            EditorGUI.indentLevel--;
-        }
-        EditorGUILayout.Space();
-
-        return targetEditor;
-    }
-
-#endif
 }

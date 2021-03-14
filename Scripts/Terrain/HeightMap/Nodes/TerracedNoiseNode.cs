@@ -26,13 +26,15 @@ public class TerracedNoiseNode : BiomeGraphNode
 
     public float[,] GetTerracedHeightMap()
     {
-        var biomeGraph = this.graph as BiomeGraph;
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
+
         float[,] heightMap = HeightMapGenerator.GenerateTerracedNoiseMap(
-            biomeGraph.width,
-            biomeGraph.height,
+            heightMapData.width,
+            heightMapData.height,
             this.noiseMapSettings,
-            biomeGraph.terrainSettings,
-            biomeGraph.sampleCentre,
+            heightMapData.terrainSettings,
+            heightMapData.sampleCentre,
             normalizeMode,
             this.numTerraces,
             this.noiseMapSettings.seed

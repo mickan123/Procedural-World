@@ -64,7 +64,9 @@ public class ObjectsOutputNode : BiomeGraphNode
 
     private void FilterByBiome(ObjectPositionData positionData)
     {
-        var biomeGraph = this.graph as BiomeGraph;
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
+
         System.Random prng = new System.Random(this.seed);
 
         for (int i = 0; i < positionData.positions.Count; i++)
@@ -73,7 +75,7 @@ public class ObjectsOutputNode : BiomeGraphNode
 
             int coordX = (int)positionData.positions.xCoords[i];
             int coordZ = (int)positionData.positions.zCoords[i];
-            float biomeStrength = biomeGraph.biomeInfo.biomeStrengths[coordX, coordZ, biomeGraph.biome];
+            float biomeStrength = heightMapData.biomeInfo.biomeStrengths[coordX, coordZ, heightMapData.biome];
 
             if (rand > biomeStrength * biomeStrength * biomeStrength)
             {

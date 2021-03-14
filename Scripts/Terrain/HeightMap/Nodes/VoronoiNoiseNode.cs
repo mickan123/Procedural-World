@@ -28,12 +28,14 @@ public class VoronoiNoiseNode : BiomeGraphNode
 
     public float[,] GetVoronoiNoiseHeightMap()
     {
-        var biomeGraph = this.graph as BiomeGraph;
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
+
         float[,] heightMap = HeightMapGenerator.GenerateVeronoiMap(
-            biomeGraph.width,
-            biomeGraph.height,
-            biomeGraph.terrainSettings,
-            biomeGraph.sampleCentre,
+            heightMapData.width,
+            heightMapData.height,
+            heightMapData.terrainSettings,
+            heightMapData.sampleCentre,
             normalizeMode,
             voronoiMode,
             numVoronoiPolygons,

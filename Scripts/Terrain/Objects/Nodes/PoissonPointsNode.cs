@@ -25,7 +25,9 @@ public class PoissonPointsNode : BiomeGraphNode
 
     public ObjectPositionData GetPositionData()
     {
-        var biomeGraph = this.graph as BiomeGraph;
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
+        
         if (this.settings == null || this.settings.noiseMapSettings == null)
         {
             return null;
@@ -33,7 +35,7 @@ public class PoissonPointsNode : BiomeGraphNode
 
         System.Random prng = new System.Random(this.seed);
 
-        List<Vector3> points = PoissonDiskSampling.GeneratePoints(settings, biomeGraph.sampleCentre, biomeGraph.heightMap, prng, biomeGraph.terrainSettings);
+        List<Vector3> points = PoissonDiskSampling.GeneratePoints(settings, heightMapData.sampleCentre, heightMapData.heightMap, prng, heightMapData.terrainSettings);
 
         List<float> xCoords = new List<float>(points.Count);
         List<float> yCoords = new List<float>(points.Count);
@@ -48,6 +50,6 @@ public class PoissonPointsNode : BiomeGraphNode
 
         ObjectPositions positions = new ObjectPositions(xCoords, yCoords, zCoords);
 
-        return new ObjectPositionData(positions, biomeGraph.heightMap);
+        return new ObjectPositionData(positions, heightMapData.heightMap);
     }
 }

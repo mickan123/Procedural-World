@@ -25,13 +25,15 @@ public class RidgedTurbulenceNode : BiomeGraphNode
 
     public float[,] GetRidgedturbulanceHeightMap()
     {
-        var biomeGraph = this.graph as BiomeGraph;
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
+
         float[,] heightMap = HeightMapGenerator.GenerateRidgedTurbulenceMap(
-            biomeGraph.width,
-            biomeGraph.height,
+            heightMapData.width,
+            heightMapData.height,
             this.noiseMapSettings,
-            biomeGraph.terrainSettings,
-            biomeGraph.sampleCentre,
+            heightMapData.terrainSettings,
+            heightMapData.sampleCentre,
             normalizeMode,
             this.noiseMapSettings.seed
         );
