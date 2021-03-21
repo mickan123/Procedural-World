@@ -10,23 +10,36 @@ public class BiomeGraph : NodeGraph
 
     public bool initialized = false;
 
+    private readonly object locker = new object();
+
     public float[,] GetHeightMap(TerrainSettings terrainSettings, Vector2 sampleCentre, int width, int height)
     {
-        this.heightMapData[System.Threading.Thread.CurrentThread] = new HeightMapGraphData(
-            terrainSettings, sampleCentre, width, height
-        );
-
+        lock(locker)
+        {
+            this.heightMapData[System.Threading.Thread.CurrentThread] = new HeightMapGraphData(
+                terrainSettings, sampleCentre, width, height
+            );
+        }
+        
         foreach (Node node in this.nodes)
         {
             if (node is HeightMapOutputNode)
             {
                 var typedNode = node as HeightMapOutputNode;
                 float[,] heightMap = typedNode.GetValue();
-                heightMapData.Remove(System.Threading.Thread.CurrentThread);
+
+                lock(locker)
+                {
+                    heightMapData.Remove(System.Threading.Thread.CurrentThread);
+                }
+                
                 return heightMap;
             }
         }
-        heightMapData.Remove(System.Threading.Thread.CurrentThread);
+        lock(locker)
+        {
+            heightMapData.Remove(System.Threading.Thread.CurrentThread);
+        }
         return null;
     }
 
@@ -39,21 +52,34 @@ public class BiomeGraph : NodeGraph
         int height
     )
     {
-        heightMapData[System.Threading.Thread.CurrentThread] = new HeightMapGraphData(
-            terrainSettings, sampleCentre, width, height, biome, info
-        );
-
+        lock(locker)
+        {
+            this.heightMapData[System.Threading.Thread.CurrentThread] = new HeightMapGraphData(
+                terrainSettings, sampleCentre, width, height, biome, info
+            );
+        }
+        
         foreach (Node node in this.nodes)
         {
             if (node is HeightMapOutputNode)
             {
                 var typedNode = node as HeightMapOutputNode;
                 float[,] heightMap = typedNode.GetValue();
-                heightMapData.Remove(System.Threading.Thread.CurrentThread);
+
+                lock(locker)
+                {
+                    heightMapData.Remove(System.Threading.Thread.CurrentThread);
+                }
+
                 return heightMap;
             }
         }
-        heightMapData.Remove(System.Threading.Thread.CurrentThread);
+        
+        lock(locker)
+        {
+            heightMapData.Remove(System.Threading.Thread.CurrentThread);
+        }
+
         return null;
     }
 
@@ -66,10 +92,13 @@ public class BiomeGraph : NodeGraph
         float[,] roadStrengthMap
     )
     {
-        heightMapData[System.Threading.Thread.CurrentThread] = new HeightMapGraphData(
-            terrainSettings, sampleCentre, biomeInfo, biome, heightMap, roadStrengthMap
-        );
-
+        lock(locker)
+        {
+            this.heightMapData[System.Threading.Thread.CurrentThread] = new HeightMapGraphData(
+                terrainSettings, sampleCentre, biomeInfo, biome, heightMap, roadStrengthMap
+            );
+        }
+        
         List<ObjectSpawner> objectSpawners = new List<ObjectSpawner>();
 
         foreach (Node node in this.nodes)
@@ -81,7 +110,10 @@ public class BiomeGraph : NodeGraph
             }
         }
 
-        heightMapData.Remove(System.Threading.Thread.CurrentThread);
+        lock(locker)
+        {
+            heightMapData.Remove(System.Threading.Thread.CurrentThread);
+        }
 
         return objectSpawners;
     }

@@ -55,9 +55,9 @@ public class ObjectsOutputNode : BiomeGraphNode
             return new ObjectSpawner(
                 this.terrainObjects,
                 positionData.positions,
-                new System.Random(seed),
-                this.hide,
-                this.staticBatch
+                new System.Random(seed),   
+                this.staticBatch,
+                this.hide
             );
         }
     }
