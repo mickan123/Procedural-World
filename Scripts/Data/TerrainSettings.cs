@@ -20,9 +20,6 @@ public class TerrainSettings : ScriptableObject
     [Range(0, 1)] public float transitionDistance;
     public List<BiomeSettings> biomeSettings = new List<BiomeSettings>();
 
-    // Erosion settings
-    public ErosionSettings erosionSettings;
-
     // Mesh settings
     public MeshSettings meshSettings;
 
@@ -74,8 +71,6 @@ public class TerrainSettings : ScriptableObject
     public void InitSeeds()
     {
         System.Random prng = new System.Random(seed);
-
-        erosionSettings.seed = prng.Next(-100000, 100000);
 
         humidityMapGraph.Init(prng);
         temperatureMapGraph.Init(prng);
@@ -434,7 +429,6 @@ public class TerrainSettings : ScriptableObject
 
     public void OnValidate()
     {
-        erosionSettings.OnValidate();
         meshSettings.OnValidate();
 
         for (int i = 0; i < biomeSettings.Count; i++)

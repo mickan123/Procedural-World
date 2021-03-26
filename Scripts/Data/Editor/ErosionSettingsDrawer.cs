@@ -18,9 +18,6 @@ public class ErosionSettingsDrawer : PropertyDrawer
         var erosionShader = serializedObject.FindProperty("erosionShader");
         var gravity = serializedObject.FindProperty("gravity");
 
-        var smoothFilterWidth = serializedObject.FindProperty("smoothFilterWidth");
-        var smoothWidth = serializedObject.FindProperty("smoothWidth");
-
         var numHydraulicErosionIterations = serializedObject.FindProperty("numHydraulicErosionIterations");
         var erosionBrushRadius = serializedObject.FindProperty("erosionBrushRadius");
 
@@ -40,13 +37,6 @@ public class ErosionSettingsDrawer : PropertyDrawer
         EditorGUI.BeginChangeCheck();
 
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), gravity, true);
-        position.y += 2 * EditorGUIUtility.singleLineHeight;
-
-        EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Smoothing Settings", EditorStyles.boldLabel);
-        position.y += EditorGUIUtility.singleLineHeight;
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), smoothFilterWidth, true);
-        position.y += EditorGUIUtility.singleLineHeight;
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), smoothWidth, true);
         position.y += 2 * EditorGUIUtility.singleLineHeight;
 
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Hydraulic Erosion Settings", EditorStyles.boldLabel);
@@ -92,7 +82,7 @@ public class ErosionSettingsDrawer : PropertyDrawer
         }
         SerializedObject serializedObject = new SerializedObject(property.objectReferenceValue as ErosionSettings);
 
-        float height = 25 * EditorGUIUtility.singleLineHeight;
+        float height = 14 * EditorGUIUtility.singleLineHeight;
 
         return height;
     }

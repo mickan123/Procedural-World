@@ -8,14 +8,11 @@ public class ErosionSettings : ScriptableObject
     public static ComputeShader erosionShader;
     public float gravity = 4;
 
-    public int smoothFilterWidth = 3; // Size of smoothing filter
-    public int smoothWidth = 25; // Number of units from edge to smooth
-
-    public int numHydraulicErosionIterations = 50000;
+    public int numHydraulicErosionIterations = 1000000;
     [Range(2, 10)]
     public int erosionBrushRadius = 3;
 
-    public int maxLifetime = 30;
+    public int maxLifetime = 50;
     public float sedimentCapacityFactor = 4;
     public float minSedimentCapacity = .01f;
     public float depositSpeed = 0.3f;
@@ -37,8 +34,7 @@ public class ErosionSettings : ScriptableObject
 
     public void OnValidate()
     {
-        smoothFilterWidth = Mathf.Max(0, smoothFilterWidth);
-        smoothWidth = Mathf.Max(0, smoothWidth);
+
     }
 
 #endif

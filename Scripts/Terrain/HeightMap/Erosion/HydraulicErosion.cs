@@ -6,7 +6,7 @@ using System;
 
 public static class HydraulicErosion
 {
-    public static BrushValues brushValues;
+    private static readonly bool cpuErosion = true;
 
     public class BrushValues
     {
@@ -54,14 +54,13 @@ public static class HydraulicErosion
 
     public static void Init(TerrainSettings settings)
     {
-        ErosionSettings erosionSettings = settings.erosionSettings;
         ErosionSettings.erosionShader = Resources.Load<ComputeShader>("Shaders/Erosion");
-        brushValues = new BrushValues(erosionSettings, settings.meshSettings.numVerticesPerLine);
     }
 
     public static float[,] Erode(
         float[,] values, 
         TerrainSettings terrainSettings, 
+        ErosionSettings erosionSettings,
         BiomeInfo info, 
         Vector2 chunkCentre
     )
@@ -87,28 +86,37 @@ public static class HydraulicErosion
         }
 
         // Generate random indices to use
-        ErosionSettings settings = terrainSettings.erosionSettings;
-        int[] randomIndices = new int[settings.numHydraulicErosionIterations];
-        System.Random prng = new System.Random(settings.seed);
-        for (int i = 0; i < settings.numHydraulicErosionIterations; i++)
+        int[] randomIndices = new int[erosionSettings.numHydraulicErosionIterations];
+        System.Random prng = new System.Random(erosionSettings.seed);
+        for (int i = 0; i < erosionSettings.numHydraulicErosionIterations; i++)
         {
-            int randomX = prng.Next(settings.erosionBrushRadius, mapSize + settings.erosionBrushRadius);
-            int randomY = prng.Next(settings.erosionBrushRadius, mapSize + settings.erosionBrushRadius);
+            int randomX = prng.Next(erosionSettings.erosionBrushRadius, mapSize - erosionSettings.erosionBrushRadius);
+            int randomY = prng.Next(erosionSettings.erosionBrushRadius, mapSize - erosionSettings.erosionBrushRadius);
             randomIndices[i] = randomY * mapSize + randomX;
         }
 
         bool gpuDone = false;
-        if (terrainSettings.IsMainThread())
-        {
-            GPUErosion(settings, mapSize, map, randomIndices, ref gpuDone);
+
+        if (cpuErosion)
+        {            
+            float[,] cpuMap = Common.CopyArray(values);
+            CPUErosion(erosionSettings, mapSize, cpuMap);
+            return cpuMap;
         }
         else
         {
-            Dispatcher.RunOnMainThread(() => GPUErosion(settings, mapSize, map, randomIndices, ref gpuDone));
-        }
-        while (!gpuDone)
-        {
-            Thread.Sleep(1);
+            if (terrainSettings.IsMainThread())
+            {
+                GPUErosion(erosionSettings, mapSize, map, randomIndices, ref gpuDone);
+            }
+            else
+            {
+                Dispatcher.RunOnMainThread(() => GPUErosion(erosionSettings, mapSize, map, randomIndices, ref gpuDone));
+            }
+            while (!gpuDone)
+            {
+                Thread.Sleep(1);
+            }
         }
 
         // Fade away erosion at edge
@@ -139,6 +147,7 @@ public static class HydraulicErosion
 
     public static void GPUErosion(ErosionSettings settings, int mapSize, float[] map, int[] randomIndices, ref bool gpuDone)
     {
+        BrushValues brushValues = new BrushValues(settings, mapSize);
         // Send brush data to compute shader
         ComputeBuffer brushIndexBuffer = new ComputeBuffer(brushValues.brushIndexOffsets.Count, sizeof(int));
         ComputeBuffer brushWeightBuffer = new ComputeBuffer(brushValues.brushWeights.Count, sizeof(int));
@@ -170,7 +179,9 @@ public static class HydraulicErosion
         ErosionSettings.erosionShader.SetFloat("gravity", settings.gravity);
         ErosionSettings.erosionShader.SetFloat("startSpeed", settings.startSpeed);
         ErosionSettings.erosionShader.SetFloat("startWater", settings.startWater);
-        ErosionSettings.erosionShader.Dispatch(0, mapSize, 1, 1);
+
+        int numThreads = settings.numHydraulicErosionIterations / 1024;
+        ErosionSettings.erosionShader.Dispatch(0, numThreads, 1, 1);
         mapBuffer.GetData(map);
 
         gpuDone = true;
@@ -181,11 +192,23 @@ public static class HydraulicErosion
         randomIndexBuffer.Release();
     }
 
-    // CPU Erosion below
-    public static void ErodeDrop(Drop drop, TerrainSettings terrainSettings, float[,] map, int mapSize)
+    public static void CPUErosion(ErosionSettings settings, int mapSize, float[,] map)
     {
-        ErosionSettings settings = terrainSettings.erosionSettings;
+        System.Random prng = new System.Random(settings.seed);
+        BrushValues brushValues = new BrushValues(settings, mapSize);
 
+        for (int i = 0; i < settings.numHydraulicErosionIterations; i++)
+        {
+            int randomX = prng.Next(settings.erosionBrushRadius, mapSize - settings.erosionBrushRadius);
+            int randomY = prng.Next(settings.erosionBrushRadius, mapSize - settings.erosionBrushRadius);
+            Drop drop = new Drop(settings, 0, randomX, randomY);
+            ErodeDrop(drop, settings, brushValues, map, mapSize);
+        }
+    }
+
+    // CPU Erosion below
+    public static void ErodeDrop(Drop drop, ErosionSettings settings, BrushValues brushValues, float[,] map, int mapSize)
+    {
         for (int lifetime = drop.lifetime; lifetime < settings.maxLifetime; lifetime++)
         {
             int nodeX = (int)drop.posX;
@@ -214,7 +237,11 @@ public static class HydraulicErosion
             drop.posY += drop.dirY;
 
             // Out of map check
-            if (drop.posX < 0 || drop.posX >= mapSize - 1 || drop.posY < 0 || drop.posY >= mapSize - 1)
+            if ((drop.posX == 0 && drop.posY == 0) 
+                || drop.posX < settings.erosionBrushRadius  + 1
+                || drop.posX > mapSize - settings.erosionBrushRadius - 1 
+                || drop.posY < settings.erosionBrushRadius + 1
+                || drop.posY > mapSize - settings.erosionBrushRadius - 1) 
             {
                 break;
             }
@@ -252,13 +279,13 @@ public static class HydraulicErosion
                 // Clamp the erosion to the change in height so that it doesn't dig a hole in the terrain behind the droplet
                 float amountToErode = Mathf.Min((sedimentCapacity - drop.sediment) * settings.erodeSpeed, -deltaHeight);
 
-                for (int brushIndex = 0; brushIndex < brushValues.erosionBrushIndices[dropletIndex].Length; brushIndex++)
-                {
-                    int nodeIndex = brushValues.erosionBrushIndices[dropletIndex][brushIndex];
-                    int brushX = nodeIndex % mapSize;
-                    int brushY = nodeIndex / mapSize;
+                for (int i = 0; i < brushValues.brushIndexOffsets.Count; i ++) {
+                    int erodeIndex = dropletIndex + brushValues.brushIndexOffsets[i];
 
-                    float weightedErodeAmount = amountToErode * brushValues.erosionBrushWeights[dropletIndex][brushIndex];
+                    int brushX = erodeIndex % mapSize;
+                    int brushY = erodeIndex / mapSize;
+
+                    float weightedErodeAmount = amountToErode * brushValues.brushWeights[i];
                     float deltaSediment = (map[brushY, brushX] < weightedErodeAmount) ? map[brushY, brushX] : weightedErodeAmount;
                     map[brushY, brushX] -= deltaSediment;
                     drop.sediment += deltaSediment;
@@ -287,8 +314,7 @@ public static class HydraulicErosion
         float x = posX - coordX;
         float y = posY - coordY;
 
-        // Calculate heights of the four nodes of the droplet's cell'
-        int nodeIndexNW = coordY * mapSize + coordX;
+        // Calculate heights of the four nodes of the droplet's cell
         float heightNW = map[coordY, coordX];
         float heightNE = map[coordY, coordX + 1];
         float heightSW = map[coordY + 1, coordX];
