@@ -222,7 +222,10 @@ public class TerrainChunk
                     + chunkData.roadStrengthMap[x + offset + 1, y + offset + 1]
                     + chunkData.roadStrengthMap[x + offset, y + offset + 1]) / 4f;
 
-                float angle = Common.CalculateAngle(x, y, heightMap);
+                float angle = (Common.CalculateAngle(x + offset, y + offset, heightMap)
+                            + Common.CalculateAngle(x + offset + 1, y + offset, heightMap)
+                            + Common.CalculateAngle(x + offset, y + offset + 1, heightMap)
+                            + Common.CalculateAngle(x + offset + 1, y + offset + 1, heightMap)) / 4f;
                 angle /= 90f; // Normalize 0 to 1 range
 
                 biomeMapTex.SetPixel(x, y, new Color(chunkData.roadStrengthMap[x + offset, y + offset], angle, 0f, 0f));
