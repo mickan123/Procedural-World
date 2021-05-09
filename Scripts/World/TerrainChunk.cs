@@ -100,7 +100,7 @@ public class TerrainChunk
     public void LoadInEditor()
     {
 
-#if (UNITY_EDITOR)
+#if (PROFILE && UNITY_EDITOR)
         float startTime = 0f;
         if (terrainSettings.IsMainThread())
         {
@@ -110,7 +110,7 @@ public class TerrainChunk
 
         this.terrainSettings.ApplyToMaterial(this.material);
 
-#if (UNITY_EDITOR)
+#if (PROFILE && UNITY_EDITOR)
         if (terrainSettings.IsMainThread())
         {
             float endTime = Time.realtimeSinceStartup;
@@ -135,7 +135,7 @@ public class TerrainChunk
         heightMapReceived = true;
         this.UpdateTerrainChunk();
 
-#if (UNITY_EDITOR)
+#if (PROFILE && UNITY_EDITOR)
         float startTime = 0f;
         if (terrainSettings.IsMainThread())
         {
@@ -145,7 +145,7 @@ public class TerrainChunk
 
         this.UpdateMaterial();
 
-#if (UNITY_EDITOR)
+#if (PROFILE && UNITY_EDITOR)
         if (terrainSettings.IsMainThread())
         {
             float endTime = Time.realtimeSinceStartup;
@@ -154,7 +154,7 @@ public class TerrainChunk
         }
 #endif
 
-#if (UNITY_EDITOR)
+#if (PROFILE && UNITY_EDITOR)
         float spawnObjectsStartTime = 0f;
         if (terrainSettings.IsMainThread())
         {
@@ -168,7 +168,7 @@ public class TerrainChunk
             spawnObjects[i].Spawn(meshObject.transform);
         }
 
-#if (UNITY_EDITOR)
+#if (PROFILE && UNITY_EDITOR)
         if (terrainSettings.IsMainThread())
         {
             float spawnObjectsEndTime = Time.realtimeSinceStartup;
