@@ -304,7 +304,7 @@ public static class HydraulicErosion
         {
             for (int y = 0; y < mapSize; y++)
             {
-                waterHeight[x, y] += settings.rainRate;
+                waterHeight[x, y] += settings.rainRate * settings.timestep;
             }
         }
     }
@@ -414,14 +414,13 @@ public static class HydraulicErosion
                 if (sediment[x, y] < sedimentCapacity)
                 {
                     float deltaSediment = Mathf.Clamp(settings.timestep * hardness[x, y] * settings.sedimentDisolveFactor * (sedimentCapacity - sediment[x, y]), 0, waterHeight[x, y]);
-                    // deltaSediment = settings.timestep * hardness[x, y] * settings.sedimentDisolveFactor * (sedimentCapacity - sediment[x, y]);
                     map[x, y] -= deltaSediment;
                     sediment[x, y] += deltaSediment;
                     waterHeight[x, y] += deltaSediment;
                 }
                 else // Deposit sediment if we are over capacity
                 {
-                    float deltaSediment = settings.timestep * settings.sedimentDepositFactor * (sediment[x, y] - sedimentCapacity);
+                    float deltaSediment = Mathf.Clamp(settings.timestep * settings.sedimentDepositFactor * (sediment[x, y] - sedimentCapacity), 0, waterHeight[x, y]);
                     map[x, y] += deltaSediment;
                     sediment[x, y] -= deltaSediment;
                     waterHeight[x, y] -= deltaSediment;
