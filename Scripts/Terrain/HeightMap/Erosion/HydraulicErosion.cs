@@ -5,7 +5,7 @@ using System.Threading;
 
 public static class HydraulicErosion
 {
-    private static readonly bool cpuErosion = true;
+    private static readonly bool cpuErosion = false;
 
     public class BrushValues
     {
@@ -154,9 +154,9 @@ public static class HydraulicErosion
         for (int i = 0; i < heightMap.Length; i++)
         {
             computeShaderHeightMap[i * 4] = heightMap[i]; // Height
-            computeShaderHeightMap[i * 4 + 1] = 1; // Water height
+            computeShaderHeightMap[i * 4 + 1] = 0; // Water height
             computeShaderHeightMap[i * 4 + 2] = 0; // Sediment
-            computeShaderHeightMap[i * 4 + 3] = 0; // Placeholder
+            computeShaderHeightMap[i * 4 + 3] = 1; // Hardness
         }
 
         ComputeBuffer heightMapBuffer = new ComputeBuffer(mapSize * mapSize, sizeof(float) * 4);
@@ -170,48 +170,78 @@ public static class HydraulicErosion
 
         // Set initial flux and velocity to zeros
         float[] flux = new float[heightMap.Length * 4];
+        float[] thermalFlux = new float[heightMap.Length * 4];
         float[] velocity = new float[heightMap.Length * 2];
 
         ComputeBuffer fluxBuffer = new ComputeBuffer(flux.Length, sizeof(float) * 4);
+        ComputeBuffer thermalFluxBuffer = new ComputeBuffer(flux.Length, sizeof(float) * 4);
         ComputeBuffer velocityBuffer = new ComputeBuffer(velocity.Length, sizeof(float) * 2);
 
         fluxBuffer.SetData(flux);
+        thermalFluxBuffer.SetData(thermalFlux);
         velocityBuffer.SetData(velocity);
 
         ErosionSettings.erosionShader.SetBuffer(0, "FluxMap", fluxBuffer);
+        ErosionSettings.erosionShader.SetBuffer(0, "ThermalFluxMap", thermalFluxBuffer);
         ErosionSettings.erosionShader.SetBuffer(0, "VelocityMap", velocityBuffer);
 
         // Set erosion shader parameters
         ErosionSettings.erosionShader.SetInt("mapSize", mapSize);
-        ErosionSettings.erosionShader.SetFloat("timestep", 1f);
-        ErosionSettings.erosionShader.SetFloat("evaporateSpeed", 0.01f);
-        ErosionSettings.erosionShader.SetFloat("rainfallAmount", 1f);
-        ErosionSettings.erosionShader.SetFloat("gravity", 9.8f);
-        ErosionSettings.erosionShader.SetFloat("sedimentCapacityFactor", 0.8f);
-        ErosionSettings.erosionShader.SetFloat("sedimentDisolveFactor", 0.8f);
-        ErosionSettings.erosionShader.SetFloat("sedimentDepositFactor", 0.8f);
+        ErosionSettings.erosionShader.SetFloat("timestep", settings.timestep);
+        ErosionSettings.erosionShader.SetFloat("evaporateSpeed", settings.evaporateSpeed);
+        ErosionSettings.erosionShader.SetFloat("rainRate", settings.rainRate);
+        ErosionSettings.erosionShader.SetFloat("gravity", settings.gravity);
+        ErosionSettings.erosionShader.SetFloat("sedimentCapacityFactor", settings.sedimentCapacityFactor);
+        ErosionSettings.erosionShader.SetFloat("sedimentDisolveFactor", settings.sedimentDisolveFactor);
+        ErosionSettings.erosionShader.SetFloat("sedimentDepositFactor", settings.sedimentDepositFactor);
+        ErosionSettings.erosionShader.SetFloat("thermalErosionRate", settings.thermalErosionRate);
+        ErosionSettings.erosionShader.SetFloat("talusAngleTangentBias", settings.talusAngleTangentBias);
+        ErosionSettings.erosionShader.SetFloat("talusAngleCoeff", settings.talusAngleCoeff);
+        ErosionSettings.erosionShader.SetFloat("sedimentSofteningFactor", settings.sedimentSofteningFactor);
 
-        ErosionSettings.erosionShader.SetFloat("stepSize", 1f / mapSize);
-        ErosionSettings.erosionShader.SetFloat("pipeArea", 20f);
+        ErosionSettings.erosionShader.SetFloat("stepSize", settings.stepSize);
+        ErosionSettings.erosionShader.SetFloat("pipeArea", settings.pipeArea);
 
         int numThreads = (mapSize * mapSize / 1024) + 1;
+        int numThreadsX = (mapSize / 256) + 1;
+        int numThreadsY = (mapSize / 256) + 1;
+
+        uint threadsPerGroupX, threadsPerGroupY, threadsPerGroupZ;
+        ErosionSettings.erosionShader.GetKernelThreadGroupSizes(0, out threadsPerGroupX, out threadsPerGroupY, out threadsPerGroupZ);
+
+        float[] waterHeight = new float[heightMap.Length];
+        float[] sediment = new float[heightMap.Length];
+        float[] hardness = new float[heightMap.Length];
+        float[] deltaHeight = new float[heightMap.Length];
+
         for (int i = 0; i < settings.numHydraulicErosionIterations; i++)
         {
-            ErosionSettings.erosionShader.Dispatch(0, 1, 1, 1);
+            ErosionSettings.erosionShader.SetInt("iteration", i);
+            ErosionSettings.erosionShader.Dispatch(
+                0, 
+                mapSize * mapSize / (int)threadsPerGroupX + 1, 
+                1,
+                1
+            );
         }
 
         heightMapBuffer.GetData(computeShaderHeightMap);
         fluxBuffer.GetData(flux);
         velocityBuffer.GetData(velocity);
 
-        for (int i = 0; i < heightMap.Length; i++)
+        for (int j = 0; j < heightMap.Length; j++)
         {
-            heightMap[i] = computeShaderHeightMap[i * 4];
+            deltaHeight[j] = computeShaderHeightMap[j * 4] - heightMap[j];
+            heightMap[j] = computeShaderHeightMap[j * 4];
+            waterHeight[j] = computeShaderHeightMap[j * 4 + 1];
+            sediment[j] = computeShaderHeightMap[j * 4 + 2];
+            hardness[j] = computeShaderHeightMap[j * 4 + 3];
         }
 
         gpuDone = true;
 
         fluxBuffer.Release();
+        thermalFluxBuffer.Release();
         velocityBuffer.Release();
         heightMapBuffer.Release();
         rainfallIndexBuffer.Release();
@@ -256,10 +286,6 @@ public static class HydraulicErosion
 
         for (int i = 0; i < settings.numHydraulicErosionIterations; i++)
         {
-            if (i == 900)
-            {
-                int temp = 1;
-            }
             CPUWaterSimulationErosion(
                 settings,
                 map,
