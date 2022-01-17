@@ -17,9 +17,8 @@
 
 #define IS_LEFT_BORDER (index % mapSize < 1)
 #define IS_RIGHT_BORDER (index % mapSize > mapSize - 2)
-#define IS_TOP_BORDER (uint(index) / uint(mapSize) < 1)
-#define IS_BOTTOM_BORDER (uint(index) / uint(mapSize) > uint(mapSize) - 2)
-
+#define IS_TOP_BORDER (uint(uint(index) / uint(mapSize)) < 1)
+#define IS_BOTTOM_BORDER (uint(uint(index) / uint(mapSize)) > uint(mapSize) - 2)
 
 // Heightmap, r = height, g = water height, b = sediment, r = placeholder
 RWStructuredBuffer<float4> HeightMap;
@@ -33,7 +32,7 @@ RWStructuredBuffer<float4> ThermalFluxMap;
 // Velocity field, r = x, g = y
 RWStructuredBuffer<float2> VelocityMap;
 
-StructuredBuffer<int> RainfallIndices;
+RWStructuredBuffer<float> InitialHeightMap;
 
 uint mapSize;
 float timestep;
@@ -47,12 +46,7 @@ float thermalErosionRate;
 float talusAngleTangentBias;
 float talusAngleCoeff;
 float sedimentSofteningFactor;
-
-float stepSize;
-float pipeArea;
-
-int iteration;
-
+float maxErosionDepth;
 
 float4 SampleBilinear(RWStructuredBuffer<float4> buff, float2 uv)
 {
@@ -78,7 +72,7 @@ void WaterIncrease(int index)
 {
     float4 state = CURRENT_SAMPLE(HeightMap);
 
-    WATER_HEIGHT(state) += timestep * rainRate;
+    WATER_HEIGHT(state) +=  rainRate;
 
     CURRENT_SAMPLE(HeightMap) = state;
 }
@@ -105,14 +99,15 @@ void FluxComputation(int index)
         FULL_HEIGHT(stateBottom)
     );
 
-    outputFlux = max(0, outputFlux + timestep * gravity * deltaHeight * pipeArea / stepSize);
+    float pipeArea = 60;
+    outputFlux = max(0, outputFlux + timestep * gravity * deltaHeight * pipeArea);
     
     // Rescale flux to not exceed total amount of water in a cell
     float sumOutputFlux = SUM_COMPS(outputFlux);
     float damping = 0.999;
     if (sumOutputFlux != 0)
     {
-        outputFlux *= min(1, waterHeight * stepSize * stepSize / (SUM_COMPS(outputFlux) * timestep)) * damping;
+        outputFlux *= min(1, waterHeight / (SUM_COMPS(outputFlux) * timestep)) * damping;
     }
 
     if (IS_LEFT_BORDER) LDIR(outputFlux) = 0;
@@ -142,7 +137,7 @@ void VelocityComputation(int index)
 	float volumeDelta = timestep * (SUM_COMPS(inputFlux) - SUM_COMPS(outputFlux));	
 
 	// Then, we update the water height in the current (x, y) cell:
-	WATER_HEIGHT(state) += volumeDelta / (stepSize * stepSize);
+	WATER_HEIGHT(state) += volumeDelta;
 
 	// Write new state to the HeightMap
 	CURRENT_SAMPLE(HeightMap) = state;
@@ -166,15 +161,19 @@ void ErosionDeposition(int index)
 	float2 velocity = CURRENT_SAMPLE(VelocityMap);
 
 	// Tilt angle computation
-	float3 dhdx = float3(2 * stepSize, TERRAIN_HEIGHT(stateRight) - TERRAIN_HEIGHT(stateLeft), 0);
-	float3 dhdy = float3(0, TERRAIN_HEIGHT(stateTop) - TERRAIN_HEIGHT(stateBottom), 2 * stepSize);
+	float3 dhdx = float3(2, TERRAIN_HEIGHT(stateRight) - TERRAIN_HEIGHT(stateLeft), 0);
+	float3 dhdy = float3(0, TERRAIN_HEIGHT(stateTop) - TERRAIN_HEIGHT(stateBottom), 2);
 	float3 normal = cross(dhdx, dhdy);
 
 	float sinTiltAngle = abs(normal.y) / length(normal);
 
-    float maxErosionDepth = 1;
-    float lmax = saturate(1 - max(0, maxErosionDepth - WATER_HEIGHT(state)) / maxErosionDepth);
-    float sedimentCapacity = sedimentCapacityFactor * length(velocity) * min(sinTiltAngle, 0.05) * lmax;
+    float deltaHeight = CURRENT_SAMPLE(InitialHeightMap) - TERRAIN_HEIGHT(state);
+    float maxErosionMultiplier = 1 - max(0, deltaHeight) / maxErosionDepth;
+
+    float erosionHeight = 5;
+    float lmax = min(1, WATER_HEIGHT(state) / erosionHeight);
+
+    float sedimentCapacity = sedimentCapacityFactor * length(velocity) * min(sinTiltAngle, 0.05) * lmax * maxErosionMultiplier;
 
     // Take sediment from soil if we haven't filled up capacity
     if (SEDIMENT(state) < sedimentCapacity)
@@ -182,14 +181,12 @@ void ErosionDeposition(int index)
         float deltaSediment = timestep * sedimentDisolveFactor * HARDNESS(state) * (sedimentCapacity - SEDIMENT(state));
         TERRAIN_HEIGHT(state) -= deltaSediment;
 		SEDIMENT(state) += deltaSediment;
-		WATER_HEIGHT(state) += deltaSediment;
     }
     else // Deposit sediment if we are over capacity
     {
         float deltaSediment = timestep * sedimentDepositFactor * (SEDIMENT(state) - sedimentCapacity);
         TERRAIN_HEIGHT(state) += deltaSediment;
 		SEDIMENT(state) -= deltaSediment;
-		WATER_HEIGHT(state) -= deltaSediment;
     }
 
     // Water evaporation.
@@ -201,6 +198,7 @@ void ErosionDeposition(int index)
     
     // Write sample
     CURRENT_SAMPLE(HeightMap) = state;
+
 }
 
 // Step 5. Transportation of sediment
@@ -243,13 +241,13 @@ void ThermalFluxComputation(int index)
         max(deltaHeight.z, deltaHeight.w)
     );
 
-    float deltaVolume = stepSize * stepSize * thermalErosionRate * HARDNESS(state) * maxHeightDifference * 0.5f;
+    float deltaVolume = thermalErosionRate * HARDNESS(state) * maxHeightDifference * 0.5f;
 
     // Calculate threshold angle to determine if mass falls in that direction
-    float threshold = HARDNESS(state) *  talusAngleCoeff + talusAngleTangentBias;
+    float threshold = HARDNESS(state) * talusAngleCoeff + talusAngleTangentBias;
 
     // Calculate how much mass is transferred in each direction
-    float4 tanAngle = deltaHeight / stepSize;
+    float4 tanAngle = deltaHeight;
     float4 k = 0;
 
     if (tanAngle.x > threshold)
@@ -296,7 +294,7 @@ void ApplyThermalErosion(int index)
     // Calculate change in volume based on incoming flux minus outgoing flux
     float deltaVolume = SUM_COMPS(inputFlux) - SUM_COMPS(outputFlux);
 
-    TERRAIN_HEIGHT(state) += timestep * deltaVolume;
+    TERRAIN_HEIGHT(state) += timestep * deltaVolume * thermalErosionRate;
 
     CURRENT_SAMPLE(HeightMap) = state;
 }
@@ -311,6 +309,6 @@ void HydraulicErosion(uint3 tid : SV_DispatchThreadID)
     VelocityComputation(index);
     ErosionDeposition(index);
     SedimentTransportation(index);
-    // ThermalFluxComputation(index);
-    // ApplyThermalErosion(index);
+    ThermalFluxComputation(index);
+    ApplyThermalErosion(index);
 }

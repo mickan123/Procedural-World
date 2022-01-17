@@ -21,18 +21,9 @@ public class ErosionSettingsDrawer : PropertyDrawer
         var numHydraulicErosionIterations = serializedObject.FindProperty("numHydraulicErosionIterations");
         var erosionBrushRadius = serializedObject.FindProperty("erosionBrushRadius");
 
-        var maxLifetime = serializedObject.FindProperty("maxLifetime");
         var sedimentCapacityFactor = serializedObject.FindProperty("sedimentCapacityFactor");
-        var minSedimentCapacity = serializedObject.FindProperty("minSedimentCapacity");
-        var depositSpeed = serializedObject.FindProperty("depositSpeed");
-        var erodeSpeed = serializedObject.FindProperty("erodeSpeed");
 
         var evaporateSpeed = serializedObject.FindProperty("evaporateSpeed");
-
-        var startSpeed = serializedObject.FindProperty("startSpeed");
-        var startWater = serializedObject.FindProperty("startWater");
-
-        var inertia = serializedObject.FindProperty("inertia");
 
         EditorGUI.BeginChangeCheck();
 
@@ -46,26 +37,10 @@ public class ErosionSettingsDrawer : PropertyDrawer
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), erosionBrushRadius, true);
         position.y += EditorGUIUtility.singleLineHeight;
 
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), maxLifetime, true);
-        position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), sedimentCapacityFactor, true);
-        position.y += EditorGUIUtility.singleLineHeight;
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), minSedimentCapacity, true);
-        position.y += EditorGUIUtility.singleLineHeight;
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), depositSpeed, true);
-        position.y += EditorGUIUtility.singleLineHeight;
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), erodeSpeed, true);
         position.y += EditorGUIUtility.singleLineHeight;
 
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), evaporateSpeed, true);
-        position.y += EditorGUIUtility.singleLineHeight;
-
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), startSpeed, true);
-        position.y += EditorGUIUtility.singleLineHeight;
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), startWater, true);
-        position.y += EditorGUIUtility.singleLineHeight;
-
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), inertia, true);
         position.y += 2 * EditorGUIUtility.singleLineHeight;
 
         if (EditorGUI.EndChangeCheck())

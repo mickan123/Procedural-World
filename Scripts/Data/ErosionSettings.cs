@@ -9,21 +9,10 @@ public class ErosionSettings : ScriptableObject
     [Range(1, 20)]public float gravity = 9.81f;
 
     public int numHydraulicErosionIterations = 1000000;
-    [Range(2, 10)]
-    public int erosionBrushRadius = 3;
-
-    public int maxLifetime = 50;
-
-    
-    public float minSedimentCapacity = .01f;
-    public float depositSpeed = 0.3f;
-    public float erodeSpeed = 0.3f;
 
     [Range(0.1f, 3f)] public float sedimentCapacityFactor = 1;
 
     [Range(0, 1f)] public float timestep = 0.02f;
-    [Range(0.1f, 60f)] public float pipeArea = 20f;
-    public float stepSize = 1.0f;
 
     [Range(0.1f, 2f)] public float sedimentDisolveFactor = 0.5f;
     [Range(0.1f, 3f)] public float sedimentDepositFactor = 1.0f;
@@ -40,13 +29,7 @@ public class ErosionSettings : ScriptableObject
 
     [Range(0, 1f)] public float talusAngleCoeff = 0.8f;
     [Range(0, 1f)] public float talusAngleTangentBias = 0.1f;
-
-    public float startSpeed = 1;
-    public float startWater = 1;
-
     
-    [Range(0, 1)] public float inertia = 0.5f;
-
     [HideInInspector]
     public int seed;  // Set by global seed
 
