@@ -19,7 +19,6 @@ public class ErosionSettingsDrawer : PropertyDrawer
         var gravity = serializedObject.FindProperty("gravity");
 
         var numHydraulicErosionIterations = serializedObject.FindProperty("numHydraulicErosionIterations");
-        var erosionBrushRadius = serializedObject.FindProperty("erosionBrushRadius");
 
         var sedimentCapacityFactor = serializedObject.FindProperty("sedimentCapacityFactor");
 
@@ -33,8 +32,6 @@ public class ErosionSettingsDrawer : PropertyDrawer
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Hydraulic Erosion Settings", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), numHydraulicErosionIterations, true);
-        position.y += EditorGUIUtility.singleLineHeight;
-        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), erosionBrushRadius, true);
         position.y += EditorGUIUtility.singleLineHeight;
 
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), sedimentCapacityFactor, true);
