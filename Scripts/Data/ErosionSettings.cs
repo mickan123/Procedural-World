@@ -25,7 +25,7 @@ public class ErosionSettings : ScriptableObject
 
     [Range(0, 0.05f)] public float rainRate = 0.012f;
 
-    [Range(0, 3f)] public float thermalErosionRate = 0.15f;
+    [Range(0, 1f)] public float thermalErosionRate = 0.2f;
 
     [Range(0, 1f)] public float talusAngleCoeff = 0.8f;
     [Range(0, 1f)] public float talusAngleTangentBias = 0.1f;

@@ -104,10 +104,9 @@ void FluxComputation(int index)
     
     // Rescale flux to not exceed total amount of water in a cell
     float sumOutputFlux = SUM_COMPS(outputFlux);
-    float damping = 0.999;
     if (sumOutputFlux != 0)
     {
-        outputFlux *= min(1, waterHeight / (SUM_COMPS(outputFlux) * timestep)) * damping;
+        outputFlux *= min(1, waterHeight / (SUM_COMPS(outputFlux) * timestep)) ;
     }
 
     if (IS_LEFT_BORDER) LDIR(outputFlux) = 0;
@@ -169,23 +168,23 @@ void ErosionDeposition(int index)
 
     float deltaHeight = CURRENT_SAMPLE(InitialHeightMap) - TERRAIN_HEIGHT(state);
     float maxErosionMultiplier = 1 - max(0, deltaHeight) / maxErosionDepth;
+    maxErosionMultiplier = 1;
 
-    float erosionHeight = 5;
-    float lmax = min(1, WATER_HEIGHT(state) / erosionHeight);
-
-    float sedimentCapacity = sedimentCapacityFactor * length(velocity) * min(sinTiltAngle, 0.05) * lmax * maxErosionMultiplier;
+    float sedimentCapacity = sedimentCapacityFactor * length(velocity) * min(sinTiltAngle, 0.05) * maxErosionMultiplier;
 
     // Take sediment from soil if we haven't filled up capacity
     if (SEDIMENT(state) < sedimentCapacity)
     {
         float deltaSediment = timestep * sedimentDisolveFactor * HARDNESS(state) * (sedimentCapacity - SEDIMENT(state));
         TERRAIN_HEIGHT(state) -= deltaSediment;
+        WATER_HEIGHT(state) += deltaSediment;
 		SEDIMENT(state) += deltaSediment;
     }
     else // Deposit sediment if we are over capacity
     {
         float deltaSediment = timestep * sedimentDepositFactor * (SEDIMENT(state) - sedimentCapacity);
         TERRAIN_HEIGHT(state) += deltaSediment;
+        WATER_HEIGHT(state) -= deltaSediment;
 		SEDIMENT(state) -= deltaSediment;
     }
 
@@ -198,7 +197,6 @@ void ErosionDeposition(int index)
     
     // Write sample
     CURRENT_SAMPLE(HeightMap) = state;
-
 }
 
 // Step 5. Transportation of sediment
@@ -283,7 +281,6 @@ void ApplyThermalErosion(int index)
 	float4 stateTop = IS_TOP_BORDER ? outputFlux : ThermalFluxMap[index - mapSize];
 	float4 stateBottom = IS_BOTTOM_BORDER ? outputFlux : ThermalFluxMap[index + mapSize];
 
-    
     float4 inputFlux = float4(
         RDIR(stateLeft),
 		LDIR(stateRight),
@@ -299,7 +296,7 @@ void ApplyThermalErosion(int index)
     CURRENT_SAMPLE(HeightMap) = state;
 }
 
-[numthreads(8, 8, 1)]
+[numthreads(128, 1, 1)]
 void HydraulicErosion(uint3 tid : SV_DispatchThreadID)
 {   
     uint index = tid.x;

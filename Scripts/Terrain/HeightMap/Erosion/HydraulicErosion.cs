@@ -152,11 +152,11 @@ public static class HydraulicErosion
                 1
             );
         }
-
+        
         heightMapBuffer.GetData(computeShaderHeightMap);
-        for (int j = 0; j < heightMap.Length; j++)
+        for (int i = 0; i < heightMap.Length; i++)
         {
-            heightMap[j] = computeShaderHeightMap[j * 4];
+            heightMap[i] = computeShaderHeightMap[i * 4];
         }
 
         gpuDone = true;
