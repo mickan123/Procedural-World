@@ -59,8 +59,11 @@ public static class Common
     public static float HeightFromFloatCoord(float x, float y, float[,] heightMap)
     {
         int maxIndex = heightMap.GetLength(0) - 1;
-        int indexX = Mathf.Clamp((int)x, 0, maxIndex);
-        int indexY = Mathf.Clamp((int)y, 0, maxIndex);
+        x = Mathf.Clamp(x, 0, maxIndex);
+        y = Mathf.Clamp(y, 0, maxIndex);
+
+        int indexX = (int)x;
+        int indexY = (int)y;
 
         x = x - indexX;
         y = y - indexY;

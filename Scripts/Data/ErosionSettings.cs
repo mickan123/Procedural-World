@@ -6,30 +6,30 @@ using UnityEngine;
 public class ErosionSettings : ScriptableObject
 {
     public static ComputeShader erosionShader;
-    public float gravity = 4;
+    [Range(1, 20)]public float gravity = 9.81f;
 
-    public int smoothFilterWidth = 3; // Size of smoothing filter
-    public int smoothWidth = 25; // Number of units from edge to smooth
+    public int numHydraulicErosionIterations = 1000000;
 
-    public int numHydraulicErosionIterations = 50000;
-    [Range(2, 10)]
-    public int erosionBrushRadius = 3;
+    [Range(0.1f, 3f)] public float sedimentCapacityFactor = 1;
 
-    public int maxLifetime = 30;
-    public float sedimentCapacityFactor = 4;
-    public float minSedimentCapacity = .01f;
-    public float depositSpeed = 0.3f;
-    public float erodeSpeed = 0.3f;
+    [Range(0, 1f)] public float timestep = 0.02f;
 
-    [Range(0, 1)]
-    public float evaporateSpeed = .01f;
+    [Range(0.1f, 2f)] public float sedimentDisolveFactor = 0.5f;
+    [Range(0.1f, 3f)] public float sedimentDepositFactor = 1.0f;
+    [Range(0, 10f)] public float sedimentSofteningFactor = 5f;
 
-    public float startSpeed = 1;
-    public float startWater = 1;
 
-    [Range(0, 1)]
-    public float inertia = 0.5f;
+    [Range(1, 40f)] public float maxErosionDepth = 10f;
+    
+    [Range(0, 0.05f)] public float evaporateSpeed = .015f;
 
+    [Range(0, 0.05f)] public float rainRate = 0.012f;
+
+    [Range(0, 1f)] public float thermalErosionRate = 0.2f;
+
+    [Range(0, 1f)] public float talusAngleCoeff = 0.8f;
+    [Range(0, 1f)] public float talusAngleTangentBias = 0.1f;
+    
     [HideInInspector]
     public int seed;  // Set by global seed
 
@@ -37,8 +37,7 @@ public class ErosionSettings : ScriptableObject
 
     public void OnValidate()
     {
-        smoothFilterWidth = Mathf.Max(0, smoothFilterWidth);
-        smoothWidth = Mathf.Max(0, smoothWidth);
+
     }
 
 #endif

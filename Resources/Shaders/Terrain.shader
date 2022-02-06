@@ -198,7 +198,7 @@
 				finalTex += biomeStrengthData.w * getBiomeTexture(i + 3, IN.worldPos, blendAxes, roadStrength, slope);
 			}
 
-			o.Albedo = finalTex;
+			o.Albedo = finalTex;			
 		}
 
 		ENDCG

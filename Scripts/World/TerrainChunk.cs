@@ -100,7 +100,7 @@ public class TerrainChunk
     public void LoadInEditor()
     {
 
-#if (UNITY_EDITOR)
+#if (PROFILE && UNITY_EDITOR)
         float startTime = 0f;
         if (terrainSettings.IsMainThread())
         {
@@ -110,7 +110,7 @@ public class TerrainChunk
 
         this.terrainSettings.ApplyToMaterial(this.material);
 
-#if (UNITY_EDITOR)
+#if (PROFILE && UNITY_EDITOR)
         if (terrainSettings.IsMainThread())
         {
             float endTime = Time.realtimeSinceStartup;
@@ -135,7 +135,7 @@ public class TerrainChunk
         heightMapReceived = true;
         this.UpdateTerrainChunk();
 
-#if (UNITY_EDITOR)
+#if (PROFILE && UNITY_EDITOR)
         float startTime = 0f;
         if (terrainSettings.IsMainThread())
         {
@@ -145,7 +145,7 @@ public class TerrainChunk
 
         this.UpdateMaterial();
 
-#if (UNITY_EDITOR)
+#if (PROFILE && UNITY_EDITOR)
         if (terrainSettings.IsMainThread())
         {
             float endTime = Time.realtimeSinceStartup;
@@ -154,7 +154,7 @@ public class TerrainChunk
         }
 #endif
 
-#if (UNITY_EDITOR)
+#if (PROFILE && UNITY_EDITOR)
         float spawnObjectsStartTime = 0f;
         if (terrainSettings.IsMainThread())
         {
@@ -168,7 +168,7 @@ public class TerrainChunk
             spawnObjects[i].Spawn(meshObject.transform);
         }
 
-#if (UNITY_EDITOR)
+#if (PROFILE && UNITY_EDITOR)
         if (terrainSettings.IsMainThread())
         {
             float spawnObjectsEndTime = Time.realtimeSinceStartup;
@@ -222,7 +222,10 @@ public class TerrainChunk
                     + chunkData.roadStrengthMap[x + offset + 1, y + offset + 1]
                     + chunkData.roadStrengthMap[x + offset, y + offset + 1]) / 4f;
 
-                float angle = Common.CalculateAngle(x, y, heightMap);
+                float angle = (Common.CalculateAngle(x + offset, y + offset, heightMap)
+                            + Common.CalculateAngle(x + offset + 1, y + offset, heightMap)
+                            + Common.CalculateAngle(x + offset, y + offset + 1, heightMap)
+                            + Common.CalculateAngle(x + offset + 1, y + offset + 1, heightMap)) / 4f;
                 angle /= 90f; // Normalize 0 to 1 range
 
                 biomeMapTex.SetPixel(x, y, new Color(chunkData.roadStrengthMap[x + offset, y + offset], angle, 0f, 0f));
