@@ -81,51 +81,77 @@ public static class Common
         return height;
     }
 
-    public static float CalculateAngle(float xIn, float yIn, float[,] heightMap)
+    // Calculate angle at each point of a heightmap by averaging the angle
+    // between that element and each adjacent element (left, right, top, bottom)
+    public static float[,] CalculateAngles(float[,] heightMap)
     {
-        int coordX = (int)xIn;
-        int coordZ = (int)yIn;
-
         int maxIndex = heightMap.GetLength(0) - 1;
 
-        // Calculate offset inside the cell (0,0) = at NW node, (1,1) = at SE node
-        float x = xIn - coordX;
-        float y = yIn - coordZ;
+        // Calculate the angle between each element and the element to its left and top
+        // This calculates every angle between every element except those on the far right
+        // and the very bottom, we make the leftAngles and topAngles array 1 larger in the
+        // x and y dimension respectively to accomodate these angles
+        float[,] leftAngles = new float[heightMap.GetLength(0) + 1, heightMap.GetLength(1)];
+        float[,] topAngles = new float[heightMap.GetLength(0), heightMap.GetLength(1) + 1];
+        for (int x = 0; x < heightMap.GetLength(0); x++)
+        {
+            for (int y = 0; y < heightMap.GetLength(1); y++)
+            { 
+                leftAngles[x, y] = AngleBetweenTwoPoints(
+                    x,
+                    y,
+                    Mathf.Min(Mathf.Max(x - 1, 0), maxIndex),
+                    Mathf.Min(Mathf.Max(y, 0), maxIndex),
+                    heightMap
+                );
 
-        float heightNW = heightMap[coordX, coordZ];
-        float heightNE = heightMap[Mathf.Min(coordX + 1, maxIndex), coordZ];
-        float heightSW = heightMap[coordX, Mathf.Min(coordZ + 1, maxIndex)];
-        float heightSE = heightMap[Mathf.Min(coordX + 1, maxIndex), Mathf.Min(coordZ + 1, maxIndex)];
+                topAngles[x, y] = AngleBetweenTwoPoints(
+                    x,
+                    y,
+                    Mathf.Min(Mathf.Max(x, 0), maxIndex),
+                    Mathf.Min(Mathf.Max(y - 1, 0), maxIndex),
+                    heightMap
+                );
+            }
+        }
 
-        float heightE = heightNE * (1 - y) + heightSE * y;
-        float heightW = heightNW * (1 - y) + heightSW * y;
-        float heightN = heightNW * (1 - x) + heightNE * x;
-        float heightS = heightSW * (1 - x) + heightSE * x;
+        // Calculate the angles to the very right and at the very bottom as they are the 
+        // only angles that haven't been calculated yet
+        for (int i = 0; i < heightMap.GetLength(0); i++)
+        {
+            int rightX = heightMap.GetLength(0) - 1;
+            int bottomY = heightMap.GetLength(1) - 1;
+            leftAngles[rightX, i] = AngleBetweenTwoPoints(
+                rightX,
+                i,
+                Mathf.Min(Mathf.Max(rightX + 1, 0), maxIndex),
+                Mathf.Min(Mathf.Max(i, 0), maxIndex),
+                heightMap
+            );
+            topAngles[i, bottomY] = AngleBetweenTwoPoints(
+                i,
+                bottomY,
+                Mathf.Min(Mathf.Max(i, 0), maxIndex),
+                Mathf.Min(Mathf.Max(bottomY + 1, 0), maxIndex),
+                heightMap
+            );
+        }
 
-        float height = heightNW * (1 - x) * (1 - y)
-                     + heightNE * x * (1 - y)
-                     + heightSW * (1 - x) * y
-                     + heightSE * x * y;
+        float[,] angles = new float[heightMap.GetLength(0), heightMap.GetLength(1)];
+        for (int x = 0; x < heightMap.GetLength(0); x++)
+        {
+            for (int y = 0; y < heightMap.GetLength(1); y++)
+            { 
+                angles[x, y] = (
+                    leftAngles[x, y] +
+                    leftAngles[x + 1, y] + 
+                    topAngles[x, y] + 
+                    topAngles[x, y + 1]
+                ) / 4f;
+            }
+        }
 
-        float angleN = Mathf.Abs(Mathf.Rad2Deg * Mathf.Atan2(
-            heightN - height,
-            (1 - y)
-        ));
-        float angleS = Mathf.Abs(Mathf.Rad2Deg * Mathf.Atan2(
-            heightS - height,
-            y
-        ));
-        float angleE = Mathf.Abs(Mathf.Rad2Deg * Mathf.Atan2(
-            heightE - height,
-            x
-        ));
-        float angleW = Mathf.Abs(Mathf.Rad2Deg * Mathf.Atan2(
-            heightW - height,
-            (1 - x)
-        ));
-        float averageAngle = (angleW + angleE + angleS + angleN) / 4f;
-
-        return averageAngle;
+        return angles;
     }
 
     private static readonly int[,] offsets = { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };

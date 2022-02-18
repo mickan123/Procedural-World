@@ -191,16 +191,15 @@ public class TerrainChunk
         this.biomeMapTex = new Texture2D(width, width, TextureFormat.RGBA32, false, false);
 
         // Create biomeStrength textures representing the strength of each biome
-        int finalTexWidth = 256;
         int biomesPerTexture = 4;
-        this.biomeStrengthTextures = new Texture2D[terrainSettings.maxBiomeCount / biomesPerTexture + 1];
-        for (int i = 0; i < terrainSettings.maxBiomeCount / biomesPerTexture + 1; i++)
+        this.biomeStrengthTextures = new Texture2D[terrainSettings.maxBiomeCount / biomesPerTexture];
+        for (int i = 0; i < terrainSettings.maxBiomeCount / biomesPerTexture; i++)
         {
             biomeStrengthTextures[i] = new Texture2D(width, width, TextureFormat.RGBA32, false, false);
         }
         this.biomeStrengthTexArray = new Texture2DArray(
-            finalTexWidth,
-            finalTexWidth,
+            width,
+            width,
             terrainSettings.maxBiomeCount,
             TextureFormat.RGBA32,
             false,
@@ -219,27 +218,33 @@ public class TerrainChunk
             biomeStrengthTexPixels[i] = new Color[width * width];
         }
 
+        // TODO Optimize this function if possible
+        float[,] angles = Common.CalculateAngles(heightMap);
+
+        // Offset of 1 for all xy coords due to having out of mesh vertices for normal calculations
+        int offset = 1;
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < width; y++)
             {   
                 // Average 4 corners of a point to get the pixel road strength
-                // Offset of 1 due to having out of mesh vertices for normal calculations
-                int offset = 1;
                 float roadStrength = (chunkData.roadStrengthMap[x + offset, y + offset] 
                     + chunkData.roadStrengthMap[x + offset + 1, y + offset] 
                     + chunkData.roadStrengthMap[x + offset + 1, y + offset + 1]
                     + chunkData.roadStrengthMap[x + offset, y + offset + 1]) / 4f;
 
-                float angle = (Common.CalculateAngle(x + offset, y + offset, heightMap)
-                            + Common.CalculateAngle(x + offset + 1, y + offset, heightMap)
-                            + Common.CalculateAngle(x + offset, y + offset + 1, heightMap)
-                            + Common.CalculateAngle(x + offset + 1, y + offset + 1, heightMap)) / 4f;
+                float angle = angles[x, y];
                 angle /= 90f; // Normalize 0 to 1 range
 
-                Color color = new Color(chunkData.roadStrengthMap[x + offset, y + offset], angle, 0f, 0f);
-                biomeMapTexPixels[x * width + y] = color;
+                // Create biomeMap pixel
+                biomeMapTexPixels[y * width + x] = new Color(
+                    chunkData.roadStrengthMap[x + offset, y + offset], 
+                    angle, 
+                    0f, 
+                    0f
+                );
 
+                // Create biomestrength pixels
                 for (int k = 0; k < terrainSettings.maxBiomeCount; k += biomesPerTexture)
                 {
                     int texIndex = k / biomesPerTexture;
@@ -250,23 +255,19 @@ public class TerrainChunk
                         (k + 2 < numBiomes) ? info.biomeStrengths[x + offset, y + offset, k + 2] : 0f,
                         (k + 3 < numBiomes) ? info.biomeStrengths[x + offset, y + offset, k + 3] : 0f
                     );
-                    // biomeStrengthTexPixels[texIndex][x * width + y] = biomeStrengths;
-                    biomeStrengthTextures[texIndex].SetPixel(x, y, biomeStrengths);
+                    biomeStrengthTexPixels[texIndex][y * width + x] = biomeStrengths;
                 }
             }
         }
-        biomeMapTex.SetPixels(biomeMapTexPixels);
-
+        
         for (int i = 0; i < biomeStrengthTextures.Length; i++)
         {
-            // biomeStrengthTextures[i].SetPixels(biomeStrengthTexPixels[i]);
-            TextureScale.Bilinear(biomeStrengthTextures[i], finalTexWidth, finalTexWidth);
-            biomeStrengthTextures[i].Apply();
-            biomeStrengthTexArray.SetPixels(biomeStrengthTextures[i].GetPixels(), i);
+            biomeStrengthTexArray.SetPixels(biomeStrengthTexPixels[i], i);
         }
         biomeStrengthTexArray.Apply();
         matBlock.SetTexture("biomeStrengthMap", biomeStrengthTexArray);
 
+        biomeMapTex.SetPixels(biomeMapTexPixels);
         biomeMapTex.Apply();
         matBlock.SetTexture("biomeMapTex", biomeMapTex);
 
