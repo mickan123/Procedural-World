@@ -6,7 +6,7 @@ public static class ChunkDataGenerator
     public static ChunkData GenerateChunkData(TerrainSettings terrainSettings, Vector2 chunkCentre)
     {
         // Generate heightmap and biomestrength data
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
         float biomeDataStartTime = 0f;
         if (terrainSettings.IsMainThread()) {
             biomeDataStartTime = Time.realtimeSinceStartup;
@@ -18,16 +18,16 @@ public static class ChunkDataGenerator
             terrainSettings,
             chunkCentre
         );
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
         if (terrainSettings.IsMainThread()) {
             float biomeDataEndTime = Time.realtimeSinceStartup;
             float biomeDataGenTimeTaken = biomeDataEndTime - biomeDataStartTime;
-            Debug.Log("Biome Data Generation time taken: " + biomeDataGenTimeTaken + "s");
+            Debug.Log("BiomeData Gen time taken: " + biomeDataGenTimeTaken + "s");
         }
 #endif
 
         // Generate roads
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
         float roadStartTime = 0f;
         if (terrainSettings.IsMainThread()) {
             roadStartTime = Time.realtimeSinceStartup;
@@ -37,7 +37,7 @@ public static class ChunkDataGenerator
         RoadData roadData = RoadGenerator.GenerateRoads(terrainSettings, chunkCentre, biomeData.heightNoiseMap, biomeData.biomeInfo);
         biomeData.heightNoiseMap = roadData.heightMap;
 
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
         if (terrainSettings.IsMainThread()) {
             float roadEndTime = Time.realtimeSinceStartup;
             float roadGenTimeTaken = roadEndTime - roadStartTime;
@@ -46,7 +46,7 @@ public static class ChunkDataGenerator
 #endif
 
         // Generate objects for chunk
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
         float objectStartTime = 0f;
         if (terrainSettings.IsMainThread()) {
             objectStartTime = Time.realtimeSinceStartup;
@@ -61,7 +61,7 @@ public static class ChunkDataGenerator
 			chunkCentre
         );
 
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
         if (terrainSettings.IsMainThread()) {
             float objectEndTime = Time.realtimeSinceStartup;
             float objectGenTimeTaken = objectEndTime - objectStartTime;

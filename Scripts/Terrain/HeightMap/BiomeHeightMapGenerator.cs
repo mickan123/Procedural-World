@@ -30,7 +30,7 @@ public static class BiomeHeightMapGenerator
             height
         );
 
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
 		float biomeInfoStartTime = 0f;
 		if (terrainSettings.IsMainThread()) {
         	biomeInfoStartTime = Time.realtimeSinceStartup;
@@ -45,15 +45,15 @@ public static class BiomeHeightMapGenerator
             terrainSettings
         );
         
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
 		if (terrainSettings.IsMainThread()) {
 			float biomeInfoEndTime = Time.realtimeSinceStartup;
 			float biomeInfoTimeTaken = biomeInfoEndTime - biomeInfoStartTime;
-			Debug.Log("BiomeInfo time taken: " + biomeInfoTimeTaken + "s");
+			Debug.Log("    BiomeInfo time taken: " + biomeInfoTimeTaken + "s");
 		}
 #endif
 
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
 		float biomeNoiseMapStartTime = 0f;
 		if (terrainSettings.IsMainThread()) {
         	biomeNoiseMapStartTime = Time.realtimeSinceStartup;
@@ -70,11 +70,11 @@ public static class BiomeHeightMapGenerator
             biomeInfo
         );
 
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
 		if (terrainSettings.IsMainThread()) {
 			float biomeNoiseMapEndTime = Time.realtimeSinceStartup;
 			float biomeNoiseMapTimeTaken = biomeNoiseMapEndTime - biomeNoiseMapStartTime;
-			Debug.Log("Biome Noise Map time taken: " + biomeNoiseMapTimeTaken + "s");
+			Debug.Log("    Biome Noise Map time taken: " + biomeNoiseMapTimeTaken + "s");
 		}
 #endif
         return new BiomeData(heightNoiseMap, biomeInfo);

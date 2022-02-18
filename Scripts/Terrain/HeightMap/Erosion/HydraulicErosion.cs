@@ -18,7 +18,7 @@ public static class HydraulicErosion
     )
     {
 
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
         float erosionStartTime = 0f;
         if (terrainSettings.IsMainThread()) {
             erosionStartTime = Time.realtimeSinceStartup;
@@ -68,11 +68,11 @@ public static class HydraulicErosion
             }
         }
 
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
         if (terrainSettings.IsMainThread()) {
             float erosionEndTime = Time.realtimeSinceStartup;
             float erosionTimeTaken = erosionEndTime - erosionStartTime;
-            Debug.Log("Erosion time taken: " + erosionTimeTaken + "s");
+            Debug.Log("        Erosion time taken: " + erosionTimeTaken + "s");
         }
 #endif
 

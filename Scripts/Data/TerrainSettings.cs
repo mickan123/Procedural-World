@@ -203,7 +203,7 @@ public class TerrainSettings : ScriptableObject
 
     private void DrawBiomeMesh(int width, int height)
     {
-#if (UNITY_EDITOR)
+#if UNITY_EDITOR
         float startTime = 0f;
         if (this.IsMainThread())
         {
@@ -225,7 +225,7 @@ public class TerrainSettings : ScriptableObject
         this.chunk.SetVisible(true);
         this.chunk.meshObject.AddComponent<HideOnPlay>();
 
-#if (UNITY_EDITOR)
+#if UNITY_EDITOR
         if (this.IsMainThread())
         {
             float endTime = Time.realtimeSinceStartup;
