@@ -103,7 +103,7 @@ public class TerrainChunk
     public void LoadInEditor()
     {
 
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
         float startTime = 0f;
         if (terrainSettings.IsMainThread())
         {
@@ -113,7 +113,7 @@ public class TerrainChunk
 
         this.terrainSettings.ApplyToMaterial(this.material);
 
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
         if (terrainSettings.IsMainThread())
         {
             float endTime = Time.realtimeSinceStartup;
@@ -138,7 +138,7 @@ public class TerrainChunk
         heightMapReceived = true;
         this.UpdateTerrainChunk();
 
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
         float startTime = 0f;
         if (terrainSettings.IsMainThread())
         {
@@ -148,7 +148,7 @@ public class TerrainChunk
 
         this.UpdateMaterial();
 
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
         if (terrainSettings.IsMainThread())
         {
             float endTime = Time.realtimeSinceStartup;
@@ -157,7 +157,7 @@ public class TerrainChunk
         }
 #endif
 
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
         float spawnObjectsStartTime = 0f;
         if (terrainSettings.IsMainThread())
         {
@@ -171,7 +171,7 @@ public class TerrainChunk
             spawnObjects[i].Spawn(meshObject.transform);
         }
 
-#if (PROFILE && UNITY_EDITOR)
+#if UNITY_EDITOR
         if (terrainSettings.IsMainThread())
         {
             float spawnObjectsEndTime = Time.realtimeSinceStartup;
@@ -190,6 +190,7 @@ public class TerrainChunk
         int numBiomes = this.terrainSettings.biomeSettings.Count;
         this.biomeMapTex = new Texture2D(width, width, TextureFormat.RGBA32, false, false);
 
+        // Create biomeStrength textures representing the strength of each biome
         int finalTexWidth = 256;
         int biomesPerTexture = 4;
         this.biomeStrengthTextures = new Texture2D[terrainSettings.maxBiomeCount / biomesPerTexture + 1];
@@ -211,6 +212,13 @@ public class TerrainChunk
 
         float[,] heightMap = this.chunkData.biomeData.heightNoiseMap;
 
+        // Create arrays to hold pixel colors so we can use SetPixels vs SetPixel individually
+        Color[] biomeMapTexPixels = new Color[width * width];
+        Color[][] biomeStrengthTexPixels = new Color[biomeStrengthTextures.Length][];
+        for (int i = 0; i < biomeStrengthTexPixels.Length; i++) {
+            biomeStrengthTexPixels[i] = new Color[width * width];
+        }
+
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < width; y++)
@@ -229,7 +237,8 @@ public class TerrainChunk
                             + Common.CalculateAngle(x + offset + 1, y + offset + 1, heightMap)) / 4f;
                 angle /= 90f; // Normalize 0 to 1 range
 
-                biomeMapTex.SetPixel(x, y, new Color(chunkData.roadStrengthMap[x + offset, y + offset], angle, 0f, 0f));
+                Color color = new Color(chunkData.roadStrengthMap[x + offset, y + offset], angle, 0f, 0f);
+                biomeMapTexPixels[x * width + y] = color;
 
                 for (int k = 0; k < terrainSettings.maxBiomeCount; k += biomesPerTexture)
                 {
@@ -241,13 +250,16 @@ public class TerrainChunk
                         (k + 2 < numBiomes) ? info.biomeStrengths[x + offset, y + offset, k + 2] : 0f,
                         (k + 3 < numBiomes) ? info.biomeStrengths[x + offset, y + offset, k + 3] : 0f
                     );
+                    // biomeStrengthTexPixels[texIndex][x * width + y] = biomeStrengths;
                     biomeStrengthTextures[texIndex].SetPixel(x, y, biomeStrengths);
                 }
             }
         }
+        biomeMapTex.SetPixels(biomeMapTexPixels);
 
         for (int i = 0; i < biomeStrengthTextures.Length; i++)
         {
+            // biomeStrengthTextures[i].SetPixels(biomeStrengthTexPixels[i]);
             TextureScale.Bilinear(biomeStrengthTextures[i], finalTexWidth, finalTexWidth);
             biomeStrengthTextures[i].Apply();
             biomeStrengthTexArray.SetPixels(biomeStrengthTextures[i].GetPixels(), i);
