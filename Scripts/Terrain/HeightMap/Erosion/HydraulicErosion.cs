@@ -14,8 +14,7 @@ public static class HydraulicErosion
         float[,] values,
         TerrainSettings terrainSettings,
         ErosionSettings erosionSettings,
-        BiomeInfo info,
-        Vector2 chunkCentre
+        BiomeInfo info
     )
     {
 

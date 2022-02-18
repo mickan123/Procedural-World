@@ -169,7 +169,6 @@ public static class HeightMapGenerator
         int width,
         int height,
         TerrainSettings terrainSettings,
-        Vector2 sampleCentre,
         NormalizeMode normalizeMode,
         VoronoiMode voronoiMode,
         int numPolygons,

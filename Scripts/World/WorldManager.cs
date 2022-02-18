@@ -1,7 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using System;
 
 public class WorldManager
 {
@@ -15,7 +13,6 @@ public class WorldManager
     private const float viewerMoveThresholdForChunkUpdate = 5f;
     private const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
 
-    private float meshWorldSize;
     private int maxChunkViewDist;
 
     private Vector2 viewerPosition;
@@ -36,7 +33,6 @@ public class WorldManager
         this.mapMaterial = mapMaterial;
 
         maxChunkViewDist = detailLevels[detailLevels.Length - 1].chunkDistanceThreshold;
-        meshWorldSize = terrainSettings.meshSettings.meshWorldSize - 1;
     }
 
     public void Update()
@@ -67,8 +63,10 @@ public class WorldManager
             visibleTerrainChunks[i].UpdateTerrainChunk();
         }
 
-        int currentChunkCoordX = Mathf.RoundToInt(viewerPosition.x / meshWorldSize);
-        int currentChunkCoordY = Mathf.RoundToInt(viewerPosition.y / meshWorldSize);
+        float chunkWidth = terrainSettings.meshSettings.meshWorldSize;
+
+        int currentChunkCoordX = Mathf.FloorToInt(viewerPosition.x / chunkWidth);
+        int currentChunkCoordY = Mathf.FloorToInt(viewerPosition.y / chunkWidth);
 
         for (int yOffset = -maxChunkViewDist; yOffset <= maxChunkViewDist; yOffset++)
         {
@@ -140,5 +138,7 @@ public struct LODInfo
 {
     [Range(0, MeshSettings.numSupportedLODs - 1)]
     public int lod;
+
+    [Range(1, 15)]
     public int chunkDistanceThreshold;
 }

@@ -35,7 +35,6 @@ public class VoronoiNoiseNode : BiomeGraphNode
             heightMapData.width,
             heightMapData.height,
             heightMapData.terrainSettings,
-            heightMapData.sampleCentre,
             normalizeMode,
             voronoiMode,
             numVoronoiPolygons,

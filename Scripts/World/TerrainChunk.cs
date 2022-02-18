@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -59,11 +58,11 @@ public class TerrainChunk
         this.terrainSettings = terrainSettings;
         this.meshSettings = terrainSettings.meshSettings;
         this.material = material;
-        sampleCentre = new Vector2(coord.x * meshSettings.meshWorldSize / meshSettings.meshScale + terrainSettings.offset.x,
-                                   coord.y * meshSettings.meshWorldSize / meshSettings.meshScale + terrainSettings.offset.x);
+        float halfChunkWidth = meshSettings.meshWorldSize / 2;
+        sampleCentre = new Vector2((coord.x * meshSettings.meshWorldSize + halfChunkWidth) / meshSettings.meshScale + terrainSettings.offset.x,
+                                   (coord.y * meshSettings.meshWorldSize + halfChunkWidth) / meshSettings.meshScale + terrainSettings.offset.x);
 
-        Vector2 position = new Vector2(coord.x * meshSettings.meshWorldSize, coord.y * meshSettings.meshWorldSize);
-        bounds = new Bounds(position, Vector2.one * meshSettings.meshWorldSize);
+        bounds = new Bounds(sampleCentre, Vector2.one * meshSettings.meshWorldSize);
 
         meshObject = new GameObject(name);
         meshRenderer = meshObject.AddComponent<MeshRenderer>();
@@ -74,7 +73,11 @@ public class TerrainChunk
 
         this.viewer = (viewer == null) ? meshObject.transform : viewer;
 
-        meshObject.transform.position = new Vector3(position.x, 0, position.y);
+        meshObject.transform.position = new Vector3(
+            coord.x * meshSettings.meshWorldSize, 
+            0, 
+            coord.y * meshSettings.meshWorldSize
+        );
         meshObject.transform.parent = parent;
         SetVisible(false);
 
@@ -180,8 +183,6 @@ public class TerrainChunk
 
     public void UpdateMaterial()
     {
-
-
         BiomeInfo info = this.chunkData.biomeData.biomeInfo;
         int width = info.biomeMap.GetLength(0) - 3;
 
