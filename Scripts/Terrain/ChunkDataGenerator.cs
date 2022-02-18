@@ -36,7 +36,7 @@ public static class ChunkDataGenerator
 #endif
 
         RoadData roadData = RoadGenerator.GenerateRoads(terrainSettings, chunkCentre, biomeData.heightNoiseMap, biomeData.biomeInfo);
-        // biomeData.heightNoiseMap = roadData.heightMap;
+        biomeData.heightNoiseMap = roadData.heightMap;
 
 #if (PROFILE && UNITY_EDITOR)
         if (terrainSettings.IsMainThread()) {

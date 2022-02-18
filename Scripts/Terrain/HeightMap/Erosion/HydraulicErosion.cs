@@ -55,7 +55,7 @@ public static class HydraulicErosion
         }
 
         // Fade away erosion at edge
-        float blendDistance = 10f;
+        float blendDistance = 5f;
         for (int i = 0; i < mapSize; i++)
         {
             for (int j = 0; j < mapSize; j++)
@@ -66,10 +66,6 @@ public static class HydraulicErosion
                 distFromEdge = Mathf.Max(distFromEdge - 3f, 0f);
                 float edgeMultiplier = Mathf.Min(distFromEdge / blendDistance, 1f);
                 values[i, j] = edgeMultiplier * map[i * mapSize + j] + (1f - edgeMultiplier) * values[i, j];
-
-
-                // TODO: Remove this once done testing erosion
-                values[i, j] = map[i * mapSize + j];
             }
         }
 
@@ -166,5 +162,6 @@ public static class HydraulicErosion
         velocityBuffer.Release();
         heightMapBuffer.Release();
         initialHeightMapBuffer.Release();
+
     }
 }
