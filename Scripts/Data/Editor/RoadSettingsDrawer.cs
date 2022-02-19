@@ -28,7 +28,6 @@ public class RoadSettingsDrawer : PropertyDrawer
         EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), roadTexture, true);
         position.y += EditorGUI.GetPropertyHeight(roadTexture, true);
         position.y += EditorGUIUtility.singleLineHeight;
-        
 
         EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "Other Settings", EditorStyles.boldLabel);
         position.y += EditorGUIUtility.singleLineHeight;

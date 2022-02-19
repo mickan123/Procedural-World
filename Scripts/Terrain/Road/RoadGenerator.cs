@@ -11,16 +11,14 @@ public static class RoadGenerator
 
     private static readonly int numChunkEdgeSmoothPoints = 5; // Number of padded points at start and end of path to help smoothing
 
-    public static RoadData GenerateRoads(TerrainSettings terrainSettings, Vector2 chunkCentre, float[,] heightMap, BiomeInfo info)
+    public static RoadData GenerateRoads(TerrainSettings terrainSettings, Vector2 chunkCentre, float[,] referenceHeightMap, BiomeInfo info)
     {
-        int mapSize = heightMap.GetLength(0);
+        int mapSize = referenceHeightMap.GetLength(0);
 
         List<RoadRoute> routes = GetRoadDestinations(mapSize, chunkCentre);
 
         int numBiomes = terrainSettings.biomeSettings.Count;
         bool[] roadsEnabled = new bool[numBiomes];
-
-        float[,] roadStrengthMap = new float[mapSize, mapSize];
 
         List<RoadSettings> roadSettingsList = new List<RoadSettings>();
 
@@ -31,14 +29,16 @@ public static class RoadGenerator
             roadSettingsList.Add(roadSettings);
         }
 
+        // Calculate road strength map and final height map
+        float[,] roadStrengthMap = new float[mapSize, mapSize];
+        float[,] finalHeightMap = referenceHeightMap.Clone() as float[,];
         for (int i = 0; i < routes.Count; i++)
         {
-            List<RoadData> roadDatas = new List<RoadData>();
-            List<Vector3> path = CreatePath(routes[i], heightMap, terrainSettings.maxRoadWidth);
+            Vector3[] path = CreatePath(routes[i], referenceHeightMap, terrainSettings.maxRoadWidth);
 
-            RoadData data = CreateRoad(path, heightMap, roadSettingsList, info);
+            RoadData data = CreateRoad(path, finalHeightMap, referenceHeightMap, roadSettingsList, info);
 
-            heightMap = data.heightMap;
+            finalHeightMap = data.heightMap;
             for (int x = 0; x < mapSize; x++)
             {
                 for (int y = 0; y < mapSize; y++)
@@ -48,7 +48,22 @@ public static class RoadGenerator
             }
         }
 
-        return new RoadData(heightMap, roadStrengthMap);
+        // Fade away any road carving from edge so that cross chunk roads blend smoothly
+        float blendDistance = 10f;
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                float nearDist = Mathf.Min(i, j);
+                float farDist = mapSize - 1 - Mathf.Max(i, j);
+                float distFromEdge = Mathf.Min(nearDist, farDist);
+                distFromEdge = Mathf.Max(distFromEdge - 3f, 0f);
+                float edgeMultiplier = Mathf.Min(distFromEdge / blendDistance, 1f);
+                finalHeightMap[i, j] = edgeMultiplier * finalHeightMap[i, j] + (1f - edgeMultiplier) * referenceHeightMap[i, j];
+            }
+        }
+
+        return new RoadData(finalHeightMap, roadStrengthMap);
     }
 
     public static List<RoadRoute> GetRoadDestinations(float mapSize, Vector2 chunkCentre)
@@ -64,7 +79,7 @@ public static class RoadGenerator
         return destinations;
     }
 
-    public static List<Vector3> CreatePath(RoadRoute route, float[,] heightMap, float maxRoadWidth)
+    public static Vector3[] CreatePath(RoadRoute route, float[,] heightMap, float maxRoadWidth)
     {
         float mapSize = heightMap.GetLength(0);
         Vector3 roadStart = new Vector3(route.roadStart.x, Common.HeightFromFloatCoord(route.roadStart, heightMap), route.roadStart.y);
@@ -86,21 +101,21 @@ public static class RoadGenerator
             path.Insert(0, roadStart);
             path.Add(roadEnd);
         }
-        return SmoothPath(path);
+        return SmoothPath(path).ToArray();
     }
 
     public static RoadData CreateRoad(
-        List<Vector3> path,
-        float[,] heightMap,
+        Vector3[] path,
+        float[,] finalHeightMap,
+        float[,] referenceHeightMap,
         List<RoadSettings> roadSettingsList,
         BiomeInfo info
     )
     {
-        float[,] workingHeightMap = Common.CopyArray(heightMap);
-        float[,] roadStrengthMap = new float[heightMap.GetLength(0), heightMap.GetLength(0)];
-        CarvePath(workingHeightMap, heightMap, path, roadSettingsList, roadStrengthMap, info);
+        float[,] roadStrengthMap = new float[referenceHeightMap.GetLength(0), referenceHeightMap.GetLength(0)];
+        CarvePath(finalHeightMap, referenceHeightMap, path, roadSettingsList, roadStrengthMap, info);
 
-        return new RoadData(workingHeightMap, roadStrengthMap);
+        return new RoadData(finalHeightMap, roadStrengthMap);
     }
 
     private static List<Vector3> FindPath(Vector3 roadStart, Vector3 roadEnd, float[,] heightMap, float maxRoadWidth)
@@ -231,14 +246,43 @@ public static class RoadGenerator
 
     private static List<Vector3> SmoothPath(List<Vector3> path)
     {
+        // Pad path so that we have a multiple of 3 points + 1 for bezier curves
+        while (path.Count % 3 != 1)
+        {
+            path.Add(path[path.Count - 1]);
+        }
+
+        // Construct bezier curve objects
+        int numBezierCurves = path.Count / 3;
+        BezierCurve[] curves = new BezierCurve[numBezierCurves];
+        for (int i = 0; i < path.Count - 1; i += 3)
+        {   
+            curves[i / 3] = new BezierCurve(path[i], path[i + 1], path[i + 2], path[i + 3]);
+        }
+
+        // Calculate smoothed bezier curve points
+        int curvedLength = (path.Count * Mathf.RoundToInt(RoadSettings.smoothness)) - 1;
+        List<Vector3> smoothedPoints = new List<Vector3>(curvedLength);
+        for (int i = 0; i < curves.Length; i++)
+        {
+            Vector3[] segments = curves[i].GetSegments(RoadSettings.smoothness * 4);
+            for (int j = 0; j < segments.Length; j++)
+            {
+                smoothedPoints.Add(segments[j]);
+            }
+        }
+
+        return smoothedPoints;
+    }
+
+    // Results in a smoother path than the bezier curve approach however 
+    // is very costly for performance
+    private static List<Vector3> VerySmoothPath(List<Vector3> path)
+    {
         List<Vector3> smoothedPoints;
         List<Vector3> points;
-        int pointsLength = 0;
-        int curvedLength = 0;
-
-        pointsLength = path.Count;
-
-        curvedLength = (pointsLength * Mathf.RoundToInt(RoadSettings.smoothness)) - 1;
+        int pointsLength = path.Count;
+        int curvedLength = (pointsLength * Mathf.RoundToInt(RoadSettings.smoothness)) - 1;
         smoothedPoints = new List<Vector3>(curvedLength);
 
         float t = 0.0f;
@@ -262,9 +306,9 @@ public static class RoadGenerator
     }
 
     private static void CarvePath(
-        float[,] workingHeightMap,
+        float[,] finalHeightMap,
         float[,] referenceHeightMap,
-        List<Vector3> path,
+        Vector3[] path,
         List<RoadSettings> roadSettingsList,
         float[,] roadStrengthMap,
         BiomeInfo info
@@ -293,7 +337,7 @@ public static class RoadGenerator
                     CarvePoint(
                         curPoint,
                         closestPointOnLine,
-                        workingHeightMap,
+                        finalHeightMap,
                         referenceHeightMap,
                         x,
                         y,
@@ -316,7 +360,7 @@ public static class RoadGenerator
                     CalculateRoadStrength(
                         curPoint,
                         closestPointOnLine,
-                        workingHeightMap,
+                        finalHeightMap,
                         referenceHeightMap,
                         x,
                         y,
@@ -328,7 +372,183 @@ public static class RoadGenerator
         }
     }
 
-    struct AverageRoadSettings
+    // Finds closest point on path at every point
+    private static int[,] FindClosestPathIndexes(float[,] referenceHeightMap, Vector3[] path, float maxRoadWidth)
+    {
+        int mapSize = referenceHeightMap.GetLength(0);
+
+        // Check whether a coordinate is approx within roadSettings.width range of 
+        // a point on path to determine whether we bother getting the closest path index
+        // Points not within this distance dont' matter
+        bool[,] getClosestPathIndex = new bool[mapSize, mapSize];
+        for (int i = 0; i < path.Length; i++)
+        {
+            int startX = (int)Mathf.Max(path[i].x - maxRoadWidth, 0);
+            int endX = (int)Mathf.Min(mapSize - 1, Mathf.CeilToInt(path[i].x + maxRoadWidth));
+            int startZ = (int)Mathf.Max(path[i].z - maxRoadWidth, 0);
+            int endZ = (int)Mathf.Min(mapSize - 1, Mathf.CeilToInt(path[i].z + maxRoadWidth));
+            for (int x = startX; x <= endX; x++)
+            {
+                for (int z = startZ; z <= endZ; z++)
+                {
+                    getClosestPathIndex[x, z] = true;
+                }
+            }
+        }
+
+        int[,] closestPathIndexes = new int[mapSize, mapSize];
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                if (getClosestPathIndex[i, j])
+                {
+                    Vector3 curPoint = new Vector3(i, referenceHeightMap[i, j], j);
+
+                    float minDist = float.MaxValue;
+                    int closestPointIndex = 0;
+                    for (int k = 0; k < path.Length; k++)
+                    {
+                        float dist = Vector3.Distance(path[k], curPoint);
+                        if (dist < minDist)
+                        {
+                            minDist = dist;
+                            closestPointIndex = k;
+                        }
+                    }
+                    closestPathIndexes[i, j] = closestPointIndex;
+                }
+                else
+                {
+                    closestPathIndexes[i, j] = -1;
+                }
+            }
+        }
+        return closestPathIndexes;
+    }
+
+    private static Vector3 ClosestPointOnLine(
+        int x,
+        int y,
+        float[,] referenceHeightMap,
+        int closestPointIndex,
+        Vector3[] path
+    )
+    {
+        Vector3 curPoint = new Vector3(x, referenceHeightMap[x, y], y);
+        Vector2 curPoint2d = new Vector2(curPoint.x, curPoint.z);
+
+        Vector3 closestPointOnPath = path[closestPointIndex];
+
+        // Get distance of 2nd closest point so we can form a line
+        Vector3 secondClosestPoint;
+        if (closestPointIndex == path.Length - 1)
+        {
+            secondClosestPoint = path[closestPointIndex - 1];
+        }
+        else if (closestPointIndex == 0)
+        {
+            secondClosestPoint = path[closestPointIndex + 1];
+        }
+        else
+        {
+            float distPre = Vector2.Distance(new Vector2(path[closestPointIndex - 1].x, path[closestPointIndex - 1].z), curPoint2d);
+            float distPost = Vector2.Distance(new Vector2(path[closestPointIndex + 1].x, path[closestPointIndex + 1].z), curPoint2d);
+            secondClosestPoint = distPre < distPost ? path[closestPointIndex - 1] : path[closestPointIndex + 1];
+        }
+
+        Vector3 direction = secondClosestPoint - closestPointOnPath;
+        Vector3 origin = closestPointOnPath;
+        Vector3 point = curPoint;
+
+        direction.Normalize();
+        Vector3 lhs = point - origin;
+        float dotP = Vector3.Dot(lhs, direction);
+
+        Vector3 closestPoint = origin + direction * dotP;
+
+        return closestPoint;    
+    }
+
+    // Carves out height map at x and y based on curPoint in path and closestPointOnLine of path
+    private static void CarvePoint(
+        Vector3 curPoint,
+        Vector3 closestPointOnLine,
+        float[,] finalHeightMap,
+        float[,] referenceHeightMap,
+        int x,
+        int y,
+        AverageRoadSettings averageRoadSettings
+    )
+    {
+        int mapSize = finalHeightMap.GetLength(0);
+
+        float distance = Vector2.Distance(new Vector2(closestPointOnLine.x, closestPointOnLine.z), new Vector2(curPoint.x, curPoint.z));
+        if (distance > averageRoadSettings.width)
+        {
+            return;
+        }
+
+        // Calculate slope multiplier
+        float angle = Common.CalculateAngle(x, y, finalHeightMap);
+        float slopeMultiplier = Mathf.Min(Mathf.Max(0f, 1f - averageRoadSettings.angleBlendFactor * angle / averageRoadSettings.maxAngle), 1f);
+
+        // If within half width of road then fully carve path, otherwise smooth outwards
+        float halfRoadWidth = averageRoadSettings.width / 2f;
+        if (distance < halfRoadWidth)
+        {
+            float percentage = distance / halfRoadWidth;
+            float roadMultiplier = percentage * averageRoadSettings.distanceBlendFactor;
+            float newValue = (1f - roadMultiplier) * closestPointOnLine.y + roadMultiplier * curPoint.y;
+
+            finalHeightMap[x, y] = slopeMultiplier * newValue + (1 - slopeMultiplier) * finalHeightMap[x, y];
+        }
+        else if (distance < averageRoadSettings.width)
+        {
+            float percentage = (distance - halfRoadWidth) / halfRoadWidth;
+            float roadMultiplier = percentage * (1f - averageRoadSettings.distanceBlendFactor) + averageRoadSettings.distanceBlendFactor;
+            float newValue = roadMultiplier * curPoint.y + (1f - roadMultiplier) * closestPointOnLine.y;
+
+            finalHeightMap[x, y] = slopeMultiplier * newValue + (1 - slopeMultiplier) * finalHeightMap[x, y];
+        }
+    }
+
+    private static void CalculateRoadStrength(
+        Vector3 curPoint,
+        Vector3 closestPointOnLine,
+        float[,] finalHeightMap,
+        float[,] referenceHeightMap,
+        int x,
+        int y,
+        AverageRoadSettings averageRoadSettings,
+        float[,] roadStrengthMap
+    )
+    {
+        float distance = Vector2.Distance(new Vector2(closestPointOnLine.x, closestPointOnLine.z), new Vector2(curPoint.x, curPoint.z));
+        if (distance > averageRoadSettings.width)
+        {
+            return;
+        }
+
+        // Calculate slope multiplier
+        float angle = Common.CalculateAngle(x, y, finalHeightMap);
+        float slopeMultiplier = Mathf.Max(0f, 1f - averageRoadSettings.angleBlendFactor * angle / averageRoadSettings.maxAngle);
+
+        // If within half width of road then fully carve path, otherwise smooth outwards
+        float halfRoadWidth = averageRoadSettings.width / 2f;
+        if (distance < halfRoadWidth)
+        {
+            roadStrengthMap[x, y] = Mathf.Max(roadStrengthMap[x, y], slopeMultiplier);
+        }
+        else if (distance < averageRoadSettings.width)
+        {
+            float percentage = (distance - halfRoadWidth) / halfRoadWidth;
+
+            roadStrengthMap[x, y] = Mathf.Max(roadStrengthMap[x, y], slopeMultiplier * (1f - percentage));
+        }
+    }
+
+    private struct AverageRoadSettings
     {
         public float maxAngle;
         public float distanceBlendFactor;
@@ -364,192 +584,6 @@ public static class RoadGenerator
         return new AverageRoadSettings(maxAngle, distanceBlendFactor, angleBlendFactor, width);
     }
 
-    // Finds closest point on path at every point
-    private static int[,] FindClosestPathIndexes(float[,] referenceHeightMap, List<Vector3> path, float maxRoadWidth)
-    {
-        int mapSize = referenceHeightMap.GetLength(0);
-
-        // Check whether a coordinate is approx within roadSettings.width range of 
-        // a point on path to determine whether we bother getting the closest path index
-        // Points not within this distance dont' matter
-        bool[,] getClosestPathIndex = new bool[mapSize, mapSize];
-        for (int i = 0; i < path.Count; i++)
-        {
-            int startX = (int)Mathf.Max(path[i].x - maxRoadWidth, 0);
-            int endX = (int)Mathf.Min(mapSize - 1, Mathf.CeilToInt(path[i].x + maxRoadWidth));
-            int startZ = (int)Mathf.Max(path[i].z - maxRoadWidth, 0);
-            int endZ = (int)Mathf.Min(mapSize - 1, Mathf.CeilToInt(path[i].z + maxRoadWidth));
-            for (int x = startX; x <= endX; x++)
-            {
-                for (int z = startZ; z <= endZ; z++)
-                {
-                    getClosestPathIndex[x, z] = true;
-                }
-            }
-        }
-
-
-        int[,] closestPathIndexes = new int[mapSize, mapSize];
-        for (int i = 0; i < mapSize; i++)
-        {
-            for (int j = 0; j < mapSize; j++)
-            {
-                if (getClosestPathIndex[i, j])
-                {
-                    Vector3 curPoint = new Vector3(i, referenceHeightMap[i, j], j);
-
-                    float minDist = float.MaxValue;
-                    int closestPointIndex = 0;
-                    for (int k = 0; k < path.Count; k++)
-                    {
-                        float dist = (path[k] - curPoint).sqrMagnitude;
-                        if (dist < minDist)
-                        {
-                            minDist = dist;
-                            closestPointIndex = k;
-                        }
-                    }
-                    closestPathIndexes[i, j] = closestPointIndex;
-                }
-                else
-                {
-                    closestPathIndexes[i, j] = -1;
-                }
-            }
-        }
-        return closestPathIndexes;
-    }
-
-    private static Vector3 ClosestPointOnLine(
-        int x,
-        int y,
-        float[,] referenceHeightMap,
-        int closestPointIndex,
-        List<Vector3> path
-    )
-    {
-        Vector3 curPoint = new Vector3(x, referenceHeightMap[x, y], y);
-        Vector2 curPoint2d = new Vector2(curPoint.x, curPoint.z);
-
-        Vector3 closestPointOnPath = path[closestPointIndex];
-
-        // Get distance of 2nd closest point so we can form a line
-        Vector3 secondClosestPoint;
-        if (closestPointIndex == path.Count - 1)
-        {
-            secondClosestPoint = path[closestPointIndex - 1];
-        }
-        else if (closestPointIndex == 0)
-        {
-            secondClosestPoint = path[closestPointIndex + 1];
-        }
-        else
-        {
-            float distPre = Vector2.Distance(new Vector2(path[closestPointIndex - 1].x, path[closestPointIndex - 1].z), curPoint2d);
-            float distPost = Vector2.Distance(new Vector2(path[closestPointIndex + 1].x, path[closestPointIndex + 1].z), curPoint2d);
-            secondClosestPoint = distPre < distPost ? path[closestPointIndex - 1] : path[closestPointIndex + 1];
-        }
-
-        Vector3 direction = secondClosestPoint - closestPointOnPath;
-        Vector3 origin = closestPointOnPath;
-        Vector3 point = curPoint;
-
-        direction.Normalize();
-        Vector3 lhs = point - origin;
-        float dotP = Vector3.Dot(lhs, direction);
-
-        Vector3 closestPoint = origin + direction * dotP;
-
-        return closestPoint;    
-    }
-
-    // Carves out height map at x and y based on curPoint in path and closestPointOnLine of path
-    private static void CarvePoint(
-        Vector3 curPoint,
-        Vector3 closestPointOnLine,
-        float[,] workingHeightMap,
-        float[,] referenceHeightMap,
-        int x,
-        int y,
-        AverageRoadSettings averageRoadSettings
-    )
-    {
-        int mapSize = workingHeightMap.GetLength(0);
-
-        float distance = Vector2.Distance(new Vector2(closestPointOnLine.x, closestPointOnLine.z), new Vector2(curPoint.x, curPoint.z));
-        if (distance > averageRoadSettings.width)
-        {
-            return;
-        }
-
-
-        // Calculate slope multiplier
-        float angle = Common.CalculateAngle(x, y, workingHeightMap);
-        float slopeMultiplier = Mathf.Min(Mathf.Max(0f, 1f - averageRoadSettings.angleBlendFactor * angle / averageRoadSettings.maxAngle), 1f);
-
-        // Calculate edge multipler which we use to not applying terrain carving at edge of map
-        float distFromEdgeChunk = Mathf.Min(
-            Mathf.Abs(Mathf.Max(x, y) - mapSize),
-            Mathf.Abs(Mathf.Min(x, y))
-        );
-        float edgeMultiplier = Common.SmoothRange(distFromEdgeChunk, 3f, 10f);
-
-        float finalMultiplier = edgeMultiplier * slopeMultiplier;
-
-        // If within half width of road then fully carve path, otherwise smooth outwards
-        float halfRoadWidth = averageRoadSettings.width / 2f;
-        if (distance < halfRoadWidth)
-        {
-            float percentage = distance / halfRoadWidth;
-            float roadMultiplier = percentage * averageRoadSettings.distanceBlendFactor;
-            float newValue = (1f - roadMultiplier) * closestPointOnLine.y + roadMultiplier * curPoint.y;
-
-            workingHeightMap[x, y] = finalMultiplier * newValue + (1 - finalMultiplier) * workingHeightMap[x, y];
-        }
-        else if (distance < averageRoadSettings.width)
-        {
-            float percentage = (distance - halfRoadWidth) / halfRoadWidth;
-            float roadMultiplier = percentage * (1f - averageRoadSettings.distanceBlendFactor) + averageRoadSettings.distanceBlendFactor;
-            float newValue = roadMultiplier * curPoint.y + (1f - roadMultiplier) * closestPointOnLine.y;
-
-            workingHeightMap[x, y] = finalMultiplier * newValue + (1 - finalMultiplier) * workingHeightMap[x, y];
-        }
-    }
-
-    private static void CalculateRoadStrength(
-        Vector3 curPoint,
-        Vector3 closestPointOnLine,
-        float[,] workingHeightMap,
-        float[,] referenceHeightMap,
-        int x,
-        int y,
-        AverageRoadSettings averageRoadSettings,
-        float[,] roadStrengthMap
-    )
-    {
-        float distance = Vector2.Distance(new Vector2(closestPointOnLine.x, closestPointOnLine.z), new Vector2(curPoint.x, curPoint.z));
-        if (distance > averageRoadSettings.width)
-        {
-            return;
-        }
-
-        // Calculate slope multiplier
-        float angle = Common.CalculateAngle(x, y, workingHeightMap);
-        float slopeMultiplier = Mathf.Max(0f, 1f - averageRoadSettings.angleBlendFactor * angle / averageRoadSettings.maxAngle);
-
-        // If within half width of road then fully carve path, otherwise smooth outwards
-        float halfRoadWidth = averageRoadSettings.width / 2f;
-        if (distance < halfRoadWidth)
-        {
-            roadStrengthMap[x, y] = Mathf.Max(roadStrengthMap[x, y], slopeMultiplier);
-        }
-        else if (distance < averageRoadSettings.width)
-        {
-            float percentage = (distance - halfRoadWidth) / halfRoadWidth;
-
-            roadStrengthMap[x, y] = Mathf.Max(roadStrengthMap[x, y], slopeMultiplier * (1f - percentage));
-        }
-    }
 
     private class Node : IHeapItem<Node>
     {

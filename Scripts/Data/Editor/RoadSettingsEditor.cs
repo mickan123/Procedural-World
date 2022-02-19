@@ -11,8 +11,6 @@ public class RoadSettingsEditor : ScriptlessEditor
 
     private SerializedProperty roadTexture;
     private SerializedProperty width;
-    private SerializedProperty stepSize;
-    private SerializedProperty smoothness;
     private SerializedProperty distanceBlendFactor;
     private SerializedProperty angleBlendFactor;
     private SerializedProperty maxAngle;

@@ -5,7 +5,7 @@ using UnityEngine;
 [System.Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/RoadSettings")]
 public class RoadSettings : ScriptableObject
 {
-    public static readonly int stepSize = 3;
+    public static readonly int stepSize = 9;
     public static readonly int smoothness = 3; // How much to smooth path
 
     public TextureData roadTexture;
