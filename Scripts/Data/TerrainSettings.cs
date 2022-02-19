@@ -28,7 +28,7 @@ public class TerrainSettings : ScriptableObject
 
     // Constants
     private const TextureFormat textureFormat = TextureFormat.RGB565;
-    private const int textureSize = 512;
+    private const int textureSize = 256;
     public readonly int maxTexturesPerBiome = 8;
     public readonly int maxBiomeCount = 8;
 
