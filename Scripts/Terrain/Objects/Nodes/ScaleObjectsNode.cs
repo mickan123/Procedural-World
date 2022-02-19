@@ -42,16 +42,17 @@ public class ScaleObjectsNode : BiomeGraphNode
             return null;
         }
         System.Random prng = new System.Random(seed);
+        int length = positionData.positions.Length;
         if (this.uniformScale && !this.randomScale)
         {
-            for (int i = 0; i < positionData.positions.Length; i++)
+            for (int i = 0; i < length; i++)
             {
                 positionData.positions.scales[i] = new Vector3(this.scale, this.scale, this.scale);
             }
         }
         else if (!this.uniformScale && !this.randomScale)
         {
-            for (int i = 0; i < positionData.positions.Length; i++)
+            for (int i = 0; i < length; i++)
             {
                 positionData.positions.scales[i] = this.nonUniformScale;
             }
@@ -68,14 +69,14 @@ public class ScaleObjectsNode : BiomeGraphNode
             }
             if (this.uniformScale)
             {
-                for (int i = 0; i < positionData.positions.Length; i++)
+                for (int i = 0; i < length; i++)
                 {
                     positionData.positions.scales[i] = new Vector3(randNums[i % maxRandomNums], randNums[i % maxRandomNums], randNums[i % maxRandomNums]);
                 }
             }
             else
             {
-                for (int i = 0; i < positionData.positions.Length; i++)
+                for (int i = 0; i < length; i++)
                 {
                     positionData.positions.scales[i] = new Vector3(randNums[(i * 3) % maxRandomNums], randNums[(i * 3 + 1) % maxRandomNums], randNums[(i * 3 + 2) % maxRandomNums]);
                 }

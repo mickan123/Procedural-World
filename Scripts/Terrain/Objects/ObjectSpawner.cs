@@ -16,12 +16,12 @@ public class ObjectPositionData
 
 public class ObjectPositions
 {
-    public float[] xCoords;
-    public float[] yCoords;
-    public float[] zCoords;
+    public readonly float[] xCoords;
+    public readonly float[] yCoords;
+    public readonly float[] zCoords;
 
-    public Quaternion[] rotations;
-    public Vector3[] scales;
+    public readonly Quaternion[] rotations;
+    public readonly Vector3[] scales;
     public bool[] filtered;
 
     public ObjectPositions(float[] xCoords, float[] yCoords, float[] zCoords, Vector3[] scales, Quaternion[] rotations)

@@ -32,7 +32,8 @@ public class FilterObjectsHeightNode : BiomeGraphNode
     {
         AnimationCurve threadSafeCurve = new AnimationCurve(this.heightProbabilityCurve.keys);
 
-        for (int i = 0; i < positionData.positions.Length; i++)
+        int length = positionData.positions.Length;
+        for (int i = 0; i < length; i++)
         {
             float height = positionData.positions.yCoords[i];
             if (height > maxHeight || height < minHeight)

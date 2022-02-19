@@ -56,7 +56,8 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
         }
 
         // Iterate over points and filter those that don't match slope criteria
-        for (int i = 0; i < positionData.positions.Length; i++)
+        int length = positionData.positions.Length;
+        for (int i = 0; i < length; i++)
         {
             float xIn = positionData.positions.xCoords[i];
             float yIn = positionData.positions.zCoords[i];

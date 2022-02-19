@@ -32,7 +32,8 @@ public class FilterObjectsRoadNode : BiomeGraphNode
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
 
-        for (int i = 0; i < positionData.positions.Length; i++)
+        int length = positionData.positions.Length;
+        for (int i = 0; i < length; i++)
         {
             if (positionData.positions.filtered[i])
             {

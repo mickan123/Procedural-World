@@ -22,7 +22,8 @@ public class ObjectsOutputNode : BiomeGraphNode
         FilterByBiome(positionData);
 
         int numCoords = 0;
-        for (int i = 0; i < positionData.positions.Length; i++)
+        int length = positionData.positions.Length;
+        for (int i = 0; i < length; i++)
         {
             if (!positionData.positions.filtered[i])
             {
@@ -37,7 +38,7 @@ public class ObjectsOutputNode : BiomeGraphNode
         Quaternion[] updatedRotations = new Quaternion[numCoords];
         
         int index = 0;
-        for (int i = 0; i < positionData.positions.Length; i++)
+        for (int i = 0; i < length; i++)
         {
             if (!positionData.positions.filtered[i])
             {
@@ -79,7 +80,8 @@ public class ObjectsOutputNode : BiomeGraphNode
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
 
-        for (int i = 0; i < positionData.positions.Length; i++)
+        int length = positionData.positions.Length;
+        for (int i = 0; i < length; i++)
         {
             float rand = this.randomValues[i % this.numRandomValues];
 
