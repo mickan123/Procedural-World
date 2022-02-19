@@ -30,11 +30,9 @@ public class FilterObjectsHeightNode : BiomeGraphNode
 
     private void FilterByHeight(ObjectPositionData positionData)
     {
-        System.Random prng = new System.Random();
         AnimationCurve threadSafeCurve = new AnimationCurve(this.heightProbabilityCurve.keys);
 
-        List<int> indices = new List<int>(positionData.positions.Count);
-        for (int i = 0; i < positionData.positions.Count; i++)
+        for (int i = 0; i < positionData.positions.Length; i++)
         {
             float height = positionData.positions.yCoords[i];
             if (height > maxHeight || height < minHeight)
@@ -45,7 +43,8 @@ public class FilterObjectsHeightNode : BiomeGraphNode
             {
                 float percentage = (height - minHeight) / (maxHeight - minHeight);
                 float minProb = threadSafeCurve.Evaluate(percentage);
-                if (Common.NextFloat(prng, 0f, 1f) > minProb)
+                float randomVal = this.randomValues[i % this.numRandomValues];
+                if (randomVal > minProb)
                 {
                     positionData.positions.filtered[i] = true;
                 }

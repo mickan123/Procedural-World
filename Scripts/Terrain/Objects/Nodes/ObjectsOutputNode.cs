@@ -21,20 +21,32 @@ public class ObjectsOutputNode : BiomeGraphNode
         ObjectPositionData positionData = GetInputValue<ObjectPositionData>("positionData");
         FilterByBiome(positionData);
 
-        List<float> updatedXCoords = new List<float>();
-        List<float> updatedYCoords = new List<float>();
-        List<float> updatedZCoords = new List<float>();
-        List<Vector3> updatedScales = new List<Vector3>();
-        List<Quaternion> updatedRotations = new List<Quaternion>();
-        for (int i = 0; i < positionData.positions.Count; i++)
+        int numCoords = 0;
+        for (int i = 0; i < positionData.positions.Length; i++)
         {
             if (!positionData.positions.filtered[i])
             {
-                updatedXCoords.Add(positionData.positions.xCoords[i]);
-                updatedYCoords.Add(positionData.positions.yCoords[i]);
-                updatedZCoords.Add(positionData.positions.zCoords[i]);
-                updatedScales.Add(positionData.positions.scales[i]);
-                updatedRotations.Add(positionData.positions.rotations[i]);
+                numCoords += 1;
+            }
+        }
+
+        float[] updatedXCoords = new float[numCoords];
+        float[] updatedYCoords = new float[numCoords];
+        float[] updatedZCoords = new float[numCoords];
+        Vector3[] updatedScales = new Vector3[numCoords];
+        Quaternion[] updatedRotations = new Quaternion[numCoords];
+        
+        int index = 0;
+        for (int i = 0; i < positionData.positions.Length; i++)
+        {
+            if (!positionData.positions.filtered[i])
+            {
+                updatedXCoords[index] = positionData.positions.xCoords[i];
+                updatedYCoords[index] = positionData.positions.yCoords[i];
+                updatedZCoords[index] = positionData.positions.zCoords[i];
+                updatedScales[index] = positionData.positions.scales[i];
+                updatedRotations[index] = positionData.positions.rotations[i];
+                index += 1;
             }
         }
         ObjectPositions updatedPositions = new ObjectPositions(updatedXCoords, updatedYCoords, updatedZCoords, updatedScales, updatedRotations);
@@ -67,11 +79,9 @@ public class ObjectsOutputNode : BiomeGraphNode
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
 
-        System.Random prng = new System.Random(this.seed);
-
-        for (int i = 0; i < positionData.positions.Count; i++)
+        for (int i = 0; i < positionData.positions.Length; i++)
         {
-            float rand = (float)prng.NextDouble();
+            float rand = this.randomValues[i % this.numRandomValues];
 
             int coordX = (int)positionData.positions.xCoords[i];
             int coordZ = (int)positionData.positions.zCoords[i];
@@ -82,6 +92,5 @@ public class ObjectsOutputNode : BiomeGraphNode
                 positionData.positions.filtered[i] = true;
             }
         }
-
     }
 }

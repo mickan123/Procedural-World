@@ -32,8 +32,7 @@ public class FilterObjectsRoadNode : BiomeGraphNode
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
 
-        System.Random prng = new System.Random();
-        for (int i = 0; i < positionData.positions.Count; i++)
+        for (int i = 0; i < positionData.positions.Length; i++)
         {
             if (positionData.positions.filtered[i])
             {
@@ -50,7 +49,8 @@ public class FilterObjectsRoadNode : BiomeGraphNode
                 heightMapData.roadStrengthMap
             );
 
-            if ((float)prng.NextDouble() * 0.5f < roadStrength)
+            float randomVal = this.randomValues[i % this.numRandomValues];
+            if (randomVal * 0.5f < roadStrength)
             {
                 positionData.positions.filtered[i] = true;
             }

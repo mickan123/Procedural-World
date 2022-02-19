@@ -44,38 +44,38 @@ public class ScaleObjectsNode : BiomeGraphNode
         System.Random prng = new System.Random(seed);
         if (this.uniformScale && !this.randomScale)
         {
-            for (int i = 0; i < positionData.positions.Count; i++)
+            for (int i = 0; i < positionData.positions.Length; i++)
             {
                 positionData.positions.scales[i] = new Vector3(this.scale, this.scale, this.scale);
             }
         }
         else if (!this.uniformScale && !this.randomScale)
         {
-            for (int i = 0; i < positionData.positions.Count; i++)
+            for (int i = 0; i < positionData.positions.Length; i++)
             {
                 positionData.positions.scales[i] = this.nonUniformScale;
             }
         }
         else if (this.randomScale)
         {
-            List<float> randNums = new List<float>(maxRandomNums);
+            float[] randNums = new float[maxRandomNums];
             for (int i = 0; i < maxRandomNums; i++) 
             {
                 float value = (float)prng.NextDouble();
 
                 value = value * (this.maxScaleUniform - this.minScaleUniform) + this.minScaleUniform;
-                randNums.Add(value);
+                randNums[i] = value;
             }
             if (this.uniformScale)
             {
-                for (int i = 0; i < positionData.positions.Count; i++)
+                for (int i = 0; i < positionData.positions.Length; i++)
                 {
                     positionData.positions.scales[i] = new Vector3(randNums[i % maxRandomNums], randNums[i % maxRandomNums], randNums[i % maxRandomNums]);
                 }
             }
             else
             {
-                for (int i = 0; i < positionData.positions.Count; i++)
+                for (int i = 0; i < positionData.positions.Length; i++)
                 {
                     positionData.positions.scales[i] = new Vector3(randNums[(i * 3) % maxRandomNums], randNums[(i * 3 + 1) % maxRandomNums], randNums[(i * 3 + 2) % maxRandomNums]);
                 }

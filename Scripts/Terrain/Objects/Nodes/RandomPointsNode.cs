@@ -37,10 +37,11 @@ public class RandomPointsNode : BiomeGraphNode
         int mapSize = heightMapData.heightMap.GetLength(0);
 
         int totalRandomPoints = numPoints * (mapSize / increment + 1) * (mapSize / increment + 1);
-        List<float> xCoords = new List<float>(totalRandomPoints);
-        List<float> yCoords = new List<float>(totalRandomPoints);
-        List<float> zCoords = new List<float>(totalRandomPoints);
+        float[] xCoords = new float[totalRandomPoints];
+        float[] yCoords = new float[totalRandomPoints];
+        float[] zCoords = new float[totalRandomPoints];
 
+        int index = 0;
         for (int x = 0; x <= mapSize - 3; x += increment)
         {
             for (int z = 0; z <= mapSize - 3; z += increment)
@@ -57,9 +58,10 @@ public class RandomPointsNode : BiomeGraphNode
 
                     if (xCoord <= mapSize - 3 && zCoord <= mapSize - 3)
                     {
-                        xCoords.Add(xCoord);
-                        yCoords.Add(yCoord);
-                        zCoords.Add(zCoord);
+                        xCoords[index] = xCoord;
+                        yCoords[index] = yCoord;
+                        zCoords[index] = zCoord;
+                        index += 1;
                     }
                 }
             }

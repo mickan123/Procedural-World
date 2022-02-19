@@ -37,7 +37,7 @@ public class TranslateObjectsNode : BiomeGraphNode
 
         System.Random prng = new System.Random(seed);
         
-        for (int i = 0; i < positionData.positions.Count; i++)
+        for (int i = 0; i < positionData.positions.Length; i++)
         {
             if (this.randomTranslation)
             {

@@ -16,42 +16,42 @@ public class ObjectPositionData
 
 public class ObjectPositions
 {
-    public List<float> xCoords;
-    public List<float> yCoords;
-    public List<float> zCoords;
+    public float[] xCoords;
+    public float[] yCoords;
+    public float[] zCoords;
 
-    public List<Quaternion> rotations;
-    public List<Vector3> scales;
+    public Quaternion[] rotations;
+    public Vector3[] scales;
     public bool[] filtered;
 
-    public ObjectPositions(List<float> xCoords, List<float> yCoords, List<float> zCoords, List<Vector3> scales, List<Quaternion> rotations)
+    public ObjectPositions(float[] xCoords, float[] yCoords, float[] zCoords, Vector3[] scales, Quaternion[] rotations)
     {
         this.xCoords = xCoords;
         this.yCoords = yCoords;
         this.zCoords = zCoords;
         this.rotations = rotations;
         this.scales = scales;
-        this.filtered = new bool[this.xCoords.Count];
+        this.filtered = new bool[this.xCoords.Length];
     }
 
-    public ObjectPositions(List<float> xCoords, List<float> yCoords, List<float> zCoords)
+    public ObjectPositions(float[] xCoords, float[] yCoords, float[] zCoords)
     {
         this.xCoords = xCoords;
         this.yCoords = yCoords;
         this.zCoords = zCoords;
-        this.scales = new List<Vector3>(this.xCoords.Count);
-        this.rotations = new List<Quaternion>(this.xCoords.Count);
-        for (int i = 0; i < this.xCoords.Count; i++)
+        this.scales = new Vector3[this.xCoords.Length];
+        this.rotations = new Quaternion[this.xCoords.Length];
+        for (int i = 0; i < this.xCoords.Length; i++)
         {
-            this.scales.Add(new Vector3(1f, 1f, 1f));
-            this.rotations.Add(Quaternion.identity);
+            this.scales[i] = new Vector3(1f, 1f, 1f);
+            this.rotations[i] = Quaternion.identity;
         }
-        this.filtered = new bool[this.xCoords.Count];
+        this.filtered = new bool[this.xCoords.Length];
     }
     
-    public int Count {
+    public int Length {
         get {
-            return this.xCoords.Count;
+            return this.xCoords.Length;
         } 
     }
 }
@@ -75,7 +75,7 @@ public class ObjectSpawner
     private bool staticBatch;
 
     // Internal vars
-    private List<GameObject> spawnedObjects;
+    private GameObject[] spawnedObjects;
     private Transform parent;
 
     public ObjectSpawner(
@@ -97,7 +97,7 @@ public class ObjectSpawner
         }
         this.positions = positions;
         this.prng = prng;
-        this.spawnedObjects = new List<GameObject>();
+        this.spawnedObjects = new GameObject[this.positions.Length];
         this.staticBatch = staticBatch;
         this.hide = hide;
     }
@@ -115,7 +115,7 @@ public class ObjectSpawner
         this.detailMode = detailMode;
         this.positions = positions;
         this.prng = prng;
-        this.spawnedObjects = new List<GameObject>();
+        this.spawnedObjects = new GameObject[this.positions.Length];
         this.hide = hide;
     }
 
@@ -142,7 +142,7 @@ public class ObjectSpawner
 
     private void SpawnMeshObjects()
     {
-        for (int i = 0; i < positions.Count; i++)
+        for (int i = 0; i < positions.Length; i++)
         {
             float rand = Common.NextFloat(prng, 0, terrainObjects.Length);
             int objIndex = (int)rand;
@@ -152,11 +152,11 @@ public class ObjectSpawner
             obj.transform.rotation = positions.rotations[i];
             obj.transform.localScale = positions.scales[i];
             obj.SetActive(!hide);
-            spawnedObjects.Add(obj);
+            spawnedObjects[i] = obj;
         }
-        if (spawnedObjects.Count > 0 && staticBatch)
+        if (spawnedObjects.Length > 0 && staticBatch)
         {
-            StaticBatchingUtility.Combine(spawnedObjects.ToArray(), spawnedObjects[0]);
+            StaticBatchingUtility.Combine(spawnedObjects, spawnedObjects[0]);
         }
     }
 
@@ -168,7 +168,7 @@ public class ObjectSpawner
             return;
         }
 
-        int detailsInterval = this.positions.Count / this.detailMaterials.Length;
+        int detailsInterval = this.positions.Length / this.detailMaterials.Length;
 
         // Shuffle so we get even distribution of different detail materials as the order of
         // positions are grouped (e.g. first x points in 0,0 square next x in 0,1 ...)
