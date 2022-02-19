@@ -13,15 +13,6 @@ public static class Common
         return value;
     }
 
-    public static double NextDouble(System.Random prng, float begin, float end)
-    {
-        double value = prng.NextDouble();
-
-        value = value * (end - begin) + begin;
-
-        return value;
-    }
-
     // Evenly smooths value from 0 to 1 in range [min, max]
     public static float SmoothRange(float value, float min, float max)
     {
@@ -38,10 +29,13 @@ public static class Common
     public static float HeightFromFloatCoord(float x, float y, float[,] heightMap)
     {
         int maxIndex = heightMap.GetLength(0) - 1;
-        x = Mathf.Clamp(x, 0, maxIndex);
-        y = Mathf.Clamp(y, 0, maxIndex);
-        
 
+        // Technically subtracting 0.001f reduces slightly incorrect results however
+        // this means we don't have to do any bounds checking in later steps so the
+        // slight accuracy loss is worth it for the performance
+        x = Mathf.Min(x, maxIndex - 0.001f); 
+        y = Mathf.Min(y, maxIndex - 0.001f);
+        
         int indexX = (int)x;
         int indexY = (int)y;
 
@@ -49,9 +43,9 @@ public static class Common
         y = y - indexY;
 
         float heightNW = heightMap[indexX, indexY];
-        float heightNE = heightMap[Mathf.Min(indexX + 1, maxIndex), indexY];
-        float heightSW = heightMap[indexX, Mathf.Min(indexY + 1, maxIndex)];
-        float heightSE = heightMap[Mathf.Min(indexX + 1, maxIndex), Mathf.Min(indexY + 1, maxIndex)];
+        float heightNE = heightMap[indexX + 1, indexY];
+        float heightSW = heightMap[indexX, indexY + 1];
+        float heightSE = heightMap[indexX + 1, indexY + 1];
 
         float height = heightNW * (1 - x) * (1 - y)
                      + heightNE * x * (1 - y)
