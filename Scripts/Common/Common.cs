@@ -13,6 +13,15 @@ public static class Common
         return value;
     }
 
+    public static double NextDouble(System.Random prng, float begin, float end)
+    {
+        double value = prng.NextDouble();
+
+        value = value * (end - begin) + begin;
+
+        return value;
+    }
+
     // Evenly smooths value from 0 to 1 in range [min, max]
     public static float SmoothRange(float value, float min, float max)
     {
@@ -31,6 +40,7 @@ public static class Common
         int maxIndex = heightMap.GetLength(0) - 1;
         x = Mathf.Clamp(x, 0, maxIndex);
         y = Mathf.Clamp(y, 0, maxIndex);
+        
 
         int indexX = (int)x;
         int indexY = (int)y;
@@ -51,73 +61,27 @@ public static class Common
         return height;
     }
 
-    // Calculate angle at each point of a heightmap by averaging the angle
-    // between that element and each adjacent element (left, right, top, bottom)
     public static float[,] CalculateAngles(float[,] heightMap)
-    {
+    {   
+        int mapSize = heightMap.GetLength(0);
         int maxIndex = heightMap.GetLength(0) - 1;
-
-        // Calculate the angle between each element and the element to its left and top
-        // This calculates every angle between every element except those on the far right
-        // and the very bottom, we make the leftAngles and topAngles array 1 larger in the
-        // x and y dimension respectively to accomodate these angles
-        float[,] leftAngles = new float[heightMap.GetLength(0) + 1, heightMap.GetLength(1)];
-        float[,] topAngles = new float[heightMap.GetLength(0), heightMap.GetLength(1) + 1];
-        for (int x = 0; x < heightMap.GetLength(0); x++)
+        float[,] angles = new float[mapSize, mapSize];
+        for (int x = 0; x < mapSize; x++)
         {
-            for (int y = 0; y < heightMap.GetLength(1); y++)
-            { 
-                leftAngles[x, y] = AngleBetweenTwoPoints(
-                    x,
-                    y,
-                    Mathf.Min(Mathf.Max(x - 1, 0), maxIndex),
-                    Mathf.Min(Mathf.Max(y, 0), maxIndex),
-                    heightMap
+            for (int y = 0; y < mapSize; y++)
+            {
+                float height = heightMap[x, y];
+
+                // Compute the differentials by stepping over 1 in both directions.
+                float dx = heightMap[Mathf.Min(x + 1, maxIndex), y] - height;
+
+                float dy = heightMap[x, Mathf.Min(y + 1, maxIndex)] - height;
+
+                float dMax = Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy));
+                angles[x, y] = Mathf.Rad2Deg * Mathf.Atan2(
+                    dMax, 
+                    1
                 );
-
-                topAngles[x, y] = AngleBetweenTwoPoints(
-                    x,
-                    y,
-                    Mathf.Min(Mathf.Max(x, 0), maxIndex),
-                    Mathf.Min(Mathf.Max(y - 1, 0), maxIndex),
-                    heightMap
-                );
-            }
-        }
-
-        // Calculate the angles to the very right and at the very bottom as they are the 
-        // only angles that haven't been calculated yet
-        for (int i = 0; i < heightMap.GetLength(0); i++)
-        {
-            int rightX = heightMap.GetLength(0) - 1;
-            int bottomY = heightMap.GetLength(1) - 1;
-            leftAngles[rightX, i] = AngleBetweenTwoPoints(
-                rightX,
-                i,
-                Mathf.Min(Mathf.Max(rightX + 1, 0), maxIndex),
-                Mathf.Min(Mathf.Max(i, 0), maxIndex),
-                heightMap
-            );
-            topAngles[i, bottomY] = AngleBetweenTwoPoints(
-                i,
-                bottomY,
-                Mathf.Min(Mathf.Max(i, 0), maxIndex),
-                Mathf.Min(Mathf.Max(bottomY + 1, 0), maxIndex),
-                heightMap
-            );
-        }
-
-        float[,] angles = new float[heightMap.GetLength(0), heightMap.GetLength(1)];
-        for (int x = 0; x < heightMap.GetLength(0); x++)
-        {
-            for (int y = 0; y < heightMap.GetLength(1); y++)
-            { 
-                angles[x, y] = (
-                    leftAngles[x, y] +
-                    leftAngles[x + 1, y] + 
-                    topAngles[x, y] + 
-                    topAngles[x, y + 1]
-                ) / 4f;
             }
         }
 

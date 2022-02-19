@@ -17,14 +17,6 @@ public static class HydraulicErosion
         BiomeInfo info
     )
     {
-
-#if UNITY_EDITOR
-        float erosionStartTime = 0f;
-        if (terrainSettings.IsMainThread()) {
-            erosionStartTime = Time.realtimeSinceStartup;
-        }
-#endif
-
         int mapSize = values.GetLength(0);
         int numBiomes = terrainSettings.biomeSettings.Count;
 
@@ -67,15 +59,6 @@ public static class HydraulicErosion
                 values[i, j] = edgeMultiplier * map[i * mapSize + j] + (1f - edgeMultiplier) * values[i, j];
             }
         }
-
-#if UNITY_EDITOR
-        if (terrainSettings.IsMainThread()) {
-            float erosionEndTime = Time.realtimeSinceStartup;
-            float erosionTimeTaken = erosionEndTime - erosionStartTime;
-            Debug.Log("        Erosion time taken: " + erosionTimeTaken + "s");
-        }
-#endif
-
         return values;
     }
 
