@@ -53,11 +53,10 @@ public class RandomPointsNode : BiomeGraphNode
                     float xCoord = Common.NextFloat(prng, x, x + increment);
                     float zCoord = Common.NextFloat(prng, z, z + increment);
 
-                    float offset = 1f;
-                    float yCoord = Common.HeightFromFloatCoord(xCoord + offset, zCoord + offset, heightMapData.heightMap);
-
                     if (xCoord <= mapSize - 3 && zCoord <= mapSize - 3)
                     {
+                        float offset = 1f;
+                        float yCoord = Common.HeightFromFloatCoord(xCoord + offset, zCoord + offset, heightMapData.heightMap);
                         xCoords[index] = xCoord;
                         yCoords[index] = yCoord;
                         zCoords[index] = zCoord;
