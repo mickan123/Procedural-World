@@ -182,10 +182,7 @@ public class TerrainSettings : ScriptableObject
             this.biomeSettings[singleBiomeIndex].endHumidity = 1f;
             this.biomeSettings[singleBiomeIndex].endTemperature = 1f;
             this.transitionDistance = 0f;
-            this.ApplyToMaterial(this.previewMaterial);
-
             DrawBiomeMesh(width, height);
-
         }
         finally
         {
