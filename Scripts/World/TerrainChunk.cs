@@ -102,25 +102,7 @@ public class TerrainChunk
 
     public void LoadInEditor()
     {
-
-#if UNITY_EDITOR
-        float startTime = 0f;
-        if (terrainSettings.IsMainThread())
-        {
-            startTime = Time.realtimeSinceStartup;
-        }
-#endif
-
         this.terrainSettings.ApplyToMaterial(this.material);
-
-#if UNITY_EDITOR
-        if (terrainSettings.IsMainThread())
-        {
-            float endTime = Time.realtimeSinceStartup;
-            float timeTaken = endTime - startTime;
-            Debug.Log("Apply to material time taken: " + timeTaken + "s");
-        }
-#endif
 
         this.chunkData = ChunkDataGenerator.GenerateChunkData(this.terrainSettings, sampleCentre);
 
@@ -138,32 +120,7 @@ public class TerrainChunk
         heightMapReceived = true;
         this.UpdateTerrainChunk();
 
-#if UNITY_EDITOR
-        float startTime = 0f;
-        if (terrainSettings.IsMainThread())
-        {
-            startTime = Time.realtimeSinceStartup;
-        }
-#endif
-
         this.UpdateMaterial();
-
-#if UNITY_EDITOR
-        if (terrainSettings.IsMainThread())
-        {
-            float endTime = Time.realtimeSinceStartup;
-            float timeTaken = endTime - startTime;
-            Debug.Log("Update material time taken: " + timeTaken + "s");
-        }
-#endif
-
-#if UNITY_EDITOR
-        float spawnObjectsStartTime = 0f;
-        if (terrainSettings.IsMainThread())
-        {
-            spawnObjectsStartTime = Time.realtimeSinceStartup;
-        }
-#endif
 
         List<ObjectSpawner> spawnObjects = this.chunkData.objects;
         for (int i = 0; i < spawnObjects.Count; i++)
@@ -171,14 +128,6 @@ public class TerrainChunk
             spawnObjects[i].Spawn(meshObject.transform);
         }
 
-#if UNITY_EDITOR
-        if (terrainSettings.IsMainThread())
-        {
-            float spawnObjectsEndTime = Time.realtimeSinceStartup;
-            float spawnObjectsTimeTaken = spawnObjectsEndTime - spawnObjectsStartTime;
-            Debug.Log("Time to spawn objects: " + spawnObjectsTimeTaken + "s");
-        }
-#endif
     }
 
     public void UpdateMaterial()
@@ -218,8 +167,7 @@ public class TerrainChunk
             biomeStrengthTexPixels[i] = new Color[width * width];
         }
 
-        // TODO Optimize this function if possible
-        float[,] angles = Common.CalculateAngles(heightMap);
+        float[,] angles = Common.CalculateAngles(heightMap); // This function call is 90% of this functions execution time
 
         // Offset of 1 for all xy coords due to having out of mesh vertices for normal calculations
         int offset = 1;
