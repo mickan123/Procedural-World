@@ -8,7 +8,7 @@ public class BiomeGraphNode : Node
 {
     [HideInInspector] public int seed;
 
-    protected readonly int numRandomValues = 1024;
+    protected readonly int numRandomValues = 16384;
     protected readonly float[] randomValues;
 
     public BiomeGraphNode() 

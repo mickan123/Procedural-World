@@ -42,21 +42,43 @@ public class RandomPointsNode : BiomeGraphNode
         float[] zCoords = new float[totalRandomPoints];
 
         int index = 0;
+        int startIdx = prng.Next(0, this.numRandomValues);
         for (int x = 0; x <= mapSize - 3; x += increment)
         {
             for (int z = 0; z <= mapSize - 3; z += increment)
             {
                 for (int spawn = 0; spawn < numPoints; spawn++)
-                {
-                    // Don't optimize this random value generation to ensure we don't have to check if its within
-                    // range as otherwise we add too many points to edge of chunk
-                    float xCoord = Common.NextFloat(prng, x, x + increment);
-                    float zCoord = Common.NextFloat(prng, z, z + increment);
+                {   
+                    // Get random x and y coords and update index
+                    float xCoord = randomValues[startIdx] * increment + x;
+                    float zCoord = randomValues[startIdx + 1] * increment + z;
+                    startIdx += 2;
+                    if (startIdx + 1 >= this.numRandomValues) 
+                    {
+                        startIdx = 0;
+                    }
 
+                    // Only get y coord for valid x and z coords and then calculate height
+                    // from the two float coords
                     if (xCoord <= mapSize - 3 && zCoord <= mapSize - 3)
                     {
                         float offset = 1f;
-                        float yCoord = Common.HeightFromFloatCoord(xCoord + offset, zCoord + offset, heightMapData.heightMap);
+                        int xIdx = (int)(xCoord + offset);
+                        int zIdx = (int)(zCoord + offset);
+                        float xOffset = xCoord + offset - xIdx;
+                        float zOffset = zCoord + offset - zIdx;
+
+                        float heightNW = heightMapData.heightMap[xIdx, zIdx];
+                        float heightNE = heightMapData.heightMap[xIdx + 1, zIdx];
+                        float heightSW = heightMapData.heightMap[xIdx, zIdx + 1];
+                        float heightSE = heightMapData.heightMap[xIdx + 1, zIdx + 1];
+
+                        int cornerHeightIdx = (xIdx * mapSize + zIdx) * 4;
+                        float yCoord = heightNW * (1 - xOffset) * (1 - zOffset)
+                            + heightNE * xOffset * (1 - zOffset)
+                            + heightSW * (1 - xOffset) * zOffset
+                            + heightSE * xOffset * zOffset;
+
                         xCoords[index] = xCoord;
                         yCoords[index] = yCoord;
                         zCoords[index] = zCoord;
