@@ -35,7 +35,7 @@ public class PoissonPointsNode : BiomeGraphNode
 
         System.Random prng = new System.Random(this.seed);
 
-        List<Vector3> points = PoissonDiskSampling.GeneratePoints(settings, heightMapData.sampleCentre, heightMapData.heightMap, prng, heightMapData.terrainSettings);
+        List<Vector3> points = PoissonDiskSampling.GeneratePoints(settings, heightMapData.sampleCentre, heightMapData.heightMap, prng, this.randomValues, heightMapData.terrainSettings);
 
         float[] xCoords = new float[points.Count];
         float[] yCoords = new float[points.Count];

@@ -4,14 +4,14 @@ using UnityEngine;
 
 public static class PoissonDiskSampling
 {
-
     public static List<Vector3> GeneratePoints(
         PoissonDiskSamplingSettings settings,
         Vector2 sampleCentre,
         float[][] heightMap,
         System.Random prng,
+        float[] randomValues,
         TerrainSettings terrainSettings,
-        int numSamplesBeforeRejection = 35
+        int numSamplesBeforeRejection = 25
     )
     {
         int mapSize = heightMap.Length;
@@ -36,15 +36,18 @@ public static class PoissonDiskSampling
 
         float maxRadius = settings.varyRadius ? settings.maxRadius : settings.radius;
         float cellSize = maxRadius / Mathf.Sqrt(2);
+        
+        int maxPointsPerCell = Mathf.CeilToInt(cellSize / (float)(Mathf.Sqrt(settings.minRadius)));
 
         // Initialize 2d grid of lists
         int gridWidth = Mathf.CeilToInt(spawnSize / cellSize);
-        List<int>[,] grid = new List<int>[gridWidth, gridWidth];
-        for (int x = 0; x < grid.GetLength(0); x++)
+        List<int>[][] grid = new List<int>[gridWidth][];
+        for (int x = 0; x < gridWidth; x++)
         {
-            for (int y = 0; y < grid.GetLength(1); y++)
+            grid[x] = new List<int>[gridWidth];
+            for (int y = 0; y < gridWidth; y++)
             {
-                grid[x, y] = new List<int>();
+                grid[x][y] = new List<int>(maxPointsPerCell);
             }
         }
 
@@ -52,7 +55,10 @@ public static class PoissonDiskSampling
         List<Vector2> spawnPoints = new List<Vector2>();
 
         int numPoints = 0;
+        int randIdx = 0;
         spawnPoints.Add(new Vector2(spawnSize / 2, spawnSize / 2));
+
+        Vector2 dir = new Vector2(); // Construct once and reuse
         while (spawnPoints.Count > 0)
         {
             numPoints++;
@@ -62,24 +68,36 @@ public static class PoissonDiskSampling
 
             for (int i = 0; i < numSamplesBeforeRejection; i++)
             {
-                float randomFloat = Common.NextFloat(prng, 0f, 1f);
+                float randomFloat = randomValues[randIdx];
                 float angle = randomFloat * Mathf.PI * 2;
                 float radius = settings.radius;
                 if (settings.varyRadius)
                 {
-                    radius = spawnNoiseMap[Mathf.RoundToInt(spawnCentre.x)][Mathf.RoundToInt(spawnCentre.y)]
+                    radius = spawnNoiseMap[(int)(spawnCentre.x)][(int)(spawnCentre.y)]
                                 * (settings.maxRadius - settings.minRadius) + settings.minRadius;
                 }
-                Vector2 dir = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle));
+                dir.Set(Mathf.Sin(angle), Mathf.Cos(angle));
 
-                Vector2 candidate = spawnCentre + dir * Common.NextFloat(prng, radius, 2 * radius);
+                Vector2 candidate = spawnCentre + dir * (randomValues[randIdx + 1] * radius + radius);
+
+                // Check if the candidate we have randomly selected is valid
                 if (IsValid(candidate, spawnSize, cellSize, radius, points2d, grid))
                 {
                     points2d.Add(candidate);
                     spawnPoints.Add(candidate);
-                    grid[(int)(candidate.x / cellSize), (int)(candidate.y / cellSize)].Add(points2d.Count);
+
+                    int cellX = (int)(candidate.x / cellSize);
+                    int cellY = (int)(candidate.y / cellSize);
+                    grid[cellX][cellY].Add(points2d.Count);
                     candidateAccepted = true;
                     break;
+                }
+
+                 // Update random index
+                randIdx += 2;
+                if (randIdx >= randomValues.Length - 1)
+                {
+                    randIdx = 0;
                 }
             }
             if (!candidateAccepted)
@@ -111,43 +129,43 @@ public static class PoissonDiskSampling
                         float cellSize,
                         float radius,
                         List<Vector2> points,
-                        List<int>[,] grid)
+                        List<int>[][] grid)
     {
-        if (candidate.x >= 0 && candidate.x < spawnSize && candidate.y >= 0 && candidate.y < spawnSize)
+        if (candidate.x < 0 || candidate.x >= spawnSize || candidate.y < 0 || candidate.y >= spawnSize)
         {
-            int cellX = (int)(candidate.x / cellSize);
-            int cellY = (int)(candidate.y / cellSize);
-            int searchStartX = Mathf.Max(0, cellX - 1);
-            int searchEndX = Mathf.Min(cellX + 1, grid.GetLength(0) - 1);
-            int searchStartY = Mathf.Max(0, cellY - 1);
-            int searchEndY = Mathf.Min(cellY + 1, grid.GetLength(1) - 1);
+            return false;
+        }
+        int cellX = (int)(candidate.x / cellSize);
+        int cellY = (int)(candidate.y / cellSize);
+        int searchStartX = Mathf.Max(0, cellX - 1);
+        int searchEndX = Mathf.Min(cellX + 1, grid.Length - 1);
+        int searchStartY = Mathf.Max(0, cellY - 1);
+        int searchEndY = Mathf.Min(cellY + 1, grid.Length - 1);
 
-            for (int x = searchStartX; x <= searchEndX; x++)
+        for (int x = searchStartX; x <= searchEndX; x++)
+        {
+            for (int y = searchStartY; y <= searchEndY; y++)
             {
-                for (int y = searchStartY; y <= searchEndY; y++)
+                for (int i = 0; i < grid[x][y].Count; i++)
                 {
-                    for (int i = 0; i < grid[x, y].Count; i++)
+                    int pointIndex = grid[x][y][i] - 1;
+                    if (pointIndex != -1)
                     {
-                        int pointIndex = grid[x, y][i] - 1;
-                        if (pointIndex != -1)
+                        float sqrDst = (candidate - points[pointIndex]).sqrMagnitude;
+                        if (sqrDst < radius * radius)
                         {
-                            float sqrDst = (candidate - points[pointIndex]).sqrMagnitude;
-                            if (sqrDst < radius * radius)
-                            {
-                                return false;
-                            }
+                            return false;
                         }
                     }
                 }
             }
-            return true;
         }
-        return false;
+        return true;
     }
 }
 
 [System.Serializable]
-public class PoissonDiskSamplingSettings 
+public class PoissonDiskSamplingSettings
 {
     public bool varyRadius = false;
     public float radius = 5f;
@@ -172,7 +190,8 @@ public class PoissonDiskSamplingSettings
 
 #if UNITY_EDITOR
 
-    public void OnValidate() {
+    public void OnValidate()
+    {
         if (noiseMapSettings != null)
         {
             noiseMapSettings.OnValidate();
