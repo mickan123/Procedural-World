@@ -99,7 +99,7 @@ public class ObjectsOutputNode : BiomeGraphNode
             int coordX = (int)positionData.positions.xCoords[i];
             int coordZ = (int)positionData.positions.zCoords[i];
 
-            float biomeStrength = heightMapData.biomeInfo.biomeStrengths[coordX, coordZ, heightMapData.biome];
+            float biomeStrength = heightMapData.biomeInfo.biomeStrengths[coordX][coordZ][heightMapData.biome];
             if (rand > biomeStrength * biomeStrength * biomeStrength)
             {
                 positionData.positions.filtered[i] = true;

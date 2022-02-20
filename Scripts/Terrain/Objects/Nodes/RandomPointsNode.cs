@@ -34,7 +34,7 @@ public class RandomPointsNode : BiomeGraphNode
         }
 
         int increment = 10;
-        int mapSize = heightMapData.heightMap.GetLength(0);
+        int mapSize = heightMapData.heightMap.Length;
 
         int totalRandomPoints = numPoints * (mapSize / increment + 1) * (mapSize / increment + 1);
         float[] xCoords = new float[totalRandomPoints];
@@ -68,10 +68,10 @@ public class RandomPointsNode : BiomeGraphNode
                         float xOffset = xCoord + offset - xIdx;
                         float zOffset = zCoord + offset - zIdx;
 
-                        float heightNW = heightMapData.heightMap[xIdx, zIdx];
-                        float heightNE = heightMapData.heightMap[xIdx + 1, zIdx];
-                        float heightSW = heightMapData.heightMap[xIdx, zIdx + 1];
-                        float heightSE = heightMapData.heightMap[xIdx + 1, zIdx + 1];
+                        float heightNW = heightMapData.heightMap[xIdx][zIdx];
+                        float heightNE = heightMapData.heightMap[xIdx + 1][zIdx];
+                        float heightSW = heightMapData.heightMap[xIdx][zIdx + 1];
+                        float heightSE = heightMapData.heightMap[xIdx + 1][zIdx + 1];
 
                         int cornerHeightIdx = (xIdx * mapSize + zIdx) * 4;
                         float yCoord = heightNW * (1 - xOffset) * (1 - zOffset)

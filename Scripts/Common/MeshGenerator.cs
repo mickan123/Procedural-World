@@ -2,14 +2,18 @@
 
 public static class MeshGenerator
 {
-    public static MeshData GenerateTerrainMesh(float[,] heightMap, MeshSettings meshSettings, int levelOfDetail)
+    public static MeshData GenerateTerrainMesh(float[][] heightMap, MeshSettings meshSettings, int levelOfDetail)
     {
         int skipIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
         int numVertsPerLine = meshSettings.numVerticesPerLine;
 
         MeshData meshData = new MeshData(numVertsPerLine, skipIncrement);
 
-        int[,] vertexIndicesMap = new int[numVertsPerLine, numVertsPerLine];
+        int[][] vertexIndicesMap = new int[numVertsPerLine][];
+        for (int i = 0; i < numVertsPerLine; i++)
+        {
+            vertexIndicesMap[i] = new int[numVertsPerLine];
+        }
         int meshVertexIndex = 0;
         int outOfMeshVertexIndex = -1;
 
@@ -25,12 +29,12 @@ public static class MeshGenerator
                                     && ((x - 2) % skipIncrement != 0 || (y - 2) % skipIncrement != 0);
                 if (isOutOfMeshVertex)
                 {
-                    vertexIndicesMap[x, y] = outOfMeshVertexIndex;
+                    vertexIndicesMap[x][y] = outOfMeshVertexIndex;
                     outOfMeshVertexIndex--;
                 }
                 else if (!isSkippedVertex)
                 {
-                    vertexIndicesMap[x, y] = meshVertexIndex;
+                    vertexIndicesMap[x][y] = meshVertexIndex;
                     meshVertexIndex++;
                 }
             }
@@ -79,10 +83,10 @@ public static class MeshGenerator
                                                 && !isMeshEdgeVertex
                                                 && !isMainVertex;
 
-                    int vertexIndex = vertexIndicesMap[x, y];
+                    int vertexIndex = vertexIndicesMap[x][y];
                     Vector2 percent = new Vector2(x - 1, y - 1) / (numVertsPerLine - 3);
                     Vector2 vertexPosition2D = new Vector2(percent.x, percent.y) * meshSettings.meshWorldSize;
-                    float height = heightMap[x, y];
+                    float height = heightMap[x][y];
 
                     if (isEdgeConnectionVertex)
                     {
@@ -91,8 +95,8 @@ public static class MeshGenerator
                         int dstToMainVertexB = skipIncrement - dstToMainVertexA;
                         float dstPercentFromAToB = dstToMainVertexA / (float)skipIncrement;
 
-                        float heightMainVertexA = heightMap[(isVertical) ? x : x - dstToMainVertexA, (isVertical) ? y - dstToMainVertexA : y];
-                        float heightMainVertexB = heightMap[(isVertical) ? x : x + dstToMainVertexB, (isVertical) ? y + dstToMainVertexB : y];
+                        float heightMainVertexA = heightMap[(isVertical) ? x : x - dstToMainVertexA][(isVertical) ? y - dstToMainVertexA : y];
+                        float heightMainVertexB = heightMap[(isVertical) ? x : x + dstToMainVertexB][(isVertical) ? y + dstToMainVertexB : y];
 
                         height = (1 - dstPercentFromAToB) * heightMainVertexA + dstPercentFromAToB * heightMainVertexB;
                     }
@@ -105,10 +109,10 @@ public static class MeshGenerator
                     {
                         int currentIncrement = (isMainVertex && x != numVertsPerLine - 3 && y != numVertsPerLine - 3) ? skipIncrement : 1;
 
-                        int a = vertexIndicesMap[x, y];
-                        int b = vertexIndicesMap[x + currentIncrement, y];
-                        int c = vertexIndicesMap[x, y + currentIncrement];
-                        int d = vertexIndicesMap[x + currentIncrement, y + currentIncrement];
+                        int a = vertexIndicesMap[x][y];
+                        int b = vertexIndicesMap[x + currentIncrement][y];
+                        int c = vertexIndicesMap[x][y + currentIncrement];
+                        int d = vertexIndicesMap[x + currentIncrement][y + currentIncrement];
                         meshData.AddTriangle(a, c, d);
                         meshData.AddTriangle(d, b, a);
                     }

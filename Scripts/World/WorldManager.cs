@@ -123,7 +123,7 @@ public struct TerrainChunkData
 
     public bool doneStage1Erosion;
 
-    public float[,] heightMap;
+    public float[][] heightMap;
 
     public TerrainChunkData(TerrainChunk terrainChunk)
     {

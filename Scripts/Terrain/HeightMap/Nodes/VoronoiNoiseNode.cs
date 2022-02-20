@@ -12,7 +12,7 @@ public class VoronoiNoiseNode : BiomeGraphNode
     [Range(1, 1000)] public int numLloydsIterations = 5;
     [Range(0, 200)] public float voronoiCrackWidth = 4f;
 
-    [Output] public float[,] heightMap;
+    [Output] public float[][] heightMap;
 
     public override object GetValue(NodePort port)
     {
@@ -26,12 +26,12 @@ public class VoronoiNoiseNode : BiomeGraphNode
         }
     }
 
-    public float[,] GetVoronoiNoiseHeightMap()
+    public float[][] GetVoronoiNoiseHeightMap()
     {
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
 
-        float[,] heightMap = HeightMapGenerator.GenerateVeronoiMap(
+        float[][] heightMap = HeightMapGenerator.GenerateVeronoiMap(
             heightMapData.width,
             heightMapData.height,
             heightMapData.terrainSettings,

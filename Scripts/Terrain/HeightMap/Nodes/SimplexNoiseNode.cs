@@ -9,7 +9,7 @@ public class SimplexNoiseNode : BiomeGraphNode
     public NoiseMapSettings noiseMapSettings;
     public HeightMapGenerator.NormalizeMode normalizeMode;
 
-    [Output] public float[,] heightMap;
+    [Output] public float[][] heightMap;
 
     public override object GetValue(NodePort port)
     {
@@ -29,12 +29,12 @@ public class SimplexNoiseNode : BiomeGraphNode
         }
     }
 
-    public float[,] GetHeightMap()
+    public float[][] GetHeightMap()
     {
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
 
-        float[,] heightMap = HeightMapGenerator.GenerateHeightMap(
+        float[][] heightMap = HeightMapGenerator.GenerateHeightMap(
             heightMapData.width,
             heightMapData.height,
             this.noiseMapSettings,

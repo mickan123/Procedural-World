@@ -12,7 +12,7 @@ public class BiomeGraph : NodeGraph
 
     private readonly object locker = new object();
 
-    public float[,] GetHeightMap(TerrainSettings terrainSettings, Vector2 sampleCentre, int width, int height)
+    public float[][] GetHeightMap(TerrainSettings terrainSettings, Vector2 sampleCentre, int width, int height)
     {
         lock(locker)
         {
@@ -26,7 +26,7 @@ public class BiomeGraph : NodeGraph
             if (node is HeightMapOutputNode)
             {
                 var typedNode = node as HeightMapOutputNode;
-                float[,] heightMap = typedNode.GetValue();
+                float[][] heightMap = typedNode.GetValue();
 
                 lock(locker)
                 {
@@ -43,7 +43,7 @@ public class BiomeGraph : NodeGraph
         return null;
     }
 
-    public float[,] GetHeightMap(
+    public float[][] GetHeightMap(
         BiomeInfo info,
         TerrainSettings terrainSettings,
         Vector2 sampleCentre,
@@ -64,7 +64,7 @@ public class BiomeGraph : NodeGraph
             if (node is HeightMapOutputNode)
             {
                 var typedNode = node as HeightMapOutputNode;
-                float[,] heightMap = typedNode.GetValue();
+                float[][] heightMap = typedNode.GetValue();
 
                 lock(locker)
                 {
@@ -88,8 +88,8 @@ public class BiomeGraph : NodeGraph
         Vector2 sampleCentre, 
         BiomeInfo biomeInfo, 
         int biome, 
-        float[,] heightMap, 
-        float[,] roadStrengthMap
+        float[][] heightMap, 
+        float[][] roadStrengthMap
     )
     {
         lock(locker)
@@ -259,8 +259,8 @@ public class HeightMapGraphData
     public int biome;
     public BiomeInfo biomeInfo;
 
-    public float[,] heightMap;
-    public float[,] roadStrengthMap;
+    public float[][] heightMap;
+    public float[][] roadStrengthMap;
 
     public HeightMapGraphData(TerrainSettings terrainSettings, Vector2 sampleCentre, int width, int height)
     {
@@ -269,8 +269,13 @@ public class HeightMapGraphData
         this.width = width;
         this.height = height;
 
-        this.heightMap = new float[width, height];
-        this.roadStrengthMap = new float[width, height];
+        this.heightMap = new float[width][];
+        this.roadStrengthMap = new float[width][];
+        for (int i = 0; i < height; i++)
+        {
+            this.heightMap[i] = new float[height];
+            this.roadStrengthMap[i] = new float[height];
+        }
     }
 
     public HeightMapGraphData(TerrainSettings terrainSettings, Vector2 sampleCentre, int width, int height, int biome, BiomeInfo biomeInfo)
@@ -283,11 +288,16 @@ public class HeightMapGraphData
         this.biome = biome;
         this.biomeInfo = biomeInfo;
 
-        this.heightMap = new float[width, height];
-        this.roadStrengthMap = new float[width, height];
+        this.heightMap = new float[width][];
+        this.roadStrengthMap = new float[width][];
+        for (int i = 0; i < height; i++)
+        {
+            this.heightMap[i] = new float[height];
+            this.roadStrengthMap[i] = new float[height];
+        }
     }
 
-    public HeightMapGraphData(TerrainSettings terrainSettings, Vector2 sampleCentre, BiomeInfo biomeInfo, int biome, float[,] heightMap, float[,] roadStrengthMap)
+    public HeightMapGraphData(TerrainSettings terrainSettings, Vector2 sampleCentre, BiomeInfo biomeInfo, int biome, float[][] heightMap, float[][] roadStrengthMap)
     {
         this.terrainSettings = terrainSettings;
         this.sampleCentre = sampleCentre;
@@ -296,7 +306,7 @@ public class HeightMapGraphData
         this.heightMap = heightMap;
         this.roadStrengthMap = roadStrengthMap;
 
-        this.width = heightMap.GetLength(0);
-        this.height = heightMap.GetLength(0);
+        this.width = heightMap.Length;
+        this.height = heightMap[0].Length;
     }
 }

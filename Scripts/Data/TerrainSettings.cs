@@ -99,7 +99,7 @@ public class TerrainSettings : ScriptableObject
 
         if (drawMode == DrawMode.NoiseMapTexture)
         {
-            float[,] heightMap = this.biomeSettings[noiseMapBiomeIndex].biomeGraph.GetHeightMap(
+            float[][] heightMap = this.biomeSettings[noiseMapBiomeIndex].biomeGraph.GetHeightMap(
                 this,
                 this.offset,
                 width,
@@ -121,14 +121,14 @@ public class TerrainSettings : ScriptableObject
         }
         else
         {
-            float[,] humidityMap = this.humidityMapGraph.GetHeightMap(
+            float[][] humidityMap = this.humidityMapGraph.GetHeightMap(
                 this,
                 offset,
                 width,
                 height
             );
 
-            float[,] temperatureMap = this.temperatureMapGraph.GetHeightMap(
+            float[][] temperatureMap = this.temperatureMapGraph.GetHeightMap(
                 this,
                 offset,
                 width,
@@ -232,17 +232,21 @@ public class TerrainSettings : ScriptableObject
 #endif
     }
 
-    private void DrawBiomes(int width, int height, float[,] humidityMap, float[,] temperatureMap)
+    private void DrawBiomes(int width, int height, float[][] humidityMap, float[][] temperatureMap)
     {
         BiomeInfo biomeInfo = BiomeHeightMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, this);
 
         int numBiomes = this.biomeSettings.Count;
-        float[,] biomeTextureMap = new float[width, height];
+        float[][] biomeTextureMap = new float[width][];
+        for (int i = 0; i < width; i++)
+        {
+            biomeTextureMap[i] = new float[height];
+        }
         for (int i = 0; i < width; i++)
         {
             for (int j = 0; j < height; j++)
             {
-                biomeTextureMap[i, j] = (float)biomeInfo.biomeMap[i, j] / (float)(numBiomes - 1);
+                biomeTextureMap[i][j] = (float)biomeInfo.biomeMap[i][j] / (float)(numBiomes - 1);
             }
         }
 

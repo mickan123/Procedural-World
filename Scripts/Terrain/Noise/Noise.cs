@@ -7,7 +7,7 @@ using XNode;
 public static class Noise
 {
 
-    public static float[,] GenerateNoiseMap(int mapWidth,
+    public static float[][] GenerateNoiseMap(int mapWidth,
                                             int mapHeight,
                                             PerlinNoiseSettings noiseSettings,
                                             Vector2 sampleCentre,
@@ -15,7 +15,11 @@ public static class Noise
                                             int seed)
     {
 
-        float[,] noiseMap = new float[mapWidth, mapHeight];
+        float[][] noiseMap = new float[mapWidth][];
+        for (int i = 0; i < mapWidth; i++)
+        {
+            noiseMap[i] = new float[mapHeight];
+        }
         System.Random prng = new System.Random(seed);
 
         // Calculate octave offsets for max num of octaves and calculate max possible height at same time
@@ -62,13 +66,13 @@ public static class Noise
                     frequency *= noiseSettings.lacunarity;
                 }
 
-                noiseMap[x, y] = noiseHeight;
+                noiseMap[x][y] = noiseHeight;
             }
         }
         return noiseMap;
     }
 
-    public static float[,] normalizeGlobalBiomeValues(float[,] input, TerrainSettings terrainSettings)
+    public static float[][] normalizeGlobalBiomeValues(float[][] input, TerrainSettings terrainSettings)
     {
 
         float maxPossibleHeight = float.MinValue;
@@ -83,19 +87,20 @@ public static class Noise
         }
 
         // Normalize by max possible height
-        for (int i = 0; i < input.GetLength(0); i++)
+        int mapSize = input.Length;
+        for (int i = 0; i < mapSize; i++)
         {
-            for (int j = 0; j < input.GetLength(1); j++)
+            for (int j = 0; j < mapSize; j++)
             {
-                float normalizedHeight = input[i, j] / maxPossibleHeight;
-                input[i, j] = Mathf.Clamp(normalizedHeight, 0, float.MaxValue);
+                float normalizedHeight = input[i][j] / maxPossibleHeight;
+                input[i][j] = Mathf.Clamp(normalizedHeight, 0, float.MaxValue);
             }
         }
 
         return input;
     }
 
-    public static float[,] normalizeGlobalValues(float[,] input, PerlinNoiseSettings noiseSettings)
+    public static float[][] normalizeGlobalValues(float[][] input, PerlinNoiseSettings noiseSettings)
     {
 
         // Calculate max possible height
@@ -108,41 +113,43 @@ public static class Noise
         }
 
         // Normalize by max possible height
-        for (int i = 0; i < input.GetLength(0); i++)
+        int mapSize = input.Length;
+        for (int i = 0; i < mapSize; i++)
         {
-            for (int j = 0; j < input.GetLength(1); j++)
+            for (int j = 0; j < mapSize; j++)
             {
-                input[i, j] = input[i, j] / maxPossibleHeight;
+                input[i][j] = input[i][j] / maxPossibleHeight;
             }
         }
 
         return input;
     }
 
-    public static float[,] normalizeLocal(float[,] input)
+    public static float[][] normalizeLocal(float[][] input)
     {
         float maxHeight = float.MinValue;
         float minHeight = float.MaxValue;
-        for (int i = 0; i < input.GetLength(0); i++)
+        int mapSize = input.Length;
+        for (int i = 0; i < mapSize; i++)
         {
-            for (int j = 0; j < input.GetLength(1); j++)
+            for (int j = 0; j < mapSize; j++)
             {
-                if (input[i, j] > maxHeight)
+                if (input[i][j] > maxHeight)
                 {
-                    maxHeight = input[i, j];
+                    maxHeight = input[i][j];
                 }
-                if (input[i, j] < minHeight)
+                if (input[i][j] < minHeight)
                 {
-                    minHeight = input[i, j];
+                    minHeight = input[i][j];
                 }
             }
         }
 
-        for (int i = 0; i < input.GetLength(0); i++)
+        for (int i = 0; i < mapSize; i++)
         {
-            for (int j = 0; j < input.GetLength(1); j++)
+            for (int j = 0; j < mapSize; j++)
             {
-                input[i, j] = (input[i, j] - minHeight) / (maxHeight - minHeight);
+                input[i][j] = (input[i][j] - minHeight) / (maxHeight - minHeight);
             }
         }
 

@@ -5,9 +5,9 @@ using UnityEngine;
 public class ObjectPositionData
 {    
     public ObjectPositions positions;
-    public float[,] heightMap;
+    public float[][] heightMap;
 
-    public ObjectPositionData(ObjectPositions positions, float[,] heightMap)
+    public ObjectPositionData(ObjectPositions positions, float[][] heightMap)
     {
         this.positions = positions;
         this.heightMap = heightMap;

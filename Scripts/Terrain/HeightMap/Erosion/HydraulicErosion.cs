@@ -10,14 +10,14 @@ public static class HydraulicErosion
         ErosionSettings.erosionShader = Resources.Load<ComputeShader>("Shaders/Erosion");
     }
 
-    public static float[,] Erode(
-        float[,] values,
+    public static float[][] Erode(
+        float[][] values,
         TerrainSettings terrainSettings,
         ErosionSettings erosionSettings,
         BiomeInfo info
     )
     {
-        int mapSize = values.GetLength(0);
+        int mapSize = values.Length;
         int numBiomes = terrainSettings.biomeSettings.Count;
 
         float[] map = new float[mapSize * mapSize];
@@ -25,7 +25,7 @@ public static class HydraulicErosion
         {
             for (int j = 0; j < mapSize; j++)
             {
-                map[i * mapSize + j] = values[i, j];
+                map[i * mapSize + j] = values[i][j];
             }
         }
 
@@ -56,7 +56,7 @@ public static class HydraulicErosion
                 float distFromEdge = Mathf.Min(nearDist, farDist);
                 distFromEdge = Mathf.Max(distFromEdge - 3f, 0f);
                 float edgeMultiplier = Mathf.Min(distFromEdge / blendDistance, 1f);
-                values[i, j] = edgeMultiplier * map[i * mapSize + j] + (1f - edgeMultiplier) * values[i, j];
+                values[i][j] = edgeMultiplier * map[i * mapSize + j] + (1f - edgeMultiplier) * values[i][j];
             }
         }
         return values;

@@ -11,7 +11,7 @@ public static class HeightMapGenerator
 
     private static readonly object VoronoiLock = new object();
 
-    public static float[,] GenerateHeightMap(
+    public static float[][] GenerateHeightMap(
         int width,
         int height,
         NoiseMapSettings noiseSettings,
@@ -21,7 +21,7 @@ public static class HeightMapGenerator
         int seed
     )
     {
-        float[,] heightMap;
+        float[][] heightMap;
         if (noiseSettings.noiseType == NoiseMapSettings.NoiseType.Perlin)
         {
             heightMap = GeneratePerlinHeightMap(width, height, noiseSettings, terrainSettings, sampleCentre, normalizeMode, seed);
@@ -42,7 +42,7 @@ public static class HeightMapGenerator
         return heightMap;
     }
 
-    public static float[,] GeneratePerlinHeightMap(
+    public static float[][] GeneratePerlinHeightMap(
         int width,
         int height,
         NoiseMapSettings noiseSettings,
@@ -53,7 +53,7 @@ public static class HeightMapGenerator
     )
     {
 
-        float[,] values = Noise.GenerateNoiseMap(width, height, noiseSettings.perlinNoiseSettings, sampleCentre, noiseSettings.noiseType, seed);
+        float[][] values = Noise.GenerateNoiseMap(width, height, noiseSettings.perlinNoiseSettings, sampleCentre, noiseSettings.noiseType, seed);
 
         if (normalizeMode == NormalizeMode.GlobalBiome)
         {
@@ -71,7 +71,7 @@ public static class HeightMapGenerator
         return values;
     }
 
-    public static float[,] GenerateSimplexHeightMap(
+    public static float[][] GenerateSimplexHeightMap(
         int width,
         int height,
         NoiseMapSettings noiseSettings,
@@ -81,7 +81,7 @@ public static class HeightMapGenerator
         int seed
     )
     {
-        float[,] values = Noise.GenerateNoiseMap(width, height, noiseSettings.simplexNoiseSettings, sampleCentre, noiseSettings.noiseType, seed);
+        float[][] values = Noise.GenerateNoiseMap(width, height, noiseSettings.simplexNoiseSettings, sampleCentre, noiseSettings.noiseType, seed);
 
         if (normalizeMode == NormalizeMode.GlobalBiome)
         {
@@ -99,7 +99,7 @@ public static class HeightMapGenerator
         return values;
     }
 
-    public static float[,] GenerateTerracedNoiseMap(
+    public static float[][] GenerateTerracedNoiseMap(
         int width,
         int height,
         NoiseMapSettings noiseMapSettings,
@@ -110,7 +110,7 @@ public static class HeightMapGenerator
         int seed
     )
     {
-        float[,] heightMap = HeightMapGenerator.GenerateHeightMap(
+        float[][] heightMap = HeightMapGenerator.GenerateHeightMap(
             width,
             height,
             noiseMapSettings,
@@ -121,19 +121,18 @@ public static class HeightMapGenerator
         );
 
         float terraceInterval = 1f / (float)numTerraces;
-
-        for (int x = 0; x < heightMap.GetLength(0); x++)
+        for (int x = 0; x < width; x++)
         {
-            for (int y = 0; y < heightMap.GetLength(1); y++)
+            for (int y = 0; y < height; y++)
             {
-                heightMap[x, y] = Mathf.Floor(heightMap[x, y] / terraceInterval) * terraceInterval;
+                heightMap[x][y] = Mathf.Floor(heightMap[x][y] / terraceInterval) * terraceInterval;
             }
         }
 
         return heightMap;
     }
 
-    public static float[,] GenerateRidgedTurbulenceMap(
+    public static float[][] GenerateRidgedTurbulenceMap(
         int width,
         int height,
         NoiseMapSettings noiseSettings,
@@ -143,7 +142,7 @@ public static class HeightMapGenerator
         int seed
     )
     {
-        float[,] heightMap = HeightMapGenerator.GenerateHeightMap(
+        float[][] heightMap = HeightMapGenerator.GenerateHeightMap(
             width,
             height,
             noiseSettings,
@@ -153,19 +152,19 @@ public static class HeightMapGenerator
             noiseSettings.seed
         );
 
-        for (int x = 0; x < heightMap.GetLength(0); x++)
+        for (int x = 0; x < width; x++)
         {
-            for (int y = 0; y < heightMap.GetLength(1); y++)
+            for (int y = 0; y < height; y++)
             {
-                heightMap[x, y] = (heightMap[x, y] * 2f) - 1; // Convert to range [-1, 1]
-                heightMap[x, y] = Mathf.Abs(heightMap[x, y]);
+                heightMap[x][y] = (heightMap[x][y] * 2f) - 1; // Convert to range [-1, 1]
+                heightMap[x][y] = Mathf.Abs(heightMap[x][y]);
             }
         }
 
         return heightMap;
     }
 
-    public static float[,] GenerateVeronoiMap(
+    public static float[][] GenerateVeronoiMap(
         int width,
         int height,
         TerrainSettings terrainSettings,
@@ -195,7 +194,11 @@ public static class HeightMapGenerator
             voronoi = new Voronoi(randomPoints, bounds, numLloydsIterations);
         }
 
-        float[,] heightMap = new float[width, height];
+        float[][] heightMap = new float[width][];
+        for (int i = 0; i < width; i++)
+        {
+            heightMap[i] = new float[height];
+        }
         if (voronoiMode == VoronoiMode.RandomFlat)
         {
             FlatVoronoiHeightMap(ref heightMap, voronoi, prng);
@@ -216,7 +219,7 @@ public static class HeightMapGenerator
         return heightMap;
     }
 
-    private static void FlatVoronoiHeightMap(ref float[,] heightMap, Voronoi voronoi, System.Random prng)
+    private static void FlatVoronoiHeightMap(ref float[][] heightMap, Voronoi voronoi, System.Random prng)
     {
         int numPolygons = voronoi.SiteCoords().Count;
         float[] randomHeights = new float[numPolygons];
@@ -224,22 +227,24 @@ public static class HeightMapGenerator
         {
             randomHeights[i] = Common.NextFloat(prng, 0, 1);
         }
-
-        for (int x = 0; x < heightMap.GetLength(0); x++)
+        
+        int mapSize = heightMap.Length;
+        for (int x = 0; x < mapSize; x++)
         {
-            for (int y = 0; y < heightMap.GetLength(1); y++)
+            for (int y = 0; y < mapSize; y++)
             {
                 Site closestSite = voronoi.ClosestSiteAtPoint(new Vector2(x, y));
-                heightMap[x, y] = randomHeights[closestSite.SiteIndex];
+                heightMap[x][y] = randomHeights[closestSite.SiteIndex];
             }
         }
     }
 
-    private static void ConvexPoloygonsVoronoiHeightMap(ref float[,] heightMap, Voronoi voronoi)
+    private static void ConvexPoloygonsVoronoiHeightMap(ref float[][] heightMap, Voronoi voronoi)
     {
-        for (int x = 0; x < heightMap.GetLength(0); x++)
+        int mapSize = heightMap.Length;
+        for (int x = 0; x < mapSize; x++)
         {
-            for (int y = 0; y < heightMap.GetLength(1); y++)
+            for (int y = 0; y < mapSize; y++)
             {
 
                 Vector2 pos = new Vector2(x, y);
@@ -254,32 +259,34 @@ public static class HeightMapGenerator
                 );
                 float distToSite = Vector2.Distance(closestSite.Coord, pos);
 
-                heightMap[x, y] = distToEdge;
+                heightMap[x][y] = distToEdge;
             }
         }
     }
 
-    private static void ClosestPointVoronoiHeightMap(ref float[,] heightMap, Voronoi voronoi)
+    private static void ClosestPointVoronoiHeightMap(ref float[][] heightMap, Voronoi voronoi)
     {
-        for (int x = 0; x < heightMap.GetLength(0); x++)
+        int mapSize = heightMap.Length;
+        for (int x = 0; x < mapSize; x++)
         {
-            for (int y = 0; y < heightMap.GetLength(1); y++)
+            for (int y = 0; y < mapSize; y++)
             {
                 Vector2 pos = new Vector2(x, y);
                 Site closestSite = voronoi.ClosestSiteAtPoint(pos);
 
                 float dist = Vector2.Distance(closestSite.Coord, pos);
 
-                heightMap[x, y] = dist;
+                heightMap[x][y] = dist;
             }
         }
     }
 
-    private static void CracksVoronoiHeightMap(ref float[,] heightMap, Voronoi voronoi, float voronoiCrackWidth)
+    private static void CracksVoronoiHeightMap(ref float[][] heightMap, Voronoi voronoi, float voronoiCrackWidth)
     {
-        for (int x = 0; x < heightMap.GetLength(0); x++)
+        int mapSize = heightMap.Length;
+        for (int x = 0; x < mapSize; x++)
         {
-            for (int y = 0; y < heightMap.GetLength(1); y++)
+            for (int y = 0; y < mapSize; y++)
             {
 
                 Vector2 pos = new Vector2(x, y);
@@ -291,13 +298,13 @@ public static class HeightMapGenerator
 
                 // Use half crack width as its calculated half from either side
                 float halfCrackWidth = voronoiCrackWidth / 2f;
-                heightMap[x, y] = (maxDist - dist > halfCrackWidth) ? 1f : 0f;
+                heightMap[x][y] = (maxDist - dist > halfCrackWidth) ? 1f : 0f;
             }
         }
     }
 
 
-    public static float[,] GenerateSandDuneHeightMap(
+    public static float[][] GenerateSandDuneHeightMap(
         int width,
         int height,
         NoiseMapSettings noiseSettings,
@@ -306,7 +313,11 @@ public static class HeightMapGenerator
         int seed
     )
     {
-        float[,] values = new float[width, height];
+        float[][] values = new float[width][];
+        for (int i = 0; i < values.Length; i++)
+        {
+            values[i] = new float[height];
+        }
         int padding = (height - meshSettings.meshWorldSize - 3) / 2;
         int chunkIdxY = (int)(sampleCentre.y + padding) / meshSettings.meshWorldSize;
 
@@ -317,7 +328,7 @@ public static class HeightMapGenerator
             SandDunePeriod settings = noiseSettings.sandDuneSettings.sandDunePeriods[k];
             float duneHeight = ((2 * sandDuneSettings.sigma * settings.duneWidth) / Mathf.PI) * Mathf.Max(1 - sandDuneSettings.xm, 0.01f);
 
-            float[,] noiseValues = Noise.GenerateNoiseMap(
+            float[][] noiseValues = Noise.GenerateNoiseMap(
                 width,
                 height,
                 noiseSettings.simplexNoiseSettings,
@@ -330,7 +341,7 @@ public static class HeightMapGenerator
                 for (int j = 0; j < height; j++)
                 {
                     float duneLength = settings.duneWidth + settings.duneGap;
-                    float duneOffset = noiseValues[i, j] * settings.maxDuneVariation + settings.duneOffset;
+                    float duneOffset = noiseValues[i][j] * settings.maxDuneVariation + settings.duneOffset;
                     float x = (j + duneOffset + chunkIdxY * (height - (2 * padding) - 3)) % duneLength;
 
                     x = (x < 0) ? x + duneLength : x;
@@ -342,9 +353,9 @@ public static class HeightMapGenerator
                     float constant = ((sandDuneSettings.p * side + 1) / 2f);
 
                     // Calculate height multiplier with range[0, 1], perlin height value must be > duneThreshold or it is clamped to 0 
-                    float duneThresholdMultiplier = Mathf.Max(0, noiseValues[i, j] - settings.duneThreshold) / (Mathf.Max(1f - settings.duneThreshold, 0.01f));
+                    float duneThresholdMultiplier = Mathf.Max(0, noiseValues[i][j] - settings.duneThreshold) / (Mathf.Max(1f - settings.duneThreshold, 0.01f));
 
-                    values[i, j] += (constant * cosTerm) * duneHeight * duneThresholdMultiplier;
+                    values[i][j] += (constant * cosTerm) * duneHeight * duneThresholdMultiplier;
                 }
             }
 

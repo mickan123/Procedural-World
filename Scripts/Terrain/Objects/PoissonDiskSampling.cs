@@ -8,15 +8,15 @@ public static class PoissonDiskSampling
     public static List<Vector3> GeneratePoints(
         PoissonDiskSamplingSettings settings,
         Vector2 sampleCentre,
-        float[,] heightMap,
+        float[][] heightMap,
         System.Random prng,
         TerrainSettings terrainSettings,
         int numSamplesBeforeRejection = 35
     )
     {
-        int mapSize = heightMap.GetLength(0);
+        int mapSize = heightMap.Length;
 
-        float[,] spawnNoiseMap;
+        float[][] spawnNoiseMap;
         if (settings.varyRadius)
         {
             spawnNoiseMap = Noise.GenerateNoiseMap(
@@ -38,7 +38,8 @@ public static class PoissonDiskSampling
         float cellSize = maxRadius / Mathf.Sqrt(2);
 
         // Initialize 2d grid of lists
-        List<int>[,] grid = new List<int>[Mathf.CeilToInt(spawnSize / cellSize), Mathf.CeilToInt(spawnSize / cellSize)];
+        int gridWidth = Mathf.CeilToInt(spawnSize / cellSize);
+        List<int>[,] grid = new List<int>[gridWidth, gridWidth];
         for (int x = 0; x < grid.GetLength(0); x++)
         {
             for (int y = 0; y < grid.GetLength(1); y++)
@@ -66,7 +67,7 @@ public static class PoissonDiskSampling
                 float radius = settings.radius;
                 if (settings.varyRadius)
                 {
-                    radius = spawnNoiseMap[Mathf.RoundToInt(spawnCentre.x), Mathf.RoundToInt(spawnCentre.y)]
+                    radius = spawnNoiseMap[Mathf.RoundToInt(spawnCentre.x)][Mathf.RoundToInt(spawnCentre.y)]
                                 * (settings.maxRadius - settings.minRadius) + settings.minRadius;
                 }
                 Vector2 dir = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle));

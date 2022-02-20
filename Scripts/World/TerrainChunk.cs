@@ -24,7 +24,7 @@ public class TerrainChunk
     private int colliderLODIndex;
 
     public ChunkData chunkData;
-    private float[,] heightMap;
+    private float[][] heightMap;
     private bool heightMapReceived;
     private int previousLODIndex = -1;
     private bool hasSetCollider;
@@ -106,7 +106,7 @@ public class TerrainChunk
 
         this.chunkData = ChunkDataGenerator.GenerateChunkData(this.terrainSettings, sampleCentre);
 
-        for (int i = 0; i < lodMeshes.GetLength(0); i++)
+        for (int i = 0; i < lodMeshes.Length; i++)
         {
             this.lodMeshes[i].GenerateMeshEditor(this.chunkData.biomeData.heightNoiseMap, this.meshSettings);
         }
@@ -133,7 +133,7 @@ public class TerrainChunk
     public void UpdateMaterial()
     {
         BiomeInfo info = this.chunkData.biomeData.biomeInfo;
-        int width = info.biomeMap.GetLength(0) - 3;
+        int width = info.biomeMap.Length - 3;
 
         // Create texture to pass in biome maps and biome strengths
         int numBiomes = this.terrainSettings.biomeSettings.Count;
@@ -158,7 +158,7 @@ public class TerrainChunk
         biomeMapTex.filterMode = FilterMode.Trilinear;
         biomeStrengthTexArray.filterMode = FilterMode.Trilinear; // TODO: Should this be bilinear
 
-        float[,] heightMap = this.chunkData.biomeData.heightNoiseMap;
+        float[][] heightMap = this.chunkData.biomeData.heightNoiseMap;
 
         // Create arrays to hold pixel colors so we can use SetPixels vs SetPixel individually
         Color[] biomeMapTexPixels = new Color[width * width];
@@ -167,7 +167,7 @@ public class TerrainChunk
             biomeStrengthTexPixels[i] = new Color[width * width];
         }
 
-        float[,] angles = Common.CalculateAngles(heightMap); // This function call is 90% of this functions execution time
+        float[][] angles = Common.CalculateAngles(heightMap); // This function call is 90% of this functions execution time
 
         // Offset of 1 for all xy coords due to having out of mesh vertices for normal calculations
         int offset = 1;
@@ -176,17 +176,17 @@ public class TerrainChunk
             for (int y = 0; y < width; y++)
             {   
                 // Average 4 corners of a point to get the pixel road strength
-                float roadStrength = (chunkData.roadStrengthMap[x + offset, y + offset] 
-                    + chunkData.roadStrengthMap[x + offset + 1, y + offset] 
-                    + chunkData.roadStrengthMap[x + offset + 1, y + offset + 1]
-                    + chunkData.roadStrengthMap[x + offset, y + offset + 1]) / 4f;
+                float roadStrength = (chunkData.roadStrengthMap[x + offset][y + offset] 
+                    + chunkData.roadStrengthMap[x + offset + 1][y + offset] 
+                    + chunkData.roadStrengthMap[x + offset + 1][y + offset + 1]
+                    + chunkData.roadStrengthMap[x + offset][y + offset + 1]) / 4f;
 
-                float angle = angles[x, y];
+                float angle = angles[x][y];
                 angle /= 90f; // Normalize 0 to 1 range
 
                 // Create biomeMap pixel
                 biomeMapTexPixels[y * width + x] = new Color(
-                    chunkData.roadStrengthMap[x + offset, y + offset], 
+                    chunkData.roadStrengthMap[x + offset][y + offset], 
                     angle, 
                     0f, 
                     0f
@@ -198,10 +198,10 @@ public class TerrainChunk
                     int texIndex = k / biomesPerTexture;
 
                     Color biomeStrengths = new Color(
-                        (k < numBiomes) ? info.biomeStrengths[x + offset, y + 1, k] : 0f,
-                        (k + 1 < numBiomes) ? info.biomeStrengths[x + offset, y + offset, k + 1] : 0f,
-                        (k + 2 < numBiomes) ? info.biomeStrengths[x + offset, y + offset, k + 2] : 0f,
-                        (k + 3 < numBiomes) ? info.biomeStrengths[x + offset, y + offset, k + 3] : 0f
+                        (k < numBiomes) ? info.biomeStrengths[x + offset][y + offset][k] : 0f,
+                        (k + 1 < numBiomes) ? info.biomeStrengths[x + offset][y + offset][k + 1] : 0f,
+                        (k + 2 < numBiomes) ? info.biomeStrengths[x + offset][y + offset][k + 2] : 0f,
+                        (k + 3 < numBiomes) ? info.biomeStrengths[x + offset][y + offset][k + 3] : 0f
                     );
                     biomeStrengthTexPixels[texIndex][y * width + x] = biomeStrengths;
                 }
@@ -347,13 +347,13 @@ class LODMesh
         updateCallback();
     }
 
-    public void RequestMesh(float[,] heightMap, MeshSettings meshSettings)
+    public void RequestMesh(float[][] heightMap, MeshSettings meshSettings)
     {
         hasRequestedMesh = true;
         ThreadedDataRequester.RequestData(() => MeshGenerator.GenerateTerrainMesh(heightMap, meshSettings, lod), OnMeshDataReceived);
     }
 
-    public void GenerateMeshEditor(float[,] heightMap, MeshSettings meshSettings)
+    public void GenerateMeshEditor(float[][] heightMap, MeshSettings meshSettings)
     {
         MeshData meshData = MeshGenerator.GenerateTerrainMesh(heightMap, meshSettings, lod);
         this.mesh = meshData.CreateMesh();

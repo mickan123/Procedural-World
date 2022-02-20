@@ -6,17 +6,21 @@ using XNode;
 [XNode.Node.CreateNodeMenuAttribute("HeightMap/Square")]
 public class HeightMapSquareNode : BiomeGraphNode
 {
-    [Input] public float[,] heightMapIn;
-    [Output] public float[,] heightMapOut;
+    [Input] public float[][] heightMapIn;
+    [Output] public float[][] heightMapOut;
 
     public override object GetValue(NodePort port)
     {
-        float[,] heightMapIn = GetInputValue<float[,]>("heightMapIn", this.heightMapIn);
+        float[][] heightMapIn = GetInputValue<float[][]>("heightMapIn", this.heightMapIn);
 
-        int width = heightMapIn.GetLength(0);
-        int height = heightMapIn.GetLength(1);
+        int width = heightMapIn.Length;
+        int height = heightMapIn[0].Length;
 
-        float[,] result = new float[width, height];
+        float[][] result = new float[width][];
+        for (int i = 0; i < width; i++)
+        {
+            result[i] = new float[height];
+        }
 
         if (port.fieldName == "heightMapOut")
         {
@@ -26,16 +30,16 @@ public class HeightMapSquareNode : BiomeGraphNode
         return result;
     }
 
-    public void SquareHeightMap(float[,] a, ref float[,] result)
+    public void SquareHeightMap(float[][] a, ref float[][] result)
     {
-        int width = a.GetLength(0);
-        int height = a.GetLength(1);
+        int width = a.Length;
+        int height = a[0].Length;
 
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                result[x, y] = a[x, y] * a[x, y];
+                result[x][y] = a[x][y] * a[x][y];
             }
         }
     }

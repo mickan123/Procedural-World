@@ -4,9 +4,9 @@ using UnityEngine;
 public static class ObjectGenerator
 {
     public static List<ObjectSpawner> GenerateObjectSpawners(
-        float[,] heightMap, 
+        float[][] heightMap, 
         BiomeInfo info, 
-        float[,] roadStrengthMap, 
+        float[][] roadStrengthMap, 
         TerrainSettings settings, 
         Vector2 sampleCentre
     )
@@ -21,7 +21,7 @@ public static class ObjectGenerator
             {
                 BiomeGraph graph = settings.biomeSettings[biome].biomeGraph;
                 graph.heightMapData[System.Threading.Thread.CurrentThread] = new HeightMapGraphData(
-                    settings, sampleCentre, heightMap.GetLength(0), heightMap.GetLength(1)
+                    settings, sampleCentre, heightMap.Length, heightMap.Length
                 );
                 List<ObjectSpawner> spawners = graph.GetObjectSpawners(settings, sampleCentre, info, biome, heightMap, roadStrengthMap);
                 biomeObjectSpawners.AddRange(spawners);
@@ -32,11 +32,11 @@ public static class ObjectGenerator
 
     private static bool HeightMapContainesBiome(BiomeInfo info, int biome)
     {
-        for (int i = 0; i < info.biomeStrengths.GetLength(0); i++)
+        for (int i = 0; i < info.biomeStrengths.Length; i++)
         {
-            for (int j = 0; j < info.biomeStrengths.GetLength(1); j++)
+            for (int j = 0; j < info.biomeStrengths.Length; j++)
             {
-                if (info.biomeStrengths[i, j, biome] > 0f)
+                if (info.biomeStrengths[i][j][biome] > 0f)
                 {
                     return true;
                 }

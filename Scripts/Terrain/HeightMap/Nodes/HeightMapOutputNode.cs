@@ -6,10 +6,10 @@ using XNode;
 [XNode.Node.CreateNodeMenuAttribute("HeightMap/Output")]
 public class HeightMapOutputNode : BiomeGraphNode
 {
-    [Input(ShowBackingValue.Never, ConnectionType.Override)] public float[,] heightMap;
+    [Input(ShowBackingValue.Never, ConnectionType.Override)] public float[][] heightMap;
 
-    public float[,] GetValue()
+    public float[][] GetValue()
     {
-        return GetInputValue<float[,]>("heightMap");
+        return GetInputValue<float[][]>("heightMap");
     }
 }
