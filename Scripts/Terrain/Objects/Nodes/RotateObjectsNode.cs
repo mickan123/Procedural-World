@@ -30,25 +30,27 @@ public class RotateObjectsNode : BiomeGraphNode
     private ObjectPositionData GetPositionData(ObjectPositionData positionDataIn)
     {
         System.Random prng = new System.Random(seed);
-        for (int i = 0; i < positionDataIn.positions.Length; i++)
+        int randIdx = prng.Next(0, this.numRandomValues);
+        int length = positionDataIn.positions.Length;
+        for (int i = 0; i < length; i++)
         {
-            positionDataIn.positions.rotations[i] = this.GetRotation(prng);
+            if (this.randomRotation)
+            {
+                float randomX = this.randomValues[randIdx] * (this.maxRotation.x - this.minRotation.x) + this.minRotation.x;
+                float randomY = this.randomValues[randIdx + 1] * (this.maxRotation.y - this.minRotation.y) + this.minRotation.y;
+                float randomZ = this.randomValues[randIdx + 2] * (this.maxRotation.x - this.minRotation.z) + this.minRotation.z;
+                randIdx += 3;
+                if (randIdx >= this.numRandomValues - 3)
+                {
+                    randIdx = 0;
+                }
+                positionDataIn.positions.rotations[i] = Quaternion.Euler(randomX, randomY, randomZ);
+            }
+            else
+            {
+                positionDataIn.positions.rotations[i] = Quaternion.Euler(this.rotation.x, this.rotation.y, this.rotation.z);
+            }
         }
         return positionDataIn;
-    }
-
-    public Quaternion GetRotation(System.Random prng)
-    {
-        if (this.randomRotation)
-        {
-            float randomX = Common.NextFloat(prng, this.minRotation.x, this.maxRotation.x);
-            float randomY = Common.NextFloat(prng, this.minRotation.y, this.maxRotation.y);
-            float randomZ = Common.NextFloat(prng, this.minRotation.z, this.maxRotation.z);
-            return Quaternion.Euler(randomX, randomY, randomZ);
-        }
-        else
-        {
-            return Quaternion.Euler(this.rotation.x, this.rotation.y, this.rotation.z);
-        }
     }
 }

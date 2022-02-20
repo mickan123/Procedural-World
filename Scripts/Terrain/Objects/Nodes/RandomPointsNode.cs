@@ -42,7 +42,7 @@ public class RandomPointsNode : BiomeGraphNode
         float[] zCoords = new float[totalRandomPoints];
 
         int index = 0;
-        int startIdx = prng.Next(0, this.numRandomValues);
+        int randIdx = prng.Next(0, this.numRandomValues);
         for (int x = 0; x <= mapSize - 3; x += increment)
         {
             for (int z = 0; z <= mapSize - 3; z += increment)
@@ -50,12 +50,12 @@ public class RandomPointsNode : BiomeGraphNode
                 for (int spawn = 0; spawn < numPoints; spawn++)
                 {   
                     // Get random x and y coords and update index
-                    float xCoord = randomValues[startIdx] * increment + x;
-                    float zCoord = randomValues[startIdx + 1] * increment + z;
-                    startIdx += 2;
-                    if (startIdx + 1 >= this.numRandomValues) 
+                    float xCoord = randomValues[randIdx] * increment + x;
+                    float zCoord = randomValues[randIdx + 1] * increment + z;
+                    randIdx += 2;
+                    if (randIdx + 1 >= this.numRandomValues) 
                     {
-                        startIdx = 0;
+                        randIdx = 0;
                     }
 
                     // Only get y coord for valid x and z coords and then calculate height

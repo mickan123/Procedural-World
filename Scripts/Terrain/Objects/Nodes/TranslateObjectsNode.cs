@@ -36,15 +36,21 @@ public class TranslateObjectsNode : BiomeGraphNode
         }
 
         System.Random prng = new System.Random(seed);
-        
+        int randIdx = prng.Next(0, this.numRandomValues);
         int length = positionData.positions.Length;
         for (int i = 0; i < length; i++)
         {
             if (this.randomTranslation)
             {
-                positionData.positions.xCoords[i] += Common.NextFloat(prng, this.minTranslation.x, this.maxTranslation.x);
-                positionData.positions.yCoords[i] += Common.NextFloat(prng, this.minTranslation.y, this.maxTranslation.y);
-                positionData.positions.zCoords[i] += Common.NextFloat(prng, this.minTranslation.z, this.maxTranslation.z);
+                positionData.positions.xCoords[i] += this.randomValues[randIdx] * (this.minTranslation.x - this.maxTranslation.x) + this.minTranslation.x;
+                positionData.positions.yCoords[i] += this.randomValues[randIdx + 1] * (this.minTranslation.y - this.maxTranslation.y) + this.minTranslation.y;
+                positionData.positions.zCoords[i] += this.randomValues[randIdx + 2] * (this.minTranslation.z - this.maxTranslation.z) + this.minTranslation.z;
+
+                randIdx += 3;
+                if (randIdx >= this.numRandomValues - 3)
+                {
+                    randIdx = 0;
+                }
             }
             else
             {

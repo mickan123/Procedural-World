@@ -21,8 +21,6 @@ public class ScaleObjectsNode : BiomeGraphNode
     public float minScaleUniform = 1;
     public float maxScaleUniform = 1;
 
-    private int maxRandomNums = 1000;
-
     public override object GetValue(NodePort port)
     {
         if (port.fieldName == "positionDataOut")
@@ -42,6 +40,7 @@ public class ScaleObjectsNode : BiomeGraphNode
             return null;
         }
         System.Random prng = new System.Random(seed);
+        int randIdx = prng.Next(0, this.numRandomValues);
         int length = positionData.positions.Length;
         if (this.uniformScale && !this.randomScale)
         {
@@ -59,26 +58,39 @@ public class ScaleObjectsNode : BiomeGraphNode
         }
         else if (this.randomScale)
         {
-            float[] randNums = new float[maxRandomNums];
-            for (int i = 0; i < maxRandomNums; i++) 
-            {
-                float value = (float)prng.NextDouble();
-
-                value = value * (this.maxScaleUniform - this.minScaleUniform) + this.minScaleUniform;
-                randNums[i] = value;
-            }
             if (this.uniformScale)
             {
                 for (int i = 0; i < length; i++)
                 {
-                    positionData.positions.scales[i] = new Vector3(randNums[i % maxRandomNums], randNums[i % maxRandomNums], randNums[i % maxRandomNums]);
+                    float randValue = this.randomValues[randIdx] * (this.maxScaleUniform - this.minScaleUniform) + this.minScaleUniform;
+                    randIdx++;
+                    if (randIdx >= this.numRandomValues)
+                    {
+                        randIdx = 0;
+                    }
+
+                    positionData.positions.scales[i].x = randValue;
+                    positionData.positions.scales[i].y = randValue;
+                    positionData.positions.scales[i].z = randValue;
                 }
             }
             else
             {
                 for (int i = 0; i < length; i++)
                 {
-                    positionData.positions.scales[i] = new Vector3(randNums[(i * 3) % maxRandomNums], randNums[(i * 3 + 1) % maxRandomNums], randNums[(i * 3 + 2) % maxRandomNums]);
+                    float randValueX = this.randomValues[randIdx] * (this.maxScaleUniform - this.minScaleUniform) + this.minScaleUniform;
+                    float randValueY = this.randomValues[randIdx + 1] * (this.maxScaleUniform - this.minScaleUniform) + this.minScaleUniform;
+                    float randValueZ = this.randomValues[randIdx + 2] * (this.maxScaleUniform - this.minScaleUniform) + this.minScaleUniform;
+
+                    randIdx += 3;
+                    if (randIdx >= this.numRandomValues - 3)
+                    {
+                        randIdx = 0;
+                    }
+
+                    positionData.positions.scales[i].x = randValueX;
+                    positionData.positions.scales[i].y = randValueY;
+                    positionData.positions.scales[i].z = randValueZ;
                 }
             }
         }
