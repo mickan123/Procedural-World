@@ -16,12 +16,12 @@ public class ObjectPositionData
 
 public class ObjectPositions
 {
-    public readonly float[] xCoords;
-    public readonly float[] yCoords;
-    public readonly float[] zCoords;
+    public float[] xCoords;
+    public float[] yCoords;
+    public float[] zCoords;
 
-    public readonly Quaternion[] rotations;
-    public readonly Vector3[] scales;
+    public Quaternion[] rotations;
+    public Vector3[] scales;
     public bool[] filtered;
 
     public ObjectPositions(float[] xCoords, float[] yCoords, float[] zCoords, Vector3[] scales, Quaternion[] rotations)
@@ -41,10 +41,13 @@ public class ObjectPositions
         this.zCoords = zCoords;
         this.scales = new Vector3[this.xCoords.Length];
         this.rotations = new Quaternion[this.xCoords.Length];
+
+        Vector3 defaultScale = new Vector3(1f, 1f, 1f);
+        Quaternion defaultRotation = Quaternion.identity;
         for (int i = 0; i < this.xCoords.Length; i++)
         {
-            this.scales[i] = new Vector3(1f, 1f, 1f);
-            this.rotations[i] = Quaternion.identity;
+            this.scales[i] = defaultScale;
+            this.rotations[i] = defaultRotation;
         }
         this.filtered = new bool[this.xCoords.Length];
     }
