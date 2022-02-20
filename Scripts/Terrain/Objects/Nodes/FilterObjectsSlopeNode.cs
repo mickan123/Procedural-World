@@ -34,7 +34,6 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
         }
 
         // Generate slope at every point
-        int maxIndex = positionData.heightMap.GetLength(0) - 1;
         int mapSize = positionData.heightMap.GetLength(0);
 
         float[,] angles = Common.CalculateAngles(positionData.heightMap);

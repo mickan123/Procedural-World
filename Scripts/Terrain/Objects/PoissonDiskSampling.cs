@@ -169,6 +169,8 @@ public class PoissonDiskSamplingSettings
         this.noiseMapSettings = noiseMapSettings;
     }
 
+#if UNITY_EDITOR
+
     public void OnValidate() {
         if (noiseMapSettings != null)
         {
@@ -178,4 +180,7 @@ public class PoissonDiskSamplingSettings
         minRadius = Mathf.Max(minRadius, 0f);
         maxRadius = Mathf.Max(maxRadius, minRadius);
     }
+
+#endif
+
 }

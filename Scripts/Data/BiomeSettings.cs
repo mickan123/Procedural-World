@@ -14,9 +14,9 @@ public class BiomeSettings : ScriptableObject
     [Range(0, 1)] public float startTemperature;
     [Range(0, 1)] public float endTemperature;
 
-    private float minWidth = 0.02f;
-
 #if UNITY_EDITOR
+
+    private float minWidth = 0.02f;
 
     public void OnValidate()
     {
