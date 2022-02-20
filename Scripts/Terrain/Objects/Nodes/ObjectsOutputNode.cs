@@ -81,14 +81,25 @@ public class ObjectsOutputNode : BiomeGraphNode
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
 
         int length = positionData.positions.Length;
+        int randIdx = 0;
         for (int i = 0; i < length; i++)
         {
-            float rand = this.randomValues[i % this.numRandomValues];
+            if (positionData.positions.filtered[i])
+            {
+                continue;
+            }
+            
+            float rand = this.randomValues[randIdx];
+            randIdx++;
+            if (randIdx >= this.numRandomValues) 
+            {
+                randIdx = 0;
+            }
 
             int coordX = (int)positionData.positions.xCoords[i];
             int coordZ = (int)positionData.positions.zCoords[i];
-            float biomeStrength = heightMapData.biomeInfo.biomeStrengths[coordX, coordZ, heightMapData.biome];
 
+            float biomeStrength = heightMapData.biomeInfo.biomeStrengths[coordX, coordZ, heightMapData.biome];
             if (rand > biomeStrength * biomeStrength * biomeStrength)
             {
                 positionData.positions.filtered[i] = true;

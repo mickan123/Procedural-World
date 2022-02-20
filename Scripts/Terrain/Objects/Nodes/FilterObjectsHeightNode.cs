@@ -35,6 +35,11 @@ public class FilterObjectsHeightNode : BiomeGraphNode
         int length = positionData.positions.Length;
         for (int i = 0; i < length; i++)
         {
+            if (positionData.positions.filtered[i])
+            {
+                continue;
+            }
+            
             float height = positionData.positions.yCoords[i];
             if (height > maxHeight || height < minHeight)
             {

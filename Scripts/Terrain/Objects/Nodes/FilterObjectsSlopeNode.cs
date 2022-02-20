@@ -35,13 +35,36 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
 
         // Generate slope at every point
         int maxIndex = positionData.heightMap.GetLength(0) - 1;
+        int mapSize = positionData.heightMap.GetLength(0);
 
         float[,] angles = Common.CalculateAngles(positionData.heightMap);
+
+        // Create a padded angles array so we don't have to do any bounds checking 
+        // in later calculations for improved performance
+        float[,] paddedAngles = new float[mapSize + 1, mapSize + 1];
+        
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                paddedAngles[i, j] = angles[i, j];
+            }
+        }
+        for (int i = 0; i < mapSize; i++)
+        {
+            paddedAngles[i, mapSize] = paddedAngles[i, mapSize - 1];
+            paddedAngles[mapSize, i] = paddedAngles[mapSize - 1, i];
+        }
 
         // Iterate over points and filter those that don't match slope criteria
         int length = positionData.positions.Length;
         for (int i = 0; i < length; i++)
         {
+            if (positionData.positions.filtered[i])
+            {
+                continue;
+            }
+
             float xIn = positionData.positions.xCoords[i];
             float yIn = positionData.positions.zCoords[i];
 
@@ -52,8 +75,8 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
             float x = xIn - coordX;
             float y = yIn - coordZ;
 
-            float xSlope = x * angles[coordX, coordZ] + (1f - x) * angles[Mathf.Min(coordX + 1, maxIndex), coordZ];
-            float ySlope = y * angles[coordX, coordZ] + (1f - y) * angles[coordX, Mathf.Min(coordZ + 1, maxIndex)];
+            float xSlope = x * paddedAngles[coordX, coordZ] + (1f - x) * paddedAngles[coordX + 1, coordZ];
+            float ySlope = y * paddedAngles[coordX, coordZ] + (1f - y) * paddedAngles[coordX, coordZ + 1];
 
             float angle = (xSlope + ySlope) / 2f;
 
