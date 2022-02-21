@@ -137,10 +137,14 @@ public static class PoissonDiskSampling
         }
         int cellX = (int)(candidate.x / cellSize);
         int cellY = (int)(candidate.y / cellSize);
-        int searchStartX = Mathf.Max(0, cellX - 1);
-        int searchEndX = Mathf.Min(cellX + 1, grid.Length - 1);
-        int searchStartY = Mathf.Max(0, cellY - 1);
-        int searchEndY = Mathf.Min(cellY + 1, grid.Length - 1);
+
+        int maxIndex = grid.Length - 1;
+
+        // Set range and clamp it inside grid indices
+        int searchStartX = ((cellX - 1) > 0) ? (cellX - 1) : 0; 
+        int searchEndX = ((cellX + 1) > maxIndex) ? maxIndex : (cellX + 1); 
+        int searchStartY = ((cellY - 1) > 0) ? (cellY - 1) : 0; 
+        int searchEndY = ((cellY + 1) > maxIndex) ? maxIndex : (cellY + 1); 
 
         for (int x = searchStartX; x <= searchEndX; x++)
         {
