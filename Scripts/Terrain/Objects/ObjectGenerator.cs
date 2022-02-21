@@ -32,9 +32,10 @@ public static class ObjectGenerator
 
     private static bool HeightMapContainesBiome(BiomeInfo info, int biome)
     {
-        for (int i = 0; i < info.biomeStrengths.Length; i++)
+        int length = info.biomeStrengths.Length;
+        for (int i = 0; i < length; i++)
         {
-            for (int j = 0; j < info.biomeStrengths.Length; j++)
+            for (int j = 0; j < length; j++)
             {
                 if (info.biomeStrengths[i][j][biome] > 0f)
                 {

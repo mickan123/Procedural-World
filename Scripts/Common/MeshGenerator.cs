@@ -227,7 +227,8 @@ public class MeshData
                 vertexNormals[vertexIndexC] += triangleNormal;
             }
         }
-        for (int i = 0; i < vertexNormals.Length; i++)
+        int length = vertexNormals.Length;
+        for (int i = 0; i < length; i++)
         {
             vertexNormals[i].Normalize();
         }

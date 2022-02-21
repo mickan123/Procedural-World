@@ -284,10 +284,12 @@ public static class RoadGenerator
         // Calculate smoothed bezier curve points
         int curvedLength = (path.Count * Mathf.RoundToInt(RoadSettings.smoothness)) - 1;
         List<Vector3> smoothedPoints = new List<Vector3>(curvedLength);
-        for (int i = 0; i < curves.Length; i++)
+        int numCurves = curves.Length;
+        for (int i = 0; i < numCurves; i++)
         {
             Vector3[] segments = curves[i].GetSegments(RoadSettings.smoothness * 4);
-            for (int j = 0; j < segments.Length; j++)
+            int segmentsLength = segments.Length;
+            for (int j = 0; j < segmentsLength; j++)
             {
                 smoothedPoints.Add(segments[j]);
             }
@@ -407,7 +409,8 @@ public static class RoadGenerator
         // Check whether a coordinate is approx within roadSettings.width range of 
         // a point on path to determine whether we bother getting the closest path index
         // Points not within this distance dont' matter
-        for (int i = 0; i < path.Length; i++)
+        int pathLength = path.Length;
+        for (int i = 0; i < pathLength; i++)
         {
             int startX = (int)Mathf.Max(path[i].x - maxRoadWidth, 0);
             int endX = (int)Mathf.Min(mapSize - 1, Mathf.CeilToInt(path[i].x + maxRoadWidth));
@@ -438,7 +441,7 @@ public static class RoadGenerator
 
                     float minDist = float.MaxValue;
                     int closestPointIndex = 0;
-                    for (int k = 0; k < path.Length; k++)
+                    for (int k = 0; k < pathLength; k++)
                     {
                         float dist = Vector3.Distance(path[k], curPoint);
                         if (dist < minDist)

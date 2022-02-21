@@ -314,7 +314,7 @@ public static class HeightMapGenerator
     )
     {
         float[][] values = new float[width][];
-        for (int i = 0; i < values.Length; i++)
+        for (int i = 0; i < width; i++)
         {
             values[i] = new float[height];
         }
@@ -323,7 +323,8 @@ public static class HeightMapGenerator
 
         SandDuneSettings sandDuneSettings = noiseSettings.sandDuneSettings;
 
-        for (int k = 0; k < noiseSettings.sandDuneSettings.sandDunePeriods.Length; k++)
+        int length = noiseSettings.sandDuneSettings.sandDunePeriods.Length;
+        for (int k = 0; k < length; k++)
         {
             SandDunePeriod settings = noiseSettings.sandDuneSettings.sandDunePeriods[k];
             float duneHeight = ((2 * sandDuneSettings.sigma * settings.duneWidth) / Mathf.PI) * Mathf.Max(1 - sandDuneSettings.xm, 0.01f);

@@ -36,20 +36,23 @@ public class ObjectPositions
 
     public ObjectPositions(float[] xCoords, float[] yCoords, float[] zCoords)
     {
+        int numCoords = xCoords.Length;
+
         this.xCoords = xCoords;
         this.yCoords = yCoords;
         this.zCoords = zCoords;
-        this.scales = new Vector3[this.xCoords.Length];
-        this.rotations = new Quaternion[this.xCoords.Length];
+        this.scales = new Vector3[numCoords];
+        this.rotations = new Quaternion[numCoords];
 
         Vector3 defaultScale = new Vector3(1f, 1f, 1f);
         Quaternion defaultRotation = Quaternion.identity;
-        for (int i = 0; i < this.xCoords.Length; i++)
+        
+        for (int i = 0; i < numCoords; i++)
         {
             this.scales[i] = defaultScale;
             this.rotations[i] = defaultRotation;
         }
-        this.filtered = new bool[this.xCoords.Length];
+        this.filtered = new bool[numCoords];
     }
     
     public int Length {
@@ -124,7 +127,8 @@ public class ObjectSpawner
 
     public void SetParent(Transform transform)
     {
-        for (int i = 0; i < terrainObjects.Length; i++)
+        int length = terrainObjects.Length;
+        for (int i = 0; i < length; i++)
         {
             terrainObjects[i].gameObject.transform.parent = transform;
         }
@@ -145,7 +149,8 @@ public class ObjectSpawner
 
     private void SpawnMeshObjects()
     {
-        for (int i = 0; i < positions.Length; i++)
+        int length = positions.Length;
+        for (int i = 0; i < length; i++)
         {
             float rand = Common.NextFloat(prng, 0, terrainObjects.Length);
             int objIndex = (int)rand;
@@ -177,7 +182,8 @@ public class ObjectSpawner
         // positions are grouped (e.g. first x points in 0,0 square next x in 0,1 ...)
         this.positions.xCoords.Shuffle(this.positions.yCoords, this.positions.zCoords);
 
-        for (int i = 0; i < this.detailMaterials.Length; i++)
+        int length = this.detailMaterials.Length;
+        for (int i = 0; i < length; i++)
         {
             Camera camera = Camera.main;
 

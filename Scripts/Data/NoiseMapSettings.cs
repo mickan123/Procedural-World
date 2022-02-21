@@ -67,7 +67,8 @@ public class SandDuneSettings
     {
         if (sandDunePeriods != null)
         {
-            for (int i = 0; i < sandDunePeriods.Length; i++)
+            int length = sandDunePeriods.Length;
+            for (int i = 0; i < length; i++)
             {
                 if (sandDunePeriods[i] != null)
                 {

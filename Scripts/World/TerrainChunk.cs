@@ -82,7 +82,8 @@ public class TerrainChunk
         SetVisible(false);
 
         lodMeshes = new LODMesh[detailLevels.Length];
-        for (int i = 0; i < detailLevels.Length; i++)
+        int length = detailLevels.Length;
+        for (int i = 0; i < length; i++)
         {
             lodMeshes[i] = new LODMesh(detailLevels[i].lod);
             lodMeshes[i].updateCallback += UpdateTerrainChunk;
@@ -106,7 +107,8 @@ public class TerrainChunk
 
         this.chunkData = ChunkDataGenerator.GenerateChunkData(this.terrainSettings, sampleCentre);
 
-        for (int i = 0; i < lodMeshes.Length; i++)
+        int lodMeshesLength = lodMeshes.Length;
+        for (int i = 0; i < lodMeshesLength; i++)
         {
             this.lodMeshes[i].GenerateMeshEditor(this.chunkData.biomeData.heightNoiseMap, this.meshSettings);
         }
@@ -163,7 +165,8 @@ public class TerrainChunk
         // Create arrays to hold pixel colors so we can use SetPixels vs SetPixel individually
         Color[] biomeMapTexPixels = new Color[width * width];
         Color[][] biomeStrengthTexPixels = new Color[biomeStrengthTextures.Length][];
-        for (int i = 0; i < biomeStrengthTexPixels.Length; i++) {
+        int biomeStrengthTexPixelsLength = biomeStrengthTexPixels.Length;
+        for (int i = 0; i < biomeStrengthTexPixelsLength; i++) {
             biomeStrengthTexPixels[i] = new Color[width * width];
         }
 
@@ -208,7 +211,8 @@ public class TerrainChunk
             }
         }
         
-        for (int i = 0; i < biomeStrengthTextures.Length; i++)
+        int biomeStrengthTexturesLength = biomeStrengthTextures.Length;
+        for (int i = 0; i < biomeStrengthTexturesLength; i++)
         {
             biomeStrengthTexArray.SetPixels(biomeStrengthTexPixels[i], i);
         }
@@ -250,7 +254,8 @@ public class TerrainChunk
             {
                 int lodIndex = 0;
 
-                for (int i = 0; i < detailLevels.Length - 1; i++)
+                int detailLevelsLength = detailLevels.Length;
+                for (int i = 0; i < detailLevelsLength - 1; i++)
                 {
                     if (viewerDstFromNearestEdge > (detailLevels[i].chunkDistanceThreshold * meshWorldSize))
                     {
