@@ -64,16 +64,17 @@ public static class RoadGenerator
         }
 
         // Fade away any road carving from edge so that cross chunk roads blend smoothly
-        float blendDistance = 10f;
+
+        float blendDistance = 5f;
         for (int i = 0; i < mapSize; i++)
         {
             for (int j = 0; j < mapSize; j++)
             {
-                float nearDist = Mathf.Min(i, j);
-                float farDist = mapSize - 1 - Mathf.Max(i, j);
-                float distFromEdge = Mathf.Min(nearDist, farDist);
-                distFromEdge = Mathf.Max(distFromEdge - 3f, 0f);
-                float edgeMultiplier = Mathf.Min(distFromEdge / blendDistance, 1f);
+                float nearDist = i < j ? i : j;
+                float farDist = mapSize - 1 - (i > j ? i : j);
+                float distFromEdge = nearDist < farDist ? nearDist : farDist;
+                distFromEdge = distFromEdge - 3f < 0f ? 0f : distFromEdge - 3f ;
+                float edgeMultiplier = distFromEdge / blendDistance < 1f ? distFromEdge / blendDistance :1f;
                 finalHeightMap[i][j] = edgeMultiplier * finalHeightMap[i][j] + (1f - edgeMultiplier) * referenceHeightMap[i][j];
             }
         }
