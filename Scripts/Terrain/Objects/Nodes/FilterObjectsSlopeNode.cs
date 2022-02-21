@@ -36,31 +36,35 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
         // Generate slope at every point
         int mapSize = positionData.heightMap.Length;
 
-        float[][] angles = Common.CalculateAngles(positionData.heightMap);
+        float[][] slopes = Common.CalculateSlopes(positionData.heightMap);
 
-        // Create a padded angles array so we don't have to do any bounds checking 
+        // Create a padded slopes array so we don't have to do any bounds checking 
         // in later calculations for improved performance
-        float[][] paddedAngles = new float[mapSize + 1][];
+        float[][] paddedSlopes = new float[mapSize + 1][];
         for (int i = 0; i < mapSize + 1; i++)
         {
-            paddedAngles[i] = new float[mapSize + 1];
+            paddedSlopes[i] = new float[mapSize + 1];
         }
         
         for (int i = 0; i < mapSize; i++)
         {
             for (int j = 0; j < mapSize; j++)
             {
-                paddedAngles[i][j] = angles[i][j];
+                paddedSlopes[i][j] = slopes[i][j];
             }
         }
         for (int i = 0; i < mapSize; i++)
         {
-            paddedAngles[i][mapSize] = paddedAngles[i][mapSize - 1];
-            paddedAngles[mapSize][i] = paddedAngles[mapSize - 1][i];
+            paddedSlopes[i][mapSize] = paddedSlopes[i][mapSize - 1];
+            paddedSlopes[mapSize][i] = paddedSlopes[mapSize - 1][i];
         }
 
         // Iterate over points and filter those that don't match slope criteria
         int length = positionData.positions.Length;
+        
+        float minAngleSlope = Mathf.Tan(minAngle * Mathf.Deg2Rad);
+        float maxAngleSlope = Mathf.Tan(maxAngle * Mathf.Deg2Rad);
+
         for (int i = 0; i < length; i++)
         {
             if (positionData.positions.filtered[i])
@@ -78,12 +82,12 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
             float x = xIn - coordX;
             float y = yIn - coordZ;
 
-            float xSlope = x * paddedAngles[coordX][coordZ] + (1f - x) * paddedAngles[coordX + 1][coordZ];
-            float ySlope = y * paddedAngles[coordX][coordZ] + (1f - y) * paddedAngles[coordX][coordZ + 1];
+            float xSlope = x * paddedSlopes[coordX][coordZ] + (1f - x) * paddedSlopes[coordX + 1][coordZ];
+            float ySlope = y * paddedSlopes[coordX][coordZ] + (1f - y) * paddedSlopes[coordX][coordZ + 1];
 
-            float angle = (xSlope + ySlope) / 2f;
+            float slope = (xSlope + ySlope) / 2f;
 
-            if (angle > maxAngle || angle < minAngle)
+            if (slope > maxAngleSlope || slope < minAngleSlope)
             {
                 positionData.positions.filtered[i] = true;
             }

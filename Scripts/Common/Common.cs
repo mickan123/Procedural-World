@@ -13,14 +13,6 @@ public static class Common
         return value;
     }
 
-    // Evenly smooths value from 0 to 1 in range [min, max]
-    public static float SmoothRange(float value, float min, float max)
-    {
-        value = Mathf.Clamp(value, min, max);
-        value = (value - min) / (max - min);
-        return value;
-    }
-
     public static float HeightFromFloatCoord(Vector2 coord, float[][] heightMap)
     {
         return HeightFromFloatCoord(coord.x, coord.y, heightMap);
@@ -28,13 +20,12 @@ public static class Common
 
     public static float HeightFromFloatCoord(float x, float y, float[][] heightMap)
     {
-        int maxIndex = heightMap.Length - 1;
-
         // Technically subtracting 0.001f reduces slightly incorrect results however
         // this means we don't have to do any bounds checking in later steps so the
         // slight accuracy loss is worth it for the performance
-        x = Mathf.Min(x, maxIndex - 0.001f); 
-        y = Mathf.Min(y, maxIndex - 0.001f);
+        float maxIndex = heightMap.Length - 1.001f;
+        x = (x < maxIndex) ? x : maxIndex;
+        y = (y < maxIndex) ? y : maxIndex;
         
         int indexX = (int)x;
         int indexY = (int)y;
@@ -58,12 +49,35 @@ public static class Common
     public static float[][] CalculateAngles(float[][] heightMap)
     {   
         int mapSize = heightMap.Length;
-        int maxIndex = mapSize - 1;
+
+        // Create a padded heightmap so we don't have to check bounds
+        // when calculating angles
+        float[][] paddedHeightMap = new float[mapSize + 1][];
+        for (int i = 0; i < mapSize + 1; i++)
+        {
+            paddedHeightMap[i] = new float[mapSize + 1];
+        }
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                paddedHeightMap[i][j] = heightMap[i][j];
+            }
+        }
+        for (int i = 0; i < mapSize; i++)
+        {
+            paddedHeightMap[i][mapSize] = heightMap[i][mapSize - 1];
+            paddedHeightMap[mapSize][i] = heightMap[mapSize - 1][i];
+        }
+
+        // Construct angles array
         float[][] angles = new float[mapSize][];
         for (int i = 0 ; i < mapSize; i++) 
         {
             angles[i] = new float[mapSize];
         }
+
+        // Calculate angle at every element in heightmap
         for (int x = 0; x < mapSize; x++)
         {
             for (int y = 0; y < mapSize; y++)
@@ -71,11 +85,13 @@ public static class Common
                 float height = heightMap[x][y];
 
                 // Compute the differentials by stepping over 1 in both directions.
-                float dx = heightMap[Mathf.Min(x + 1, maxIndex)][y] - height;
+                float dx = paddedHeightMap[x + 1][y] - height;
+                dx = dx > 0 ? dx : -dx;
 
-                float dy = heightMap[x][Mathf.Min(y + 1, maxIndex)] - height;
+                float dy = paddedHeightMap[x][y + 1] - height;
+                dy = dy > 0 ? dy : -dy;
 
-                float dMax = Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy));
+                float dMax = dx > dy ? dx : dy;
                 angles[x][y] = Mathf.Rad2Deg * Mathf.Atan2(
                     dMax, 
                     1
@@ -84,6 +100,62 @@ public static class Common
         }
 
         return angles;
+    }
+
+    // Calculates slopes as opposed to angles, this is useful as angles
+    // require many expensive Atan2 operations
+    public static float[][] CalculateSlopes(float[][] heightMap)
+    {   
+        
+        int mapSize = heightMap.Length;
+
+        // Create a padded heightmap so we don't have to check bounds
+        // when calculating angles
+        float[][] paddedHeightMap = new float[mapSize + 1][];
+        for (int i = 0; i < mapSize + 1; i++)
+        {
+            paddedHeightMap[i] = new float[mapSize + 1];
+        }
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                paddedHeightMap[i][j] = heightMap[i][j];
+            }
+        }
+        for (int i = 0; i < mapSize; i++)
+        {
+            paddedHeightMap[i][mapSize] = heightMap[i][mapSize - 1];
+            paddedHeightMap[mapSize][i] = heightMap[mapSize - 1][i];
+        }
+
+        // Construct slopes array
+        float[][] slopes = new float[mapSize][];
+        for (int i = 0 ; i < mapSize; i++) 
+        {
+            slopes[i] = new float[mapSize];
+        }
+
+        // Calculate slope at every element in heightmap
+        for (int x = 0; x < mapSize; x++)
+        {
+            for (int y = 0; y < mapSize; y++)
+            {
+                float height = paddedHeightMap[x][y];
+
+                // Compute the differentials by stepping over 1 in both directions.
+                float dx = paddedHeightMap[x + 1][y] - height;
+                dx = dx > 0 ? dx : -dx;
+
+                float dy = paddedHeightMap[x][y + 1] - height;
+                dy = dy > 0 ? dy : -dy;
+
+                float dMax = dx > dy ? dx : dy;
+                slopes[x][y] = dMax;
+            }
+        }
+
+        return slopes;
     }
 
     private static readonly int[,] offsets = { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
@@ -95,24 +167,33 @@ public static class Common
         float maxAngle = 0f;
         for (int i = 0; i < 4; i++)
         {
+            int x2 = xIn + offsets[i, 0];
+            x2 = x2 >= 0 ? x2 : 0;
+            x2 = x2 > maxIndex ? maxIndex : x2;
+
+            int y2 = xIn + offsets[i, 0];
+            y2 = y2 >= 0 ? y2 : 0;
+            y2 = y2 > maxIndex ? maxIndex : y2;
+
             float angle = AngleBetweenTwoPoints(
                 xIn,
                 yIn,
-                Mathf.Min(Mathf.Max(xIn + offsets[i, 0], 0), maxIndex),
-                Mathf.Min(Mathf.Max(yIn + offsets[i, 1], 0), maxIndex),
+                x2,
+                y2,
                 heightMap
             );
-            maxAngle = Mathf.Max(maxAngle, angle);
+            maxAngle = maxAngle > angle ? maxAngle : angle;
         }
         return maxAngle;
     }
 
     private static float AngleBetweenTwoPoints(int x1, int y1, int x2, int y2, float[][] heightMap)
     {
-        float angle = Mathf.Abs(Mathf.Rad2Deg * Mathf.Atan2(
+        float angle = Mathf.Rad2Deg * Mathf.Atan2(
             heightMap[x1][y1] - heightMap[x2][y2],
             1f
-        ));
+        );
+        angle = angle > 0 ? angle : -angle; // Get abs value
         return angle;
     }
 
