@@ -64,9 +64,11 @@ public static class HydraulicErosion
 
     public static void GPUErosion(ErosionSettings settings, int mapSize, float[] heightMap, ref bool gpuDone)
     {
+        int length = heightMap.Length;
+
         // Heightmap buffer
-        float[] computeShaderHeightMap = new float[mapSize * 4];
-        for (int i = 0; i < mapSize; i++)
+        float[] computeShaderHeightMap = new float[length * 4];
+        for (int i = 0; i < length; i++)
         {
             computeShaderHeightMap[i * 4] = heightMap[i]; // Height
             computeShaderHeightMap[i * 4 + 1] = 0; // Water height
@@ -81,9 +83,9 @@ public static class HydraulicErosion
         initialHeightMapBuffer.SetData(heightMap);
 
         // Set initial flux and velocity to zeros
-        float[] flux = new float[mapSize * 4];
-        float[] thermalFlux = new float[mapSize * 4];
-        float[] velocity = new float[mapSize * 2];
+        float[] flux = new float[length * 4];
+        float[] thermalFlux = new float[length * 4];
+        float[] velocity = new float[length * 2];
 
         ComputeBuffer fluxBuffer = new ComputeBuffer(flux.Length, sizeof(float) * 4);
         ComputeBuffer thermalFluxBuffer = new ComputeBuffer(flux.Length, sizeof(float) * 4);
@@ -132,7 +134,7 @@ public static class HydraulicErosion
         }
         
         heightMapBuffer.GetData(computeShaderHeightMap);
-        for (int i = 0; i < mapSize; i++)
+        for (int i = 0; i < length; i++)
         {
             heightMap[i] = computeShaderHeightMap[i * 4];
         }
