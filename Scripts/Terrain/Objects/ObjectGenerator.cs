@@ -15,7 +15,7 @@ public static class ObjectGenerator
 
         System.Random prng = new System.Random((int)(sampleCentre.x + sampleCentre.y));
 
-        for (int biome = 0; biome < settings.biomeSettings.Count; biome++)
+        for (int biome = 0; biome < settings.biomeSettings.Length; biome++)
         {
             if (HeightMapContainesBiome(info, biome))
             {

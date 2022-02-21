@@ -18,7 +18,7 @@ public class TerrainSettings : ScriptableObject
     public BiomeGraph temperatureMapGraph;
 
     [Range(0, 1)] public float transitionDistance;
-    public List<BiomeSettings> biomeSettings = new List<BiomeSettings>();
+    public BiomeSettings[] biomeSettings;
 
     // Mesh settings
     public MeshSettings meshSettings;
@@ -75,7 +75,7 @@ public class TerrainSettings : ScriptableObject
         humidityMapGraph.Init(prng);
         temperatureMapGraph.Init(prng);
 
-        for (int i = 0; i < biomeSettings.Count; i++)
+        for (int i = 0; i < biomeSettings.Length; i++)
         {
             var graph = biomeSettings[i].biomeGraph;
             if (graph != null)
@@ -160,12 +160,12 @@ public class TerrainSettings : ScriptableObject
 
     private void DrawSingleBiome(int width, int height)
     {
-        BiomeSettings[] oldBiomes = new BiomeSettings[this.biomeSettings.Count];
+        BiomeSettings[] oldBiomes = new BiomeSettings[this.biomeSettings.Length];
         float oldTransitionDistance = this.transitionDistance;
 
         try
         {
-            for (int i = 0; i < this.biomeSettings.Count; i++)
+            for (int i = 0; i < this.biomeSettings.Length; i++)
             {
                 oldBiomes[i] = (BiomeSettings)(BiomeSettings.CreateInstance("BiomeSettings"));
                 oldBiomes[i].startHumidity = this.biomeSettings[i].startHumidity;
@@ -187,7 +187,7 @@ public class TerrainSettings : ScriptableObject
         finally
         {
             // Reset settings
-            for (int i = 0; i < this.biomeSettings.Count; i++)
+            for (int i = 0; i < this.biomeSettings.Length; i++)
             {
                 this.biomeSettings[i].startHumidity = oldBiomes[i].startHumidity;
                 this.biomeSettings[i].endHumidity = oldBiomes[i].endHumidity;
@@ -236,7 +236,7 @@ public class TerrainSettings : ScriptableObject
     {
         BiomeInfo biomeInfo = BiomeHeightMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, this);
 
-        int numBiomes = this.biomeSettings.Count;
+        int numBiomes = this.biomeSettings.Length;
         float[][] biomeTextureMap = new float[width][];
         for (int i = 0; i < width; i++)
         {
@@ -272,19 +272,19 @@ public class TerrainSettings : ScriptableObject
     private void ApplyHeightSlopeToMaterial(Material material)
     {
         // Slope height texture settings
-        float[] numTexturesPerBiome = new float[biomeSettings.Count];
-        float[] startHeights = new float[biomeSettings.Count * maxTexturesPerBiome];
-        float[] endHeights = new float[biomeSettings.Count * maxTexturesPerBiome];
-        float[] startSlopes = new float[biomeSettings.Count * maxTexturesPerBiome];
-        float[] endSlopes = new float[biomeSettings.Count * maxTexturesPerBiome];
-        Color[] tints = new Color[biomeSettings.Count * maxTexturesPerBiome];
-        float[] tintStrengths = new float[biomeSettings.Count * maxTexturesPerBiome];
-        float[] blendStrength = new float[biomeSettings.Count * maxTexturesPerBiome];
-        float[] textureScales = new float[biomeSettings.Count * maxTexturesPerBiome];
+        float[] numTexturesPerBiome = new float[biomeSettings.Length];
+        float[] startHeights = new float[biomeSettings.Length * maxTexturesPerBiome];
+        float[] endHeights = new float[biomeSettings.Length * maxTexturesPerBiome];
+        float[] startSlopes = new float[biomeSettings.Length * maxTexturesPerBiome];
+        float[] endSlopes = new float[biomeSettings.Length * maxTexturesPerBiome];
+        Color[] tints = new Color[biomeSettings.Length * maxTexturesPerBiome];
+        float[] tintStrengths = new float[biomeSettings.Length * maxTexturesPerBiome];
+        float[] blendStrength = new float[biomeSettings.Length * maxTexturesPerBiome];
+        float[] textureScales = new float[biomeSettings.Length * maxTexturesPerBiome];
 
         this.biomeBaseTexturesArray = new Texture2DArray(textureSize, textureSize, maxTexturesPerBiome * maxBiomeCount, textureFormat, true);
 
-        for (int i = 0; i < biomeSettings.Count; i++)
+        for (int i = 0; i < biomeSettings.Length; i++)
         {
             numTexturesPerBiome[i] = biomeSettings[i].textureData.Count;
             for (int j = 0; j < biomeSettings[i].textureData.Count; j++)
@@ -326,19 +326,19 @@ public class TerrainSettings : ScriptableObject
     private void ApplyRoadToMaterial(Material material)
     {
         // Slope height texture settings
-        float[] numRoadTexturesPerBiome = new float[biomeSettings.Count];
-        float[] roadStartHeights = new float[biomeSettings.Count * maxTexturesPerBiome];
-        float[] roadEndHeights = new float[biomeSettings.Count * maxTexturesPerBiome];
-        float[] roadStartSlopes = new float[biomeSettings.Count * maxTexturesPerBiome];
-        float[] roadEndSlopes = new float[biomeSettings.Count * maxTexturesPerBiome];
-        Color[] roadTints = new Color[biomeSettings.Count * maxTexturesPerBiome];
-        float[] roadTintStrengths = new float[biomeSettings.Count * maxTexturesPerBiome];
-        float[] roadBlendStrength = new float[biomeSettings.Count * maxTexturesPerBiome];
-        float[] roadTextureScales = new float[biomeSettings.Count * maxTexturesPerBiome];
+        float[] numRoadTexturesPerBiome = new float[biomeSettings.Length];
+        float[] roadStartHeights = new float[biomeSettings.Length * maxTexturesPerBiome];
+        float[] roadEndHeights = new float[biomeSettings.Length * maxTexturesPerBiome];
+        float[] roadStartSlopes = new float[biomeSettings.Length * maxTexturesPerBiome];
+        float[] roadEndSlopes = new float[biomeSettings.Length * maxTexturesPerBiome];
+        Color[] roadTints = new Color[biomeSettings.Length * maxTexturesPerBiome];
+        float[] roadTintStrengths = new float[biomeSettings.Length * maxTexturesPerBiome];
+        float[] roadBlendStrength = new float[biomeSettings.Length * maxTexturesPerBiome];
+        float[] roadTextureScales = new float[biomeSettings.Length * maxTexturesPerBiome];
 
         this.roadTextureArray = new Texture2DArray(textureSize, textureSize, maxTexturesPerBiome * maxBiomeCount, textureFormat, true);
 
-        for (int i = 0; i < biomeSettings.Count; i++)
+        for (int i = 0; i < biomeSettings.Length; i++)
         {
             numRoadTexturesPerBiome[i] = 1;
             RoadSettings roadSettings = biomeSettings[i].biomeGraph.GetRoadSettings();
@@ -384,7 +384,7 @@ public class TerrainSettings : ScriptableObject
         get
         {
             float maxRoadWidth = 0f;
-            for (int i = 0; i < biomeSettings.Count; i++)
+            for (int i = 0; i < biomeSettings.Length; i++)
             {
                 float width = biomeSettings[i].biomeGraph.GetMaxRoadWidth();
                 if (width > maxRoadWidth)
@@ -409,7 +409,7 @@ public class TerrainSettings : ScriptableObject
         get
         {
             float maxHeight = float.MinValue;
-            for (int i = 0; i < biomeSettings.Count; i++)
+            for (int i = 0; i < biomeSettings.Length; i++)
             {
                 float height = biomeSettings[i].biomeGraph.GetMaxHeight();
                 if (height > maxHeight)
@@ -432,7 +432,7 @@ public class TerrainSettings : ScriptableObject
     {
         meshSettings.OnValidate();
 
-        for (int i = 0; i < biomeSettings.Count; i++)
+        for (int i = 0; i < biomeSettings.Length; i++)
         {
             if (biomeSettings[i] != null)
             {

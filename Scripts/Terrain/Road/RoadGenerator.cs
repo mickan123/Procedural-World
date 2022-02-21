@@ -17,12 +17,12 @@ public static class RoadGenerator
 
         List<RoadRoute> routes = GetRoadDestinations(mapSize, chunkCentre);
 
-        int numBiomes = terrainSettings.biomeSettings.Count;
+        int numBiomes = terrainSettings.biomeSettings.Length;
         bool[] roadsEnabled = new bool[numBiomes];
 
         List<RoadSettings> roadSettingsList = new List<RoadSettings>();
 
-        for (int i = 0; i < terrainSettings.biomeSettings.Count; i++)
+        for (int i = 0; i < terrainSettings.biomeSettings.Length; i++)
         {
             BiomeGraph graph = terrainSettings.biomeSettings[i].biomeGraph;
             RoadSettings roadSettings = graph.GetRoadSettings();

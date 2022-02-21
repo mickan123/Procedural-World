@@ -73,20 +73,18 @@ public static class BiomeHeightMapGenerator
     )
     {
         // Generate noise maps for all nearby and present biomes
-        int numBiomes = terrainSettings.biomeSettings.Count;
-        List<float[][]> biomeNoiseMaps = new List<float[][]>();
+        int numBiomes = terrainSettings.biomeSettings.Length;
+        float[][][] biomeNoiseMaps = new float[numBiomes][][];
         for (int i = 0; i < numBiomes; i++)
         {
             BiomeGraph graph = terrainSettings.biomeSettings[i].biomeGraph;
-            biomeNoiseMaps.Add(
-                graph.GetHeightMap(
-                    biomeInfo,
-                    terrainSettings,
-                    sampleCentre,
-                    i,
-                    width,
-                    height
-                )
+            biomeNoiseMaps[i] = graph.GetHeightMap(
+                biomeInfo,
+                terrainSettings,
+                sampleCentre,
+                i,
+                width,
+                height
             );
         }
 
@@ -113,7 +111,7 @@ public static class BiomeHeightMapGenerator
 
     public static BiomeInfo GenerateBiomeInfo(int width, int height, float[][] humidityNoiseMap, float[][] temperatureNoiseMap, TerrainSettings settings)
     {
-        int numBiomes = settings.biomeSettings.Count;
+        int numBiomes = settings.biomeSettings.Length;
         int[][] biomeMap = new int[width][];
         float[][][] biomeStrengths = new float[width][][];
         for (int i = 0; i < width; i++)
@@ -152,7 +150,11 @@ public static class BiomeHeightMapGenerator
 
                 // Get strengths of all other biomes for blending
                 int actualBiomeIndex = biomeMap[i][j];
-                float actualBiomeTransitionDist = Mathf.Max(settings.transitionDistance, 0.00001f);
+                float actualBiomeTransitionDist = settings.transitionDistance;
+                if (actualBiomeTransitionDist <= 0)
+                {
+                    actualBiomeTransitionDist = 0.000001f;
+                }
                 float totalBiomeStrength = 1f; // Start at 1 for base biome
 
                 for (int k = 0; k < numBiomes; k++)
@@ -160,10 +162,13 @@ public static class BiomeHeightMapGenerator
                     if (k != actualBiomeIndex)
                     {
                         BiomeSettings curBiome = settings.biomeSettings[k];
-                        float humidityDist = Mathf.Min(Mathf.Abs(humidity - curBiome.startHumidity),
-                                                       Mathf.Abs(humidity - curBiome.endHumidity));
-                        float tempDist = Mathf.Min(Mathf.Abs(temperature - curBiome.startTemperature),
-                                                   Mathf.Abs(temperature - curBiome.endTemperature));
+                        float humidityDistStart = humidity > curBiome.startHumidity ? humidity - curBiome.startHumidity : curBiome.startHumidity - humidity;
+                        float humidityDistEnd = humidity > curBiome.startHumidity ? humidity - curBiome.startHumidity : curBiome.startHumidity - humidity;
+                        float humidityDist = humidityDistStart > humidityDistEnd ? humidityDistStart : humidityDistEnd;
+
+                        float tempDistStart = temperature > curBiome.startTemperature ? temperature - curBiome.startTemperature : curBiome.startTemperature - temperature;
+                        float tempDistEnd = temperature > curBiome.endTemperature ? temperature - curBiome.endTemperature : curBiome.endTemperature - temperature;
+                        float tempDist = tempDistStart > tempDistEnd ? tempDistStart : tempDistEnd;
 
                         if (humidity >= curBiome.startHumidity && humidity <= curBiome.endHumidity)
                         {

@@ -138,7 +138,7 @@ public class TerrainChunk
         int width = info.biomeMap.Length - 3;
 
         // Create texture to pass in biome maps and biome strengths
-        int numBiomes = this.terrainSettings.biomeSettings.Count;
+        int numBiomes = this.terrainSettings.biomeSettings.Length;
         this.biomeMapTex = new Texture2D(width, width, TextureFormat.RGBA32, false, false);
 
         // Create biomeStrength textures representing the strength of each biome

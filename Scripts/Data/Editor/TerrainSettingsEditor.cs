@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -108,7 +108,6 @@ public class TerrainSettingsEditor : Editor
             settings.endHumidity = Mathf.Max(0.02f, settings.endHumidity);
             settings.startTemperature = Mathf.Min(0.98f, settings.startTemperature);
             settings.endTemperature = Mathf.Max(0.02f, settings.endTemperature);
-            myTarget.biomeSettings.Add(settings);
         };
     }
 

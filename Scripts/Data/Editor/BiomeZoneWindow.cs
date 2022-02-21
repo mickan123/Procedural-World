@@ -69,7 +69,7 @@ public class BiomeZoneWindow : EditorWindow
 
         // Create boxes for each individual biome
         this.biomeSettingsBoxes = new List<BiomeSettingsBox>();
-        for (int i = 0; i < this.terrainSettings.biomeSettings.Count; i++)
+        for (int i = 0; i < this.terrainSettings.biomeSettings.Length; i++)
         {
             BiomeSettingsBox box = new BiomeSettingsBox(this.terrainSettings.biomeSettings[i], biomeZoneRect, this.selectWidth);
             biomeSettingsBoxes.Add(box);

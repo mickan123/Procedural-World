@@ -18,7 +18,7 @@ public static class HydraulicErosion
     )
     {
         int mapSize = values.Length;
-        int numBiomes = terrainSettings.biomeSettings.Count;
+        int numBiomes = terrainSettings.biomeSettings.Length;
 
         float[] map = new float[mapSize * mapSize];
         for (int i = 0; i < mapSize; i++)

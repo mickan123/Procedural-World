@@ -77,7 +77,7 @@ public static class Noise
 
         float maxPossibleHeight = float.MinValue;
 
-        for (int i = 0; i < terrainSettings.biomeSettings.Count; i++)
+        for (int i = 0; i < terrainSettings.biomeSettings.Length; i++)
         {
             float height = terrainSettings.biomeSettings[i].biomeGraph.GetMaxPossibleHeight();
             if (height > maxPossibleHeight)
