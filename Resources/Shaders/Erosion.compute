@@ -48,6 +48,8 @@ float talusAngleCoeff;
 float sedimentSofteningFactor;
 float maxErosionDepth;
 
+int numIterations;
+
 float4 SampleBilinear(RWStructuredBuffer<float4> buff, float2 uv)
 {
 	float2 uva = floor(uv);
@@ -301,11 +303,13 @@ void HydraulicErosion(uint3 tid : SV_DispatchThreadID)
 {   
     uint index = tid.x;
 
-    WaterIncrease(index);
-    FluxComputation(index);
-    VelocityComputation(index);
-    ErosionDeposition(index);
-    SedimentTransportation(index);
-    ThermalFluxComputation(index);
-    ApplyThermalErosion(index);
+    for (int i = 0; i < numIterations; i++) {
+        WaterIncrease(index);
+        FluxComputation(index);
+        VelocityComputation(index);
+        ErosionDeposition(index);
+        SedimentTransportation(index);
+        ThermalFluxComputation(index);
+        ApplyThermalErosion(index);
+    }
 }
