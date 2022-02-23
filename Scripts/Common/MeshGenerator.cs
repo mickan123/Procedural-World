@@ -124,7 +124,7 @@ public static class MeshGenerator
             }
         }
 
-        meshData.ProcessMesh();
+        meshData.CalculateNormals();
 
         return meshData;
     }
@@ -192,9 +192,9 @@ public class MeshData
         }
     }
 
-    Vector3[] CalculateNormals()
+    public void CalculateNormals()
     {
-        Vector3[] vertexNormals = new Vector3[vertices.Length];
+        bakedNormals = new Vector3[vertices.Length];
         int triangleCount = triangles.Length / 3;
         for (int i = 0; i < triangleCount; i++)
         {
@@ -204,9 +204,9 @@ public class MeshData
             int vertexIndexC = triangles[normalTriangleIndex + 2];
 
             Vector3 triangleNormal = SurfaceNormalFromIndices(vertexIndexA, vertexIndexB, vertexIndexC);
-            vertexNormals[vertexIndexA] += triangleNormal;
-            vertexNormals[vertexIndexB] += triangleNormal;
-            vertexNormals[vertexIndexC] += triangleNormal;
+            bakedNormals[vertexIndexA] += triangleNormal;
+            bakedNormals[vertexIndexB] += triangleNormal;
+            bakedNormals[vertexIndexC] += triangleNormal;
         }
 
         int borderTriangleCount = outOfMeshTriangles.Length / 3;
@@ -220,23 +220,22 @@ public class MeshData
             Vector3 triangleNormal = SurfaceNormalFromIndices(vertexIndexA, vertexIndexB, vertexIndexC);
             if (vertexIndexA >= 0)
             {
-                vertexNormals[vertexIndexA] += triangleNormal;
+                bakedNormals[vertexIndexA] += triangleNormal;
             }
             if (vertexIndexB >= 0)
             {
-                vertexNormals[vertexIndexB] += triangleNormal;
+                bakedNormals[vertexIndexB] += triangleNormal;
             }
             if (vertexIndexC >= 0)
             {
-                vertexNormals[vertexIndexC] += triangleNormal;
+                bakedNormals[vertexIndexC] += triangleNormal;
             }
         }
-        int length = vertexNormals.Length;
+        int length = bakedNormals.Length;
         for (int i = 0; i < length; i++)
         {
-            vertexNormals[i].Normalize();
+            bakedNormals[i].Normalize();
         }
-        return vertexNormals;
     }
 
     Vector3 SurfaceNormalFromIndices(int indexA, int indexB, int indexC)
@@ -249,11 +248,6 @@ public class MeshData
         Vector3 sideAC = pointC - pointA;
 
         return Vector3.Cross(sideAB, sideAC).normalized;
-    }
-
-    public void ProcessMesh()
-    {
-        bakedNormals = CalculateNormals();
     }
 
     public Mesh CreateMesh()
