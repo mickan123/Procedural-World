@@ -81,7 +81,8 @@ public static class MeshGenerator
         public NativeArray<int> outOfMeshTriangles;
 
         public NativeArray<Vector3> bakedNormals;
-
+        
+        [ReadOnly]
         public NativeArray<float> heightMap;
 
         public int numVertsPerLine;
