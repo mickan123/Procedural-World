@@ -27,12 +27,6 @@ public class PoissonPointsNode : BiomeGraphNode
     {
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
-        
-        if (this.settings == null || this.settings.noiseMapSettings == null)
-        {
-            return null;
-        }
-
         System.Random prng = new System.Random(this.seed);
 
         List<Vector3> points = PoissonDiskSampling.GeneratePoints(settings, heightMapData.sampleCentre, heightMapData.heightMap, prng, this.randomValues, heightMapData.terrainSettings);

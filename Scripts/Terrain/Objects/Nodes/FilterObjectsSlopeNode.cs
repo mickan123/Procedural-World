@@ -28,11 +28,6 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
 
     private void FilterBySlope(ObjectPositionData positionData)
     {
-        if (positionData == null)
-        {
-            return;
-        }
-
         // Generate slope at every point
         int mapSize = positionData.heightMap.Length;
 

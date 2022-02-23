@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class TextureScale
 {
-    public class ThreadData
+    public struct ThreadData
     {
         public int start;
         public int end;

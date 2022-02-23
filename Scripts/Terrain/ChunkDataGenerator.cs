@@ -30,7 +30,7 @@ public static class ChunkDataGenerator
     }
 }
 
-public class ChunkData
+public struct ChunkData
 {
     public BiomeData biomeData;
     public List<ObjectSpawner> objects;

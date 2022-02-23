@@ -17,7 +17,7 @@ public class RotateObjectsNode : BiomeGraphNode
     public override object GetValue(NodePort port)
     {   
         ObjectPositionData positionData = GetInputValue<ObjectPositionData>("positionDataIn", this.positionDataIn);
-        if (port.fieldName == "positionDataOut" && positionData != null)
+        if (port.fieldName == "positionDataOut")
         {
             return GetPositionData(positionData);
         }

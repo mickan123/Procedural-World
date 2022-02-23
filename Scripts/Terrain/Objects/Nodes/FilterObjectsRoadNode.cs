@@ -25,10 +25,6 @@ public class FilterObjectsRoadNode : BiomeGraphNode
 
     private void FilterOnRoad(ObjectPositionData positionData)
     {
-        if (positionData == null)
-        {
-            return;
-        }
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
 

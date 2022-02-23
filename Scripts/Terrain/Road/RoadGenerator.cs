@@ -673,7 +673,7 @@ public static class RoadGenerator
         }
     }
 
-    public class RoadRoute
+    public struct RoadRoute
     {
         public Vector2 roadStart;
         public Vector2 roadEnd;

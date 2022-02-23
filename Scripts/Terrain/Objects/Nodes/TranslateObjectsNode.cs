@@ -30,11 +30,6 @@ public class TranslateObjectsNode : BiomeGraphNode
 
     private ObjectPositionData GetPositionData(ObjectPositionData positionData)
     {
-        if (positionData == null)
-        {
-            return null;
-        }
-
         System.Random prng = new System.Random(seed);
         int randIdx = prng.Next(0, this.numRandomValues);
         int length = positionData.positions.Length;

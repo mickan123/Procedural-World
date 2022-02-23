@@ -27,11 +27,6 @@ public class RandomPointsNode : BiomeGraphNode
         System.Random prng = new System.Random(this.seed);
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
-        
-        if (heightMapData.heightMap == null)
-        {
-            return null;
-        }
 
         int increment = 10;
         int mapSize = heightMapData.heightMap.Length;

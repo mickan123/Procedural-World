@@ -249,7 +249,7 @@ public class BiomeGraph : NodeGraph
 }
 
 // Contains all the data needed to calculate the heightmap
-public class HeightMapGraphData
+public struct HeightMapGraphData
 {
     public TerrainSettings terrainSettings;
     public Vector2 sampleCentre;
@@ -268,6 +268,8 @@ public class HeightMapGraphData
         this.sampleCentre = sampleCentre;
         this.width = width;
         this.height = height;
+        this.biome = 0;
+        this.biomeInfo = new BiomeInfo();
 
         this.heightMap = new float[width][];
         this.roadStrengthMap = new float[width][];
