@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ObjectPositionData
+public struct ObjectPositionData
 {    
     public ObjectPositions positions;
     public float[][] heightMap;
@@ -14,7 +14,7 @@ public class ObjectPositionData
     }
 }
 
-public class ObjectPositions
+public struct ObjectPositions
 {
     public float[] xCoords;
     public float[] yCoords;
@@ -64,6 +64,22 @@ public class ObjectPositions
 
 public class ObjectSpawner
 {
+    private static readonly Vector3[] defaultNormals = { 
+        new Vector3(0f, 0f, -1f),
+        new Vector3(-.866f, 0f, -0.5f),
+        new Vector3(.866f, 0f, -0.5f),
+        new Vector3(0f, 0f, 1f),
+        new Vector3(.866f, 0f, 0.5f),
+        new Vector3(-.866f, 0f, 0.5f),
+    };
+
+    private static readonly Vector2[] defaultUvs = { 
+        new Vector2(0f, 1f),
+        new Vector2(1f, 1f),
+        new Vector2(1f, 0f),
+        new Vector2(0f, 0f),
+    };
+
     private bool isDetail;
 
     // Detail only settings
@@ -176,42 +192,39 @@ public class ObjectSpawner
             return;
         }
 
-        int detailsInterval = this.positions.Length / this.detailMaterials.Length;
+        int numDetailMaterials = this.detailMaterials.Length;
 
-        // Shuffle so we get even distribution of different detail materials as the order of
-        // positions are grouped (e.g. first x points in 0,0 square next x in 0,1 ...)
-        this.positions.xCoords.Shuffle(this.positions.yCoords, this.positions.zCoords);
-
-        int length = this.detailMaterials.Length;
-        for (int i = 0; i < length; i++)
+        GameObject[] detailObjects = new GameObject[numDetailMaterials];
+        for (int i = 0; i < numDetailMaterials; i++)
         {
-            Camera camera = Camera.main;
+            detailObjects[i] = new GameObject();
+            detailObjects[i].transform.parent = this.parent;
+            detailObjects[i].transform.localPosition = new Vector3(0f, 0f, 0f);
+        }
 
-            GameObject groupObject = new GameObject();
-            groupObject.transform.parent = this.parent;
-            groupObject.transform.localPosition = new Vector3(0f, 0f, 0f);
-            MeshFilter groupMeshFilter = groupObject.AddComponent<MeshFilter>();
-            MeshRenderer groupMeshRenderer = groupObject.AddComponent<MeshRenderer>();
+        Mesh[] meshes;
+        if (this.detailMode == DetailMode.Billboard)
+        {
+            meshes = this.GenerateBillboardDetailsMesh();
+        }
+        else if (this.detailMode == DetailMode.Triangle)
+        {
+            meshes = this.GenerateTriangleDetailsMesh();
+        }
+        else if (this.detailMode == DetailMode.Circle)
+        {
+            meshes = this.GenerateCircleDetailsMesh();
+        }
+        else
+        {
+            meshes = this.GenerateCircleDetailsMesh();
+        }
 
-            Mesh mesh;
-            if (this.detailMode == DetailMode.Billboard)
-            {
-                mesh = this.GenerateBillboardDetailsMesh(i * detailsInterval, (i + 1) * detailsInterval);
-            }
-            else if (this.detailMode == DetailMode.Triangle)
-            {
-                mesh = this.GenerateTriangleDetailsMesh();
-            }
-            else if (this.detailMode == DetailMode.Circle)
-            {
-                mesh = this.GenerateCircleDetailsMesh(i * detailsInterval, (i + 1) * detailsInterval);
-            }
-            else
-            {
-                mesh = this.GenerateCircleDetailsMesh(i * detailsInterval, (i + 1) * detailsInterval);
-            }
-
-            groupMeshFilter.sharedMesh = mesh;
+        for (int i = 0; i < numDetailMaterials; i++)
+        {
+            MeshFilter groupMeshFilter = detailObjects[i].AddComponent<MeshFilter>();
+            MeshRenderer groupMeshRenderer = detailObjects[i].AddComponent<MeshRenderer>();
+            groupMeshFilter.sharedMesh = meshes[i];
             groupMeshRenderer.sharedMaterial = this.detailMaterials[i];
 
             // TODO options for lighting on details
@@ -219,7 +232,7 @@ public class ObjectSpawner
             groupMeshRenderer.receiveShadows = true;
             groupMeshRenderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.BlendProbes;
 
-            groupObject.SetActive(!hide);
+            detailObjects[i].SetActive(!hide);
         }
     }
 
@@ -228,345 +241,330 @@ public class ObjectSpawner
 
     }
 
-    private Mesh GenerateBillboardDetailsMesh(int start, int end)
+    private Mesh[] GenerateBillboardDetailsMesh()
     {
         int verticesPerPosition = 4;
         int trianglesPerPosition = 6;
 
-        int numObjects = end - start;
-        Vector3[] vertices = new Vector3[numObjects * verticesPerPosition];
-        int[] triangles = new int[numObjects * trianglesPerPosition];
-        Vector2[] uvs = new Vector2[numObjects * verticesPerPosition];
-        Vector3[] normals = new Vector3[numObjects * verticesPerPosition];
+        int numDetailTypes = this.detailMaterials.Length;
+        int numObjects = this.positions.Length;
         
-        for (int i = 0; i < numObjects; i++)
+        Vector3[][] vertices = new Vector3[numDetailTypes][];
+        int[][] triangles = new int[numDetailTypes][];
+        Vector2[][] uvs = new Vector2[numDetailTypes][];
+        Vector3[][] normals = new Vector3[numDetailTypes][];
+
+        for (int i = 0; i < numDetailTypes; i++) {
+            vertices[i] = new Vector3[numObjects * verticesPerPosition];
+            triangles[i] = new int[numObjects * trianglesPerPosition];
+            uvs[i] = new Vector2[numObjects * verticesPerPosition];
+            normals[i] = new Vector3[numObjects * verticesPerPosition];
+        }
+        
+        for (int detail = 0; detail < numDetailTypes; detail++) 
         {
-            float x = this.positions.xCoords[i];
-            float y = this.positions.yCoords[i];
-            float z = this.positions.zCoords[i];
+            for (int idx = 0; idx < numObjects; idx++)
+            {
+                float x = this.positions.xCoords[idx];
+                float y = this.positions.yCoords[idx];
+                float z = this.positions.zCoords[idx];
 
-            float scaleX = this.positions.scales[i].x;
-            float scaleY = this.positions.scales[i].y;
+                float scaleX = this.positions.scales[idx].x;
+                float scaleY = this.positions.scales[idx].y;
 
-            Vector3 a = new Vector3(x - 0.5f * scaleX, y + 0.5f * scaleY, z); // Top left
-            Vector3 b = new Vector3(x + 0.5f * scaleX, y + 0.5f * scaleY, z); // Top right
-            Vector3 c = new Vector3(x + 0.5f * scaleX, y - 0.5f * scaleY, z); // Bottom right
-            Vector3 d = new Vector3(x - 0.5f * scaleX, y - 0.5f * scaleY, z); // Bottom left
+                Vector3 a = new Vector3(x - 0.5f * scaleX, y + 0.5f * scaleY, z); // Top left
+                Vector3 b = new Vector3(x + 0.5f * scaleX, y + 0.5f * scaleY, z); // Top right
+                Vector3 c = new Vector3(x + 0.5f * scaleX, y - 0.5f * scaleY, z); // Bottom right
+                Vector3 d = new Vector3(x - 0.5f * scaleX, y - 0.5f * scaleY, z); // Bottom left
 
-            int verticesOffset = i * verticesPerPosition;
-            vertices[verticesOffset + 0] = a;
-            vertices[verticesOffset + 1] = b;
-            vertices[verticesOffset + 2] = c;
-            vertices[verticesOffset + 3] = d;
+                int verticesOffset = idx * verticesPerPosition;
+                vertices[detail][verticesOffset + 0] = a;
+                vertices[detail][verticesOffset + 1] = b;
+                vertices[detail][verticesOffset + 2] = c;
+                vertices[detail][verticesOffset + 3] = d;
 
-            int trianglesOffset = i * trianglesPerPosition;
-            triangles[trianglesOffset + 0] = 0 + verticesOffset;
-            triangles[trianglesOffset + 1] = 2 + verticesOffset;
-            triangles[trianglesOffset + 2] = 3 + verticesOffset;
-            triangles[trianglesOffset + 3] = 0 + verticesOffset;
-            triangles[trianglesOffset + 4] = 1 + verticesOffset;
-            triangles[trianglesOffset + 5] = 2 + verticesOffset;
+                int trianglesOffset = idx * trianglesPerPosition;
+                triangles[detail][trianglesOffset + 0] = 0 + verticesOffset;
+                triangles[detail][trianglesOffset + 1] = 2 + verticesOffset;
+                triangles[detail][trianglesOffset + 2] = 3 + verticesOffset;
+                triangles[detail][trianglesOffset + 3] = 0 + verticesOffset;
+                triangles[detail][trianglesOffset + 4] = 1 + verticesOffset;
+                triangles[detail][trianglesOffset + 5] = 2 + verticesOffset;
 
-            int uvsOffset = verticesOffset;
-            uvs[uvsOffset + 0] = new Vector2(0f, 1f);
-            uvs[uvsOffset + 1] = new Vector2(1f, 1f);
-            uvs[uvsOffset + 2] = new Vector2(1f, 0f);
-            uvs[uvsOffset + 3] = new Vector2(0f, 0f);
+                int uvsOffset = verticesOffset;
+                uvs[detail][uvsOffset + 0] = defaultUvs[0];
+                uvs[detail][uvsOffset + 1] = defaultUvs[1];
+                uvs[detail][uvsOffset + 2] = defaultUvs[2];
+                uvs[detail][uvsOffset + 3] = defaultUvs[3];
 
-            int normalsOffset = verticesOffset;
-            normals[normalsOffset + 0] = new Vector3(0f, 0f, -1f);
-            normals[normalsOffset + 1] = new Vector3(0f, 0f, -1f);
-            normals[normalsOffset + 2] = new Vector3(0f, 0f, -1f);
-            normals[normalsOffset + 3] = new Vector3(0f, 0f, -1f);
+                // Same normal for every point for a billboard
+                int normalsOffset = verticesOffset;
+                normals[detail][normalsOffset + 0] = defaultNormals[0];
+                normals[detail][normalsOffset + 1] = defaultNormals[0];
+                normals[detail][normalsOffset + 2] = defaultNormals[0];
+                normals[detail][normalsOffset + 3] = defaultNormals[0];
+            }
         }
 
-        Mesh finalMesh = new Mesh();
-        finalMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-        finalMesh.vertices = vertices;
-        finalMesh.triangles = triangles;
-        finalMesh.normals = normals;
-        finalMesh.uv = uvs;
+        Mesh[] meshes = new Mesh[numDetailTypes];
+        for (int i = 0; i < numDetailTypes; i++)
+        {
+            meshes[i] = new Mesh();
+            meshes[i].indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            meshes[i].vertices = vertices[i];
+            meshes[i].triangles = triangles[i];
+            meshes[i].normals = normals[i];
+            meshes[i].uv = uvs[i];
+        }
 
-        return finalMesh;
+        return meshes;
     }
 
-    private Mesh GenerateTriangleDetailsMesh()
+    // TODO
+    private Mesh[] GenerateTriangleDetailsMesh()
     {
-        return new Mesh();
+        Mesh[] meshes = new Mesh[1];
+        meshes[0] = new Mesh();
+        return meshes;
     }
 
-    private Mesh GenerateCircleDetailsMesh(int start, int end)
+    private Mesh[] GenerateCircleDetailsMesh()
     {
         int verticesPerPosition = 24;
         int trianglesPerPosition = 36;
+        
+        int numDetailTypes = this.detailMaterials.Length;
+        int numObjects = this.positions.Length;
+        int numObjectsPerDetail = (numObjects / numDetailTypes) + 1;
 
-        int numObjects = end - start;
-        if (numObjects == 0)
-        {
-            return new Mesh();
+        Vector3[][] vertices = new Vector3[numDetailTypes][];
+        int[][] triangles = new int[numDetailTypes][];
+        Vector2[][] uvs = new Vector2[numDetailTypes][];
+        Vector3[][] normals = new Vector3[numDetailTypes][];
+
+        for (int i = 0; i < numDetailTypes; i++) {
+            vertices[i] = new Vector3[numObjectsPerDetail * verticesPerPosition];
+            triangles[i] = new int[numObjectsPerDetail * trianglesPerPosition];
+            uvs[i] = new Vector2[numObjectsPerDetail * verticesPerPosition];
+            normals[i] = new Vector3[numObjectsPerDetail * verticesPerPosition];
         }
 
-        Vector3[] vertices = new Vector3[numObjects * verticesPerPosition];
-        int[] triangles = new int[numObjects * trianglesPerPosition];
-        Vector2[] uvs = new Vector2[numObjects * verticesPerPosition];
-        Vector3[] normals = new Vector3[numObjects * verticesPerPosition];
-
-        for (int pos = start; pos < end; pos++)
+        // Set positions of vertice for each mesh
+        for (int detail = 0; detail < numDetailTypes; detail++) 
         {
-            float x = this.positions.xCoords[pos];
-            float y = this.positions.yCoords[pos];
-            float z = this.positions.zCoords[pos];
+            for (int idx = 0; idx < numObjects; idx++)
+            {
+                float x = this.positions.xCoords[idx];
+                float y = this.positions.yCoords[idx];
+                float z = this.positions.zCoords[idx];
 
-            float scaleX = this.positions.scales[pos].x;
-            float scaleY = this.positions.scales[pos].y;
-            float scaleZ = this.positions.scales[pos].z;
+                float scaleX = this.positions.scales[idx].x;
+                float scaleY = this.positions.scales[idx].y;
+                float scaleZ = this.positions.scales[idx].z;
 
-            // Horizontal quad
-            Vector3 a = new Vector3(x - 0.5f * scaleX, y + 0.5f * scaleY, z); // Top left
-            Vector3 b = new Vector3(x + 0.5f * scaleX, y + 0.5f * scaleY, z); // Top right
-            Vector3 c = new Vector3(x + 0.5f * scaleX, y - 0.5f * scaleY, z); // Bottom right
-            Vector3 d = new Vector3(x - 0.5f * scaleX, y - 0.5f * scaleY, z); // Bottom left
+                // Horizontal quad
+                Vector3 a = new Vector3(x - 0.5f * scaleX, y + 0.5f * scaleY, z); // Top left
+                Vector3 b = new Vector3(x + 0.5f * scaleX, y + 0.5f * scaleY, z); // Top right
+                Vector3 c = new Vector3(x + 0.5f * scaleX, y - 0.5f * scaleY, z); // Bottom right
+                Vector3 d = new Vector3(x - 0.5f * scaleX, y - 0.5f * scaleY, z); // Bottom left
 
-            // Rotated 60 degrees clockwise
-            Vector3 e = new Vector3(x - 0.25f * scaleX, y + 0.5f * scaleY, z + 0.433f * scaleZ); // Top left
-            Vector3 f = new Vector3(x + 0.25f * scaleX, y + 0.5f * scaleY, z - 0.433f * scaleZ); // Top right
-            Vector3 g = new Vector3(x + 0.25f * scaleX, y - 0.5f * scaleY, z - 0.433f * scaleZ); // Bottom right
-            Vector3 h = new Vector3(x - 0.25f * scaleX, y - 0.5f * scaleY, z + 0.433f * scaleZ); // Bottom left
+                // Rotated 60 degrees clockwise
+                Vector3 e = new Vector3(x - 0.25f * scaleX, y + 0.5f * scaleY, z + 0.433f * scaleZ); // Top left
+                Vector3 f = new Vector3(x + 0.25f * scaleX, y + 0.5f * scaleY, z - 0.433f * scaleZ); // Top right
+                Vector3 g = new Vector3(x + 0.25f * scaleX, y - 0.5f * scaleY, z - 0.433f * scaleZ); // Bottom right
+                Vector3 h = new Vector3(x - 0.25f * scaleX, y - 0.5f * scaleY, z + 0.433f * scaleZ); // Bottom left
 
-            // Rotated 120 degrees clockwise
-            Vector3 i = new Vector3(x - 0.25f * scaleX, y + 0.5f * scaleY, z - 0.433f * scaleZ); // Top left
-            Vector3 j = new Vector3(x + 0.25f * scaleX, y + 0.5f * scaleY, z + 0.433f * scaleZ); // Top right
-            Vector3 k = new Vector3(x + 0.25f * scaleX, y - 0.5f * scaleY, z + 0.433f * scaleZ); // Bottom right
-            Vector3 l = new Vector3(x - 0.25f * scaleX, y - 0.5f * scaleY, z - 0.433f * scaleZ); // Bottom left
+                // Rotated 120 degrees clockwise
+                Vector3 i = new Vector3(x - 0.25f * scaleX, y + 0.5f * scaleY, z - 0.433f * scaleZ); // Top left
+                Vector3 j = new Vector3(x + 0.25f * scaleX, y + 0.5f * scaleY, z + 0.433f * scaleZ); // Top right
+                Vector3 k = new Vector3(x + 0.25f * scaleX, y - 0.5f * scaleY, z + 0.433f * scaleZ); // Bottom right
+                Vector3 l = new Vector3(x - 0.25f * scaleX, y - 0.5f * scaleY, z - 0.433f * scaleZ); // Bottom left
+                
+                int verticesOffset = (idx * verticesPerPosition) / numDetailTypes;
+                
+                // Horizontal quad
+                vertices[detail][verticesOffset + 0] = a;
+                vertices[detail][verticesOffset + 1] = b;
+                vertices[detail][verticesOffset + 2] = c;
+                vertices[detail][verticesOffset + 3] = d;
 
-            int verticesOffset = (pos - start) * verticesPerPosition;
+                // Rotated 60 degrees clockwise
+                vertices[detail][verticesOffset + 4] = e;
+                vertices[detail][verticesOffset + 5] = f;
+                vertices[detail][verticesOffset + 6] = g;
+                vertices[detail][verticesOffset + 7] = h;
 
-            // Horizontal quad
-            vertices[verticesOffset + 0] = a;
-            vertices[verticesOffset + 1] = b;
-            vertices[verticesOffset + 2] = c;
-            vertices[verticesOffset + 3] = d;
+                // Rotated 120 degrees clockwise
+                vertices[detail][verticesOffset + 8] = i;
+                vertices[detail][verticesOffset + 9] = j;
+                vertices[detail][verticesOffset + 10] = k;
+                vertices[detail][verticesOffset + 11] = l;
 
-            // Rotated 60 degrees clockwise
-            vertices[verticesOffset + 4] = e;
-            vertices[verticesOffset + 5] = f;
-            vertices[verticesOffset + 6] = g;
-            vertices[verticesOffset + 7] = h;
+                // Horizontal quad reverse
+                vertices[detail][verticesOffset + 12] = a;
+                vertices[detail][verticesOffset + 13] = b;
+                vertices[detail][verticesOffset + 14] = c;
+                vertices[detail][verticesOffset + 15] = d;
 
-            // Rotated 120 degrees clockwise
-            vertices[verticesOffset + 8] = i;
-            vertices[verticesOffset + 9] = j;
-            vertices[verticesOffset + 10] = k;
-            vertices[verticesOffset + 11] = l;
+                // Rotated 60 degrees clockwise reverse
+                vertices[detail][verticesOffset + 16] = e;
+                vertices[detail][verticesOffset + 17] = f;
+                vertices[detail][verticesOffset + 18] = g;
+                vertices[detail][verticesOffset + 19] = h;
 
-            // Horizontal quad reverse
-            vertices[verticesOffset + 12] = a;
-            vertices[verticesOffset + 13] = b;
-            vertices[verticesOffset + 14] = c;
-            vertices[verticesOffset + 15] = d;
-
-            // Rotated 60 degrees clockwise reverse
-            vertices[verticesOffset + 16] = e;
-            vertices[verticesOffset + 17] = f;
-            vertices[verticesOffset + 18] = g;
-            vertices[verticesOffset + 19] = h;
-
-            // Rotated 120 degrees clockwise reverse
-            vertices[verticesOffset + 20] = i;
-            vertices[verticesOffset + 21] = j;
-            vertices[verticesOffset + 22] = k;
-            vertices[verticesOffset + 23] = l;
+                // Rotated 120 degrees clockwise reverse
+                vertices[detail][verticesOffset + 20] = i;
+                vertices[detail][verticesOffset + 21] = j;
+                vertices[detail][verticesOffset + 22] = k;
+                vertices[detail][verticesOffset + 23] = l;
+            }
         }
 
-        uvs[0] = new Vector2(0f, 1f);
-        uvs[1] = new Vector2(1f, 1f);
-        uvs[2] = new Vector2(1f, 0f);
-        uvs[3] = new Vector2(0f, 0f);
+        // Set uvs for each mesh
+        for (int i = 0; i < numDetailTypes; i++) 
+        { 
+            for (int j = 0; j < numObjectsPerDetail; j++)
+            {
+                int uvsOffset = j * verticesPerPosition;
+                uvs[i][uvsOffset + 0] = defaultUvs[0];
+                uvs[i][uvsOffset + 1] = defaultUvs[1];
+                uvs[i][uvsOffset + 2] = defaultUvs[2];
+                uvs[i][uvsOffset + 3] = defaultUvs[3];
 
-        uvs[4] = new Vector2(0f, 1f);
-        uvs[5] = new Vector2(1f, 1f);
-        uvs[6] = new Vector2(1f, 0f);
-        uvs[7] = new Vector2(0f, 0f);
+                uvs[i][uvsOffset + 4] = defaultUvs[0];
+                uvs[i][uvsOffset + 5] = defaultUvs[1];
+                uvs[i][uvsOffset + 6] = defaultUvs[2];
+                uvs[i][uvsOffset + 7] = defaultUvs[3];
 
-        uvs[8] = new Vector2(0f, 1f);
-        uvs[9] = new Vector2(1f, 1f);
-        uvs[10] = new Vector2(1f, 0f);
-        uvs[11] = new Vector2(0f, 0f);
+                uvs[i][uvsOffset + 8] = defaultUvs[0];
+                uvs[i][uvsOffset + 9] = defaultUvs[1];
+                uvs[i][uvsOffset + 10] = defaultUvs[2];
+                uvs[i][uvsOffset + 11] = defaultUvs[3];
 
-        uvs[12] = new Vector2(0f, 1f);
-        uvs[13] = new Vector2(1f, 1f);
-        uvs[14] = new Vector2(1f, 0f);
-        uvs[15] = new Vector2(0f, 0f);
+                uvs[i][uvsOffset + 12] = defaultUvs[0];
+                uvs[i][uvsOffset + 13] = defaultUvs[1];
+                uvs[i][uvsOffset + 14] = defaultUvs[2];
+                uvs[i][uvsOffset + 15] = defaultUvs[3];
 
-        uvs[16] = new Vector2(0f, 1f);
-        uvs[17] = new Vector2(1f, 1f);
-        uvs[18] = new Vector2(1f, 0f);
-        uvs[19] = new Vector2(0f, 0f);
+                uvs[i][uvsOffset + 16] = defaultUvs[0];
+                uvs[i][uvsOffset + 17] = defaultUvs[1];
+                uvs[i][uvsOffset + 18] = defaultUvs[2];
+                uvs[i][uvsOffset + 19] = defaultUvs[3];
 
-        uvs[20] = new Vector2(0f, 1f);
-        uvs[21] = new Vector2(1f, 1f);
-        uvs[22] = new Vector2(1f, 0f);
-        uvs[23] = new Vector2(0f, 0f);
-
-        for (int i = 1; i < numObjects; i++)
-        {
-            int uvsOffset = i * verticesPerPosition;
-            uvs[uvsOffset + 0] = uvs[0];
-            uvs[uvsOffset + 1] = uvs[1];
-            uvs[uvsOffset + 2] = uvs[2];
-            uvs[uvsOffset + 3] = uvs[3];
-
-            uvs[uvsOffset + 4] = uvs[4];
-            uvs[uvsOffset + 5] = uvs[5];
-            uvs[uvsOffset + 6] = uvs[6];
-            uvs[uvsOffset + 7] = uvs[7];
-
-            uvs[uvsOffset + 8] = uvs[8];
-            uvs[uvsOffset + 9] = uvs[9];
-            uvs[uvsOffset + 10] = uvs[10];
-            uvs[uvsOffset + 11] = uvs[11];
-
-            uvs[uvsOffset + 12] = uvs[12];
-            uvs[uvsOffset + 13] = uvs[13];
-            uvs[uvsOffset + 14] = uvs[14];
-            uvs[uvsOffset + 15] = uvs[15];
-
-            uvs[uvsOffset + 16] = uvs[16];
-            uvs[uvsOffset + 17] = uvs[17];
-            uvs[uvsOffset + 18] = uvs[18];
-            uvs[uvsOffset + 19] = uvs[19];
-
-            uvs[uvsOffset + 20] = uvs[20];
-            uvs[uvsOffset + 21] = uvs[21];
-            uvs[uvsOffset + 22] = uvs[22];
-            uvs[uvsOffset + 23] = uvs[23];
+                uvs[i][uvsOffset + 20] = defaultUvs[0];
+                uvs[i][uvsOffset + 21] = defaultUvs[1];
+                uvs[i][uvsOffset + 22] = defaultUvs[2];
+                uvs[i][uvsOffset + 23] = defaultUvs[3];
+            }
         }
 
-        normals[0] = new Vector3(0f, 0f, -1f);
-        normals[1] = new Vector3(0f, 0f, -1f);
-        normals[2] = new Vector3(0f, 0f, -1f);
-        normals[3] = new Vector3(0f, 0f, -1f);
+        // Set normals for each mesh
+        for (int i = 0; i < numDetailTypes; i++) 
+        { 
+            for (int j = 0; j < numObjectsPerDetail; j++)
+            {
+                int normalsOffset = j * verticesPerPosition;
+                normals[i][normalsOffset + 0] = defaultNormals[0];
+                normals[i][normalsOffset + 1] = defaultNormals[0];
+                normals[i][normalsOffset + 2] = defaultNormals[0];
+                normals[i][normalsOffset + 3] = defaultNormals[0];
 
-        normals[4] = new Vector3(-.866f, 0f, -0.5f);
-        normals[5] = new Vector3(-.866f, 0f, -0.5f);
-        normals[6] = new Vector3(-.866f, 0f, -0.5f);
-        normals[7] = new Vector3(-.866f, 0f, -0.5f);
+                normals[i][normalsOffset + 4] = defaultNormals[1];
+                normals[i][normalsOffset + 5] = defaultNormals[1];
+                normals[i][normalsOffset + 6] = defaultNormals[1];
+                normals[i][normalsOffset + 7] = defaultNormals[1];
 
-        normals[8] = new Vector3(.866f, 0f, -0.5f);
-        normals[9] = new Vector3(.866f, 0f, -0.5f);
-        normals[10] = new Vector3(.866f, 0f, -0.5f);
-        normals[11] = new Vector3(.866f, 0f, -0.5f);
+                normals[i][normalsOffset + 8] = defaultNormals[2];
+                normals[i][normalsOffset + 9] = defaultNormals[2];
+                normals[i][normalsOffset + 10] = defaultNormals[2];
+                normals[i][normalsOffset + 11] = defaultNormals[2];
 
-        normals[12] = new Vector3(0f, 0f, 1f);
-        normals[13] = new Vector3(0f, 0f, 1f);
-        normals[14] = new Vector3(0f, 0f, 1f);
-        normals[15] = new Vector3(0f, 0f, 1f);
+                normals[i][normalsOffset + 12] = defaultNormals[3];
+                normals[i][normalsOffset + 13] = defaultNormals[3];
+                normals[i][normalsOffset + 14] = defaultNormals[3];
+                normals[i][normalsOffset + 15] = defaultNormals[3];
 
-        normals[16] = new Vector3(.866f, 0f, 0.5f);
-        normals[17] = new Vector3(.866f, 0f, 0.5f);
-        normals[18] = new Vector3(.866f, 0f, 0.5f);
-        normals[19] = new Vector3(.866f, 0f, 0.5f);
+                normals[i][normalsOffset + 16] = defaultNormals[4];
+                normals[i][normalsOffset + 17] = defaultNormals[4];
+                normals[i][normalsOffset + 18] = defaultNormals[4];
+                normals[i][normalsOffset + 19] = defaultNormals[4];
 
-        normals[20] = new Vector3(-.866f, 0f, 0.5f);
-        normals[21] = new Vector3(-.866f, 0f, 0.5f);
-        normals[22] = new Vector3(-.866f, 0f, 0.5f);
-        normals[23] = new Vector3(-.866f, 0f, 0.5f);
-        for (int i = 1; i < numObjects; i++)
-        {
-            int normalsOffset = i * verticesPerPosition;
-            normals[normalsOffset + 0] = normals[0];
-            normals[normalsOffset + 1] = normals[1];
-            normals[normalsOffset + 2] = normals[2];
-            normals[normalsOffset + 3] = normals[3];
-
-            normals[normalsOffset + 4] = normals[4];
-            normals[normalsOffset + 5] = normals[5];
-            normals[normalsOffset + 6] = normals[6];
-            normals[normalsOffset + 7] = normals[7];
-
-            normals[normalsOffset + 8] = normals[8];
-            normals[normalsOffset + 9] = normals[9];
-            normals[normalsOffset + 10] = normals[10];
-            normals[normalsOffset + 11] = normals[11];
-
-            normals[normalsOffset + 12] = normals[12];
-            normals[normalsOffset + 13] = normals[13];
-            normals[normalsOffset + 14] = normals[14];
-            normals[normalsOffset + 15] = normals[15];
-
-            normals[normalsOffset + 16] = normals[16];
-            normals[normalsOffset + 17] = normals[17];
-            normals[normalsOffset + 18] = normals[18];
-            normals[normalsOffset + 19] = normals[19];
-
-            normals[normalsOffset + 20] = normals[20];
-            normals[normalsOffset + 21] = normals[21];
-            normals[normalsOffset + 22] = normals[22];
-            normals[normalsOffset + 23] = normals[23];
+                normals[i][normalsOffset + 20] = defaultNormals[5];
+                normals[i][normalsOffset + 21] = defaultNormals[5];
+                normals[i][normalsOffset + 22] = defaultNormals[5];
+                normals[i][normalsOffset + 23] = defaultNormals[5];
+            }
         }
 
-        for (int i = 0; i < numObjects; i++)
+        for (int i = 0; i < numDetailTypes; i++) 
         {
-            int verticesOffset = i * verticesPerPosition;
-            int trianglesOffset = i * trianglesPerPosition;
+            for (int j = 0; j < numObjectsPerDetail; j++)
+            {
+                int verticesOffset = j * verticesPerPosition;
+                int trianglesOffset = j * trianglesPerPosition;
 
-            // Horizontal quad
-            triangles[trianglesOffset + 0] = 0 + verticesOffset;
-            triangles[trianglesOffset + 1] = 2 + verticesOffset;
-            triangles[trianglesOffset + 2] = 3 + verticesOffset;
-            triangles[trianglesOffset + 3] = 0 + verticesOffset;
-            triangles[trianglesOffset + 4] = 1 + verticesOffset;
-            triangles[trianglesOffset + 5] = 2 + verticesOffset;
+                // Horizontal quad
+                triangles[i][trianglesOffset + 0] = 0 + verticesOffset;
+                triangles[i][trianglesOffset + 1] = 2 + verticesOffset;
+                triangles[i][trianglesOffset + 2] = 3 + verticesOffset;
+                triangles[i][trianglesOffset + 3] = 0 + verticesOffset;
+                triangles[i][trianglesOffset + 4] = 1 + verticesOffset;
+                triangles[i][trianglesOffset + 5] = 2 + verticesOffset;
 
-            // Rotated 60 degrees clockwise
-            triangles[trianglesOffset + 6] = 4 + verticesOffset;
-            triangles[trianglesOffset + 7] = 6 + verticesOffset;
-            triangles[trianglesOffset + 8] = 7 + verticesOffset;
-            triangles[trianglesOffset + 9] = 4 + verticesOffset;
-            triangles[trianglesOffset + 10] = 5 + verticesOffset;
-            triangles[trianglesOffset + 11] = 6 + verticesOffset;
+                // Rotated 60 degrees clockwise
+                triangles[i][trianglesOffset + 6] = 4 + verticesOffset;
+                triangles[i][trianglesOffset + 7] = 6 + verticesOffset;
+                triangles[i][trianglesOffset + 8] = 7 + verticesOffset;
+                triangles[i][trianglesOffset + 9] = 4 + verticesOffset;
+                triangles[i][trianglesOffset + 10] = 5 + verticesOffset;
+                triangles[i][trianglesOffset + 11] = 6 + verticesOffset;
 
-            // Rotated 120 degrees clockwise
-            triangles[trianglesOffset + 12] = 8 + verticesOffset;
-            triangles[trianglesOffset + 13] = 10 + verticesOffset;
-            triangles[trianglesOffset + 14] = 11 + verticesOffset;
-            triangles[trianglesOffset + 15] = 8 + verticesOffset;
-            triangles[trianglesOffset + 16] = 9 + verticesOffset;
-            triangles[trianglesOffset + 17] = 10 + verticesOffset;
+                // Rotated 120 degrees clockwise
+                triangles[i][trianglesOffset + 12] = 8 + verticesOffset;
+                triangles[i][trianglesOffset + 13] = 10 + verticesOffset;
+                triangles[i][trianglesOffset + 14] = 11 + verticesOffset;
+                triangles[i][trianglesOffset + 15] = 8 + verticesOffset;
+                triangles[i][trianglesOffset + 16] = 9 + verticesOffset;
+                triangles[i][trianglesOffset + 17] = 10 + verticesOffset;
 
-            // Horizontal quad reverse
-            triangles[trianglesOffset + 18] = 12 + verticesOffset;
-            triangles[trianglesOffset + 19] = 15 + verticesOffset;
-            triangles[trianglesOffset + 20] = 14 + verticesOffset;
-            triangles[trianglesOffset + 21] = 12 + verticesOffset;
-            triangles[trianglesOffset + 22] = 14 + verticesOffset;
-            triangles[trianglesOffset + 23] = 13 + verticesOffset;
+                // Horizontal quad reverse
+                triangles[i][trianglesOffset + 18] = 12 + verticesOffset;
+                triangles[i][trianglesOffset + 19] = 15 + verticesOffset;
+                triangles[i][trianglesOffset + 20] = 14 + verticesOffset;
+                triangles[i][trianglesOffset + 21] = 12 + verticesOffset;
+                triangles[i][trianglesOffset + 22] = 14 + verticesOffset;
+                triangles[i][trianglesOffset + 23] = 13 + verticesOffset;
 
-            // Rotated 60 degrees clockwise reverse
-            triangles[trianglesOffset + 24] = 16 + verticesOffset;
-            triangles[trianglesOffset + 25] = 19 + verticesOffset;
-            triangles[trianglesOffset + 26] = 18 + verticesOffset;
-            triangles[trianglesOffset + 27] = 16 + verticesOffset;
-            triangles[trianglesOffset + 28] = 18 + verticesOffset;
-            triangles[trianglesOffset + 29] = 17 + verticesOffset;
+                // Rotated 60 degrees clockwise reverse
+                triangles[i][trianglesOffset + 24] = 16 + verticesOffset;
+                triangles[i][trianglesOffset + 25] = 19 + verticesOffset;
+                triangles[i][trianglesOffset + 26] = 18 + verticesOffset;
+                triangles[i][trianglesOffset + 27] = 16 + verticesOffset;
+                triangles[i][trianglesOffset + 28] = 18 + verticesOffset;
+                triangles[i][trianglesOffset + 29] = 17 + verticesOffset;
 
-            // Rotated 120 degrees clockwise reverse
-            triangles[trianglesOffset + 30] = 20 + verticesOffset;
-            triangles[trianglesOffset + 31] = 23 + verticesOffset;
-            triangles[trianglesOffset + 32] = 22 + verticesOffset;
-            triangles[trianglesOffset + 33] = 20 + verticesOffset;
-            triangles[trianglesOffset + 34] = 22 + verticesOffset;
-            triangles[trianglesOffset + 35] = 21 + verticesOffset;
+                // Rotated 120 degrees clockwise reverse
+                triangles[i][trianglesOffset + 30] = 20 + verticesOffset;
+                triangles[i][trianglesOffset + 31] = 23 + verticesOffset;
+                triangles[i][trianglesOffset + 32] = 22 + verticesOffset;
+                triangles[i][trianglesOffset + 33] = 20 + verticesOffset;
+                triangles[i][trianglesOffset + 34] = 22 + verticesOffset;
+                triangles[i][trianglesOffset + 35] = 21 + verticesOffset;
+            }
         }
 
-        Mesh finalMesh = new Mesh();
-        finalMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-        finalMesh.vertices = vertices;
-        finalMesh.triangles = triangles;
-        finalMesh.normals = normals;
-        finalMesh.uv = uvs;
+        Mesh[] meshes = new Mesh[numDetailTypes];
+        for (int i = 0; i < numDetailTypes; i++)
+        {
+            meshes[i] = new Mesh();
+            meshes[i].indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            meshes[i].vertices = vertices[i];
+            meshes[i].triangles = triangles[i];
+            meshes[i].normals = normals[i];
+            meshes[i].uv = uvs[i];
+        }
 
-        return finalMesh;
+        return meshes;
     }
 }
 
