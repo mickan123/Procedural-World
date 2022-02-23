@@ -6,6 +6,7 @@ public static class MeshGenerator
     {
         int skipIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
         int numVertsPerLine = meshSettings.numVerticesPerLine;
+        int meshWorldSize = meshSettings.meshWorldSize;
 
         MeshData meshData = new MeshData(numVertsPerLine, skipIncrement);
 
@@ -63,6 +64,8 @@ public static class MeshGenerator
 		 * R R R R R R R R R R R R R
 		 *
 		 */
+        Vector2 vertexPosition2D = new Vector2();
+        Vector2 percent = new Vector2();
         for (int x = 0; x < numVertsPerLine; x++)
         {
             for (int y = 0; y < numVertsPerLine; y++)
@@ -84,8 +87,9 @@ public static class MeshGenerator
                                                 && !isMainVertex;
 
                     int vertexIndex = vertexIndicesMap[x][y];
-                    Vector2 percent = new Vector2(x - 1, y - 1) / (numVertsPerLine - 3);
-                    Vector2 vertexPosition2D = new Vector2(percent.x, percent.y) * meshSettings.meshWorldSize;
+                    percent.Set((float)(x - 1) / (numVertsPerLine - 3), (float)(y - 1) / (numVertsPerLine - 3));
+                    vertexPosition2D.Set(percent.x * meshWorldSize, percent.y * meshWorldSize);
+
                     float height = heightMap[x][y];
 
                     if (isEdgeConnectionVertex)
