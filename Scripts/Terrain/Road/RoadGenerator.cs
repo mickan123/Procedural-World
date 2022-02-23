@@ -413,10 +413,19 @@ public static class RoadGenerator
         int pathLength = path.Length;
         for (int i = 0; i < pathLength; i++)
         {
-            int startX = (int)Mathf.Max(path[i].x - maxRoadWidth, 0);
-            int endX = (int)Mathf.Min(mapSize - 1, Mathf.CeilToInt(path[i].x + maxRoadWidth));
-            int startZ = (int)Mathf.Max(path[i].z - maxRoadWidth, 0);
-            int endZ = (int)Mathf.Min(mapSize - 1, Mathf.CeilToInt(path[i].z + maxRoadWidth));
+            // Calculate search area and clamp it within map bounds
+            int startX = (int)(path[i].x - maxRoadWidth);
+            startX = startX < 0 ? 0 : startX;
+
+            int endX = (int)(path[i].x + maxRoadWidth) + 1;
+            endX = endX > (mapSize - 1) ? (mapSize - 1) : endX;
+
+            int startZ = (int)(path[i].z - maxRoadWidth);
+            startZ = startZ < 0 ? 0 : startZ;
+
+            int endZ = (int)(path[i].z + maxRoadWidth) + 1;
+            endZ = endZ > (mapSize - 1) ? (mapSize - 1) : endZ;
+
             for (int x = startX; x <= endX; x++)
             {
                 for (int z = startZ; z <= endZ; z++)
@@ -432,30 +441,33 @@ public static class RoadGenerator
             closestPathIndexes[i] = new int[mapSize];
         }
 
-        for (int i = 0; i < mapSize; i++)
+        float deltaX, deltaY, deltaZ;;
+        for (int x = 0; x < mapSize; x++)
         {
-            for (int j = 0; j < mapSize; j++)
+            for (int z = 0; z < mapSize; z++)
             {
-                if (getClosestPathIndex[i][j])
+                float y = referenceHeightMap[x][z];
+                if (getClosestPathIndex[x][z])
                 {
-                    Vector3 curPoint = new Vector3(i, referenceHeightMap[i][j], j);
-
                     float minDist = float.MaxValue;
                     int closestPointIndex = 0;
                     for (int k = 0; k < pathLength; k++)
                     {
-                        float dist = Vector3.Distance(path[k], curPoint);
+                        deltaX = path[k].x - x;
+                        deltaY = path[k].y - y;
+                        deltaZ = path[k].z - z;
+                        float dist = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
                         if (dist < minDist)
                         {
                             minDist = dist;
                             closestPointIndex = k;
                         }
                     }
-                    closestPathIndexes[i][j] = closestPointIndex;
+                    closestPathIndexes[x][z] = closestPointIndex;
                 }
                 else
                 {
-                    closestPathIndexes[i][j] = -1;
+                    closestPathIndexes[x][z] = -1;
                 }
             }
         }
@@ -464,14 +476,13 @@ public static class RoadGenerator
 
     private static Vector3 ClosestPointOnLine(
         int x,
-        int y,
+        int z,
         float[][] referenceHeightMap,
         int closestPointIndex,
         Vector3[] path
     )
     {
-        Vector3 curPoint = new Vector3(x, referenceHeightMap[x][y], y);
-        Vector2 curPoint2d = new Vector2(curPoint.x, curPoint.z);
+        Vector3 curPoint = new Vector3(x, referenceHeightMap[x][z], z);
 
         Vector3 closestPointOnPath = path[closestPointIndex];
 
@@ -487,8 +498,17 @@ public static class RoadGenerator
         }
         else
         {
-            float distPre = Vector2.Distance(new Vector2(path[closestPointIndex - 1].x, path[closestPointIndex - 1].z), curPoint2d);
-            float distPost = Vector2.Distance(new Vector2(path[closestPointIndex + 1].x, path[closestPointIndex + 1].z), curPoint2d);
+            Vector3 previousPoint = path[closestPointIndex - 1];
+            Vector3 nextPoint = path[closestPointIndex + 1];
+
+            float deltaPreX = previousPoint.x - x;
+            float deltaPreZ = previousPoint.z - z;
+            float distPre = deltaPreX * deltaPreX + deltaPreZ * deltaPreZ;
+            
+            float deltaPostX = nextPoint.x - x;
+            float deltaPostZ = nextPoint.z - z;
+            float distPost = deltaPostX * deltaPostX + deltaPostZ * deltaPostZ;
+
             secondClosestPoint = distPre < distPost ? path[closestPointIndex - 1] : path[closestPointIndex + 1];
         }
 
@@ -517,8 +537,10 @@ public static class RoadGenerator
     )
     {
         int mapSize = finalHeightMap.Length;
-
-        float distance = Vector2.Distance(new Vector2(closestPointOnLine.x, closestPointOnLine.z), new Vector2(curPoint.x, curPoint.z));
+        
+        float deltaX = closestPointOnLine.x - curPoint.x;
+        float deltaZ = closestPointOnLine.z - curPoint.z;
+        float distance = Mathf.Sqrt(deltaX * deltaX + deltaZ * deltaZ);
         if (distance > averageRoadSettings.width)
         {
             return;
@@ -526,8 +548,10 @@ public static class RoadGenerator
 
         // Calculate slope multiplier
         float angle = Common.CalculateAngle(x, y, finalHeightMap);
-        float slopeMultiplier = Mathf.Min(Mathf.Max(0f, 1f - averageRoadSettings.angleBlendFactor * angle / averageRoadSettings.maxAngle), 1f);
-
+        float slopeMultiplier = 1f - averageRoadSettings.angleBlendFactor * angle / averageRoadSettings.maxAngle;
+        slopeMultiplier = slopeMultiplier < 0f ? 0f : slopeMultiplier;
+        slopeMultiplier = slopeMultiplier > 1f ? 1f : slopeMultiplier;
+        
         // If within half width of road then fully carve path, otherwise smooth outwards
         float halfRoadWidth = averageRoadSettings.width / 2f;
         if (distance < halfRoadWidth)
@@ -559,7 +583,9 @@ public static class RoadGenerator
         float[][] roadStrengthMap
     )
     {
-        float distance = Vector2.Distance(new Vector2(closestPointOnLine.x, closestPointOnLine.z), new Vector2(curPoint.x, curPoint.z));
+        float deltaX = closestPointOnLine.x - curPoint.x;
+        float deltaZ = closestPointOnLine.z - curPoint.z;
+        float distance = Mathf.Sqrt(deltaX * deltaX + deltaZ * deltaZ);
         if (distance > averageRoadSettings.width)
         {
             return;
@@ -567,19 +593,21 @@ public static class RoadGenerator
 
         // Calculate slope multiplier
         float angle = Common.CalculateAngle(x, y, finalHeightMap);
-        float slopeMultiplier = Mathf.Max(0f, 1f - averageRoadSettings.angleBlendFactor * angle / averageRoadSettings.maxAngle);
+        float slopeMultiplier = 1f - averageRoadSettings.angleBlendFactor * angle / averageRoadSettings.maxAngle;
+        slopeMultiplier = slopeMultiplier < 0f ? 0f : slopeMultiplier;
+        slopeMultiplier = slopeMultiplier > 1f ? 1f : slopeMultiplier;
 
         // If within half width of road then fully carve path, otherwise smooth outwards
         float halfRoadWidth = averageRoadSettings.width / 2f;
         if (distance < halfRoadWidth)
         {
-            roadStrengthMap[x][y] = Mathf.Max(roadStrengthMap[x][y], slopeMultiplier);
+            roadStrengthMap[x][y] = slopeMultiplier > roadStrengthMap[x][y] ? slopeMultiplier : roadStrengthMap[x][y];
         }
         else if (distance < averageRoadSettings.width)
         {
             float percentage = (distance - halfRoadWidth) / halfRoadWidth;
-
-            roadStrengthMap[x][y] = Mathf.Max(roadStrengthMap[x][y], slopeMultiplier * (1f - percentage));
+            slopeMultiplier = slopeMultiplier * (1f - percentage);
+            roadStrengthMap[x][y] = slopeMultiplier > roadStrengthMap[x][y] ? slopeMultiplier : roadStrengthMap[x][y];
         }
     }
 
