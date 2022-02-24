@@ -28,3 +28,20 @@ public class RoadSettings : ScriptableObject
 
 #endif
 }
+
+// Equivalent struct so that the settings can be used by burst compiler
+public struct RoadSettingsStruct
+{   
+    public float width;
+    public float maxAngle;
+    public float distanceBlendFactor;
+    public float angleBlendFactor;
+
+    public RoadSettingsStruct(RoadSettings roadSettings)
+    {
+        this.width = roadSettings.width;
+        this.maxAngle = roadSettings.maxAngle;
+        this.distanceBlendFactor = roadSettings.distanceBlendFactor;
+        this.angleBlendFactor = roadSettings.angleBlendFactor;
+    }
+}

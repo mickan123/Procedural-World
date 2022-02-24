@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
+using Unity.Collections;
 
 public static class BiomeHeightMapGenerator
 {
@@ -244,5 +244,11 @@ public struct BiomeInfo
         this.biomeMap = biomeMap;
         this.biomeStrengths = biomeStrengths;
         this.mainBiome = mainBiome;
+    }
+    
+    public int numBiomes {
+        get {
+            return this.biomeStrengths[0][0].Length;
+        } 
     }
 }
