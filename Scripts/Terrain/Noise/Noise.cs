@@ -1,74 +1,126 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using System.Linq;
-using XNode;
+﻿using UnityEngine;
+using Unity.Burst;
+using Unity.Jobs;
+using Unity.Collections;
 
 public static class Noise
 {
 
-    public static float[][] GenerateNoiseMap(int mapWidth,
-                                            int mapHeight,
+    [BurstCompile]
+    struct CalculateNoiseJob : IJob
+    {
+        [WriteOnly]
+        public NativeArray<float> noiseMap;
+
+        [ReadOnly]
+        public NativeArray<float> octaveOffsetsX;
+        [ReadOnly]
+        public NativeArray<float> octaveOffsetsY;
+
+        public NoiseMapSettings.NoiseType noiseType;
+
+        public int width;
+        public int height;
+
+        public float persistance;
+        public float lacunarity;
+        public float scale;
+        public int octaves;
+
+        public void Execute()
+        {
+            float amplitude = 1;
+            float frequency = 1;
+
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    amplitude = 1;
+                    frequency = 1;
+                    float noiseHeight = 0;
+
+                    for (int i = 0; i < octaves; i++)
+                    {
+                        float sampleX = (x + octaveOffsetsX[i]) / scale * frequency;
+                        float sampleY = (y + octaveOffsetsY[i]) / scale * frequency;
+
+                        float noiseValue = 0f;
+                        if (noiseType == NoiseMapSettings.NoiseType.Perlin)
+                        {
+                            noiseValue = Mathf.PerlinNoise(sampleX, sampleY);
+                        }
+                        else if (noiseType == NoiseMapSettings.NoiseType.Simplex)
+                        {
+                            // TODO get simplex noise for burst compiler
+                            noiseValue = Mathf.PerlinNoise(sampleX, sampleY);
+                        }
+
+
+                        noiseHeight += noiseValue * amplitude;
+
+                        amplitude *= persistance;
+                        frequency *= lacunarity;
+                    }
+                    noiseMap[x * width + y] = noiseHeight;
+                }
+            }
+        }
+    }
+
+    public static float[][] GenerateNoiseMap(int width,
+                                            int height,
                                             PerlinNoiseSettings noiseSettings,
                                             Vector2 sampleCentre,
                                             NoiseMapSettings.NoiseType noiseType,
                                             int seed)
     {
 
-        float[][] noiseMap = new float[mapWidth][];
-        for (int i = 0; i < mapWidth; i++)
+        float[][] noiseMap = new float[width][];
+        for (int i = 0; i < width; i++)
         {
-            noiseMap[i] = new float[mapHeight];
+            noiseMap[i] = new float[height];
         }
         System.Random prng = new System.Random(seed);
 
         // Calculate octave offsets for max num of octaves and calculate max possible height at same time
-        Vector2[] octaveOffsets = new Vector2[noiseSettings.octaves];
+
+        NativeArray<float> octaveOffsetsX = new NativeArray<float>(noiseSettings.octaves, Allocator.TempJob);
+        NativeArray<float> octaveOffsetsY = new NativeArray<float>(noiseSettings.octaves, Allocator.TempJob);
 
         for (int i = 0; i < noiseSettings.octaves; i++)
         {
-            float offsetX = prng.Next(-100000, 100000) + sampleCentre.x;
-            float offsetY = prng.Next(-100000, 100000) + sampleCentre.y;
-            octaveOffsets[i] = new Vector2(offsetX, offsetY);
+            octaveOffsetsX[i] = prng.Next(-100000, 100000) + sampleCentre.x;
+            octaveOffsetsY[i] = prng.Next(-100000, 100000) + sampleCentre.y;
         }
 
-        float amplitude = 1;
-        float frequency = 1;
+        NativeArray<float> noiseMapNat = new NativeArray<float>(width * height, Allocator.TempJob);
 
-        for (int y = 0; y < mapHeight; y++)
+        CalculateNoiseJob burstJob = new CalculateNoiseJob
         {
-            for (int x = 0; x < mapWidth; x++)
-            {
+            width = width,
+            height = height,
+            noiseMap = noiseMapNat,
+            octaveOffsetsX = octaveOffsetsX,
+            octaveOffsetsY = octaveOffsetsY,
+            noiseType = noiseType,
+            persistance = noiseSettings.persistance,
+            lacunarity = noiseSettings.lacunarity,
+            scale = noiseSettings.scale,
+            octaves = noiseSettings.octaves
+        };
+        burstJob.Schedule().Complete();
 
-                amplitude = 1;
-                frequency = 1;
-                float noiseHeight = 0;
-
-                for (int i = 0; i < noiseSettings.octaves; i++)
-                {
-                    float sampleX = (x + octaveOffsets[i].x) / noiseSettings.scale * frequency;
-                    float sampleY = (y + octaveOffsets[i].y) / noiseSettings.scale * frequency;
-
-                    float noiseValue = 0f;
-                    if (noiseType == NoiseMapSettings.NoiseType.Perlin)
-                    {
-                        noiseValue = Mathf.PerlinNoise(sampleX, sampleY);
-                    }
-                    else if (noiseType == NoiseMapSettings.NoiseType.Simplex)
-                    {
-                        float simplexNoiseVal = NoiseFunctions.Simplex2D(new Vector3(sampleX, sampleY, 0f), 1f).value;
-                        noiseValue = (simplexNoiseVal + 1f) / 2; // Convert from [-1, 1] to [0, 1]
-                    }
-
-                    noiseHeight += noiseValue * amplitude;
-
-                    amplitude *= noiseSettings.persistance;
-                    frequency *= noiseSettings.lacunarity;
-                }
-
-                noiseMap[x][y] = noiseHeight;
-            }
+        for (int i = 0; i < height; i++)
+        {   
+            int start = i * width;
+            noiseMapNat.GetSubArray(start, width).CopyTo(noiseMap[i]);
         }
+
+        noiseMapNat.Dispose();
+        octaveOffsetsX.Dispose();
+        octaveOffsetsY.Dispose();
+
         return noiseMap;
     }
 
