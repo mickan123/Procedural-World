@@ -6,7 +6,7 @@ using UnityEngine;
 public class RoadSettings : ScriptableObject
 {
     public static readonly int stepSize = 9;
-    public static readonly int smoothness = 3; // How much to smooth path
+    public static readonly int smoothness = 27; // How much to smooth path
 
     public TextureData roadTexture;
     public float width = 1f;

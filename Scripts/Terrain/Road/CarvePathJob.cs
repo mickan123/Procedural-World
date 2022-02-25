@@ -7,7 +7,7 @@ using Unity.Collections;
 struct CarvePathJob : IJob
 {
     public NativeArray<float> finalHeightMap;
-    public NativeArray<float> referenceHeightMap;
+    public NativeArray<float> originalHeightMap;
     public NativeArray<float> roadStrengthMap;
     public NativeArray<Vector3> path;
 
@@ -27,7 +27,7 @@ struct CarvePathJob : IJob
                 maxWidth = roadSettings[i].width;
             }
         }
-        NativeArray<int> closestPathIndexes = FindClosestPathIndexes(referenceHeightMap, path, maxWidth, mapSize);
+        NativeArray<int> closestPathIndexes = FindClosestPathIndexes(originalHeightMap, path, maxWidth, mapSize);
 
         for (int x = 0; x < mapSize; x++)
         {
@@ -36,13 +36,13 @@ struct CarvePathJob : IJob
                 if (closestPathIndexes[x * mapSize + y] != -1)
                 {
                     AverageRoadSettings averageRoadSettings = CalculateAverageRoadSettings(mapSize, numBiomes, x, y, roadSettings, biomeStrengths);
-                    Vector3 closestPointOnLine = ClosestPointOnLine(mapSize, x, y, referenceHeightMap, closestPathIndexes[x * mapSize + y], path);
-                    Vector3 curPoint = new Vector3(x, referenceHeightMap[x * mapSize + y], y);
+                    Vector3 closestPointOnLine = ClosestPointOnLine(mapSize, x, y, originalHeightMap, closestPathIndexes[x * mapSize + y], path);
+                    Vector3 curPoint = new Vector3(x, originalHeightMap[x * mapSize + y], y);
                     CarvePoint(
                         curPoint,
                         closestPointOnLine,
                         finalHeightMap,
-                        referenceHeightMap,
+                        originalHeightMap,
                         mapSize,
                         x,
                         y,
@@ -60,13 +60,13 @@ struct CarvePathJob : IJob
                 if (closestPathIndexes[x * mapSize + y] != -1)
                 {
                     AverageRoadSettings averageRoadSettings = CalculateAverageRoadSettings(mapSize, numBiomes, x, y, roadSettings, biomeStrengths);
-                    Vector3 closestPointOnLine = ClosestPointOnLine(mapSize, x, y, referenceHeightMap, closestPathIndexes[x * mapSize + y], path);
-                    Vector3 curPoint = new Vector3(x, referenceHeightMap[x * mapSize + y], y);
+                    Vector3 closestPointOnLine = ClosestPointOnLine(mapSize, x, y, originalHeightMap, closestPathIndexes[x * mapSize + y], path);
+                    Vector3 curPoint = new Vector3(x, originalHeightMap[x * mapSize + y], y);
                     CalculateRoadStrength(
                         curPoint,
                         closestPointOnLine,
                         finalHeightMap,
-                        referenceHeightMap,
+                        originalHeightMap,
                         mapSize,
                         x,
                         y,
@@ -81,7 +81,7 @@ struct CarvePathJob : IJob
     }
 
     // Finds closest point on path at every point
-    private static NativeArray<int> FindClosestPathIndexes(NativeArray<float> referenceHeightMap, NativeArray<Vector3> path, float maxRoadWidth, int mapSize)
+    private static NativeArray<int> FindClosestPathIndexes(NativeArray<float> originalHeightMap, NativeArray<Vector3> path, float maxRoadWidth, int mapSize)
     {
         NativeArray<bool> getClosestPathIndex = new NativeArray<bool>(mapSize * mapSize, Allocator.Temp);
 
@@ -112,7 +112,7 @@ struct CarvePathJob : IJob
         {
             for (int z = 0; z < mapSize; z++)
             {
-                float y = referenceHeightMap[x * mapSize + z];
+                float y = originalHeightMap[x * mapSize + z];
                 if (getClosestPathIndex[x * mapSize + z])
                 {
                     float minDist = float.MaxValue;
@@ -145,12 +145,12 @@ struct CarvePathJob : IJob
         int mapSize,
         int x,
         int z,
-        NativeArray<float> referenceHeightMap,
+        NativeArray<float> originalHeightMap,
         int closestPointIndex,
         NativeArray<Vector3> path
     )
     {
-        Vector3 curPoint = new Vector3(x, referenceHeightMap[x * mapSize + z], z);
+        Vector3 curPoint = new Vector3(x, originalHeightMap[x * mapSize + z], z);
 
         Vector3 closestPointOnPath = path[closestPointIndex];
 
@@ -197,7 +197,7 @@ struct CarvePathJob : IJob
         Vector3 curPoint,
         Vector3 closestPointOnLine,
         NativeArray<float> finalHeightMap,
-        NativeArray<float> referenceHeightMap,
+        NativeArray<float> originalHeightMap,
         int mapSize,
         int x,
         int y,
@@ -243,7 +243,7 @@ struct CarvePathJob : IJob
         Vector3 curPoint,
         Vector3 closestPointOnLine,
         NativeArray<float> finalHeightMap,
-        NativeArray<float> referenceHeightMap,
+        NativeArray<float> originalHeightMap,
         int mapSize,
         int x,
         int y,

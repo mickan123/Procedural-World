@@ -37,7 +37,7 @@ public static class ObjectGenerator
         {
             for (int j = 0; j < length; j++)
             {
-                if (info.biomeStrengths[i][j][biome] > 0f)
+                if (info.GetBiomeStrength(i, j, biome) > 0f)
                 {
                     return true;
                 }

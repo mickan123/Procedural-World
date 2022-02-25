@@ -2,27 +2,24 @@
 using UnityEngine;
 using Unity.Collections;
 using Unity.Jobs;
+using Unity.Mathematics;
 
 public static class RoadGenerator
 {
-    private static readonly int[,] offsets = { { 1 , 0}, { 0 , 1}, { -1, 0}, { 0 , -1},
-                                               { 1 , 1}, { 1 ,-1}, { -1, 1}, {-1 , -1},
-                                               { 2 , 1}, { 2 ,-1}, { -2, 1}, {-2 , -1},
-                                               { 1 , 2}, { 1 ,-2}, { -1, 2}, {-1 , -2}};
+    // Number of padded points at start and end of path to help smoothing
+    private static readonly int numChunkEdgeSmoothPoints = 5; 
 
-    private static readonly int numChunkEdgeSmoothPoints = 5; // Number of padded points at start and end of path to help smoothing
-
-    public static RoadData GenerateRoads(TerrainSettings terrainSettings, Vector2 chunkCentre, float[][] referenceHeightMap, BiomeInfo info)
+    public static RoadData GenerateRoads(
+        TerrainSettings terrainSettings, 
+        Vector2 chunkCentre, 
+        float[][] originalHeightMap, 
+        BiomeInfo info
+    )
     {
-        int mapSize = referenceHeightMap.Length;
+        int mapSize = originalHeightMap.Length;
 
-        List<RoadRoute> routes = GetRoadDestinations(mapSize, chunkCentre);
-
-        int numBiomes = terrainSettings.biomeSettings.Length;
-        bool[] roadsEnabled = new bool[numBiomes];
-
+        // Create list of roadsettings
         List<RoadSettings> roadSettingsList = new List<RoadSettings>();
-
         for (int i = 0; i < terrainSettings.biomeSettings.Length; i++)
         {
             BiomeGraph graph = terrainSettings.biomeSettings[i].biomeGraph;
@@ -30,58 +27,49 @@ public static class RoadGenerator
             roadSettingsList.Add(roadSettings);
         }
 
-        // Initialise road strength map and final heightmap
-        float[][] roadStrengthMap = new float[mapSize][];
+        // Allocate road strength map and final heightmap
+        float[][] finalRoadStrengthMap = new float[mapSize][];
         float[][] finalHeightMap = new float[mapSize][];
         for (int i = 0; i < mapSize; i++)
         {
-            roadStrengthMap[i] = new float[mapSize];
+            finalRoadStrengthMap[i] = new float[mapSize];
             finalHeightMap[i] = new float[mapSize];
-            
         }
 
+        // Initialise finalHeightMap to be same is originalHeightMap
         for (int i = 0; i < mapSize; i++)
         {
             for (int j = 0; j < mapSize; j++)
             {
-                finalHeightMap[i][j] = referenceHeightMap[i][j];
+                finalHeightMap[i][j] = originalHeightMap[i][j];
             }
         }
 
+        // Create roads
+        List<RoadRoute> routes = GetRoadDestinations(mapSize, chunkCentre);
         for (int i = 0; i < routes.Count; i++)
         {
-            Vector3[] path = CreatePath(routes[i], referenceHeightMap, terrainSettings.maxRoadWidth);
-
-            RoadData data = CreateRoad(path, finalHeightMap, referenceHeightMap, roadSettingsList, info);
+            Vector3[] path = CreatePath(routes[i], originalHeightMap, terrainSettings.maxRoadWidth);
+            RoadData data = CreateRoad(path, finalHeightMap, originalHeightMap, roadSettingsList, info);
 
             finalHeightMap = data.heightMap;
+
+            // Update roadstrengthmap
             for (int x = 0; x < mapSize; x++)
             {
                 for (int y = 0; y < mapSize; y++)
                 {
-                    roadStrengthMap[x][y] = Mathf.Max(data.roadStrengthMap[x][y], roadStrengthMap[x][y]);
+                    finalRoadStrengthMap[x][y] = Mathf.Max(data.roadStrengthMap[x][y], finalRoadStrengthMap[x][y]);
                 }
             }
         }
 
         // Fade away any road carving from edge so that cross chunk roads blend smoothly
-
-        float blendDistance = 5f;
-        for (int i = 0; i < mapSize; i++)
-        {
-            for (int j = 0; j < mapSize; j++)
-            {
-                float nearDist = i < j ? i : j;
-                float farDist = mapSize - 1 - (i > j ? i : j);
-                float distFromEdge = nearDist < farDist ? nearDist : farDist;
-                distFromEdge = distFromEdge - 3f < 0f ? 0f : distFromEdge - 3f ;
-                float edgeMultiplier = distFromEdge / blendDistance < 1f ? distFromEdge / blendDistance :1f;
-                finalHeightMap[i][j] = edgeMultiplier * finalHeightMap[i][j] + (1f - edgeMultiplier) * referenceHeightMap[i][j];
-            }
-        }
-
-        return new RoadData(finalHeightMap, roadStrengthMap);
+        Common.FadeEdgeHeightMap(originalHeightMap, finalHeightMap, 5f);
+        
+        return new RoadData(finalHeightMap, finalRoadStrengthMap);
     }
+
 
     public static List<RoadRoute> GetRoadDestinations(float mapSize, Vector2 chunkCentre)
     {
@@ -96,178 +84,100 @@ public static class RoadGenerator
         return destinations;
     }
 
+
     public static Vector3[] CreatePath(RoadRoute route, float[][] heightMap, float maxRoadWidth)
     {
-        float mapSize = heightMap.Length;
+        int mapSize = heightMap.Length;
         Vector3 roadStart = new Vector3(route.roadStart.x, Common.HeightFromFloatCoord(route.roadStart, heightMap), route.roadStart.y);
         Vector3 roadEnd = new Vector3(route.roadEnd.x, Common.HeightFromFloatCoord(route.roadEnd, heightMap), route.roadEnd.y);
 
-        // Create second point perpendicular to edge from start and end points to make sure last part of path is perpendsicular to edge of chunk
+        // Create second point perpendicular to edge from start and end points to make sure last part of path is perpendicular to edge of chunk
         Vector3 roadStart2nd = roadStart + new Vector3((roadStart.x == 0) ? 5 : (roadStart.x == mapSize - 1) ? -5 : 0,
                                                         0,
                                                         (roadStart.z == 0) ? 5 : (roadStart.z == mapSize - 1) ? -5 : 0);
         Vector3 roadEnd2nd = roadEnd + new Vector3((roadEnd.x == 0) ? 5 : (roadEnd.x == mapSize - 1) ? -5 : 0,
                                                     0,
                                                     (roadEnd.z == 0) ? 5 : (roadEnd.z == mapSize - 1) ? -5 : 0);
-
-        List<Vector3> path = FindPath(roadStart2nd, roadEnd2nd, heightMap, maxRoadWidth);
-
-        // The more times we add start and end points smoother end and start of path will be
-        for (int i = 0; i < numChunkEdgeSmoothPoints; i++)
-        {
-            path.Insert(0, roadStart);
-            path.Add(roadEnd);
-        }
-        return SmoothPath(path).ToArray();
-    }
-
-    public static RoadData CreateRoad(
-        Vector3[] path,
-        float[][] finalHeightMap,
-        float[][] referenceHeightMap,
-        List<RoadSettings> roadSettingsList,
-        BiomeInfo info
-    )
-    {   
-        int mapSize = referenceHeightMap.Length;
-        float[][] roadStrengthMap = new float[mapSize][];
-        for (int i = 0; i < mapSize; i++)
-        {
-            roadStrengthMap[i] = new float[mapSize];
-        }
-        CarvePath(finalHeightMap, referenceHeightMap, path, roadSettingsList, roadStrengthMap, info);
-
-        return new RoadData(finalHeightMap, roadStrengthMap);
-    }
-
-    private static List<Vector3> FindPath(Vector3 roadStart, Vector3 roadEnd, float[][] heightMap, float maxRoadWidth)
-    {
-        int mapSize = heightMap.Length;
-
-        Node[][] nodeGrid = new Node[mapSize][];
-        for (int i = 0; i < mapSize; i++)
-        {
-            nodeGrid[i] = new Node[mapSize];
-            for (int j = 0; j < mapSize; j++)
-            {
-                nodeGrid[i][j] = new Node(i, j, heightMap[i][j]);
-            }
-        }
-
-        Node startNode = nodeGrid[(int)roadStart.x][(int)roadStart.z];
-        Node endNode = nodeGrid[(int)roadEnd.x][(int)roadEnd.z];
-
-        Heap<Node> openSet = new Heap<Node>(mapSize * mapSize);
-        HashSet<Node> closedSet = new HashSet<Node>();
-        openSet.Add(startNode);
-
-        while (openSet.Count > 0)
-        {
-            Node currentNode = openSet.RemoveFirst();
-            closedSet.Add(currentNode);
-
-            if (currentNode == endNode)
-            {
-                return RetracePath(currentNode, heightMap);
-            }
-
-            List<Node> neighbours = GetNeighbours(nodeGrid, currentNode, endNode);
-            for (int i = 0; i < neighbours.Count; i++)
-            {
-                Node neighbour = neighbours[i];
-
-                if (closedSet.Contains(neighbour))
-                {
-                    continue;
-                }
-
-                float costToNeighbour = currentNode.gCost + GetCost(currentNode, neighbour, mapSize, maxRoadWidth / 2f);
-                if (costToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
-                {
-                    neighbour.gCost = costToNeighbour;
-                    neighbour.hCost = GetCost(neighbour, endNode, mapSize, maxRoadWidth / 2f);
-                    neighbour.parent = currentNode;
-
-                    if (!openSet.Contains(neighbour))
-                    {
-                        openSet.Add(neighbour);
-                    }
-                    else
-                    {
-                        openSet.UpdateItem(neighbour);
-                    }
-                }
-            }
-        }
-        return new List<Vector3>();
-    }
-
-    private static List<Node> GetNeighbours(Node[][] nodeGrid, Node node, Node endNode)
-    {
-        List<Node> neighbours = new List<Node>();
-        int mapSize = nodeGrid.Length;
-
-        float deltaXend = Mathf.Abs(endNode.x - node.x);
-        float deltaYend = Mathf.Abs(endNode.y - node.y);
-        float distanceToEndnode = deltaXend * deltaXend + deltaYend * deltaYend;
-
-        if (distanceToEndnode < RoadSettings.stepSize * 2f)
-        {
-            neighbours.Add(endNode);
-        }
-
-        for (int i = 0; i < offsets.GetLength(0); i++)
-        {
-            int neighbourX = node.x + offsets[i, 0] * RoadSettings.stepSize;
-            int neighbourY = node.y + offsets[i, 1] * RoadSettings.stepSize;
-
-            neighbourX = Mathf.Clamp(neighbourX, 0, mapSize - 1);
-            neighbourY = Mathf.Clamp(neighbourY, 0, mapSize - 1);
-
-            neighbours.Add(nodeGrid[neighbourX][neighbourY]);
-        }
-
-        return neighbours;
-    }
-
-    private static float GetCost(Node a, Node b, int mapSize, float halfRoadWidth)
-    {
-
-        float deltaX = a.x - b.x;
-        float deltaY = a.y - b.y;
-        float flatDist = Mathf.Sqrt(deltaX * deltaX + deltaY * deltaY);
-
-        float heightDiff = Mathf.Abs(a.height - b.height);
-
-        float slope = heightDiff / flatDist;
-        float slopeCost = slope;
-
-        // Penalize being close to edge of chunk
-        float edgeCost = 0f;
-        if (b.x < halfRoadWidth || b.x > mapSize - 1 - halfRoadWidth
-            || b.y < halfRoadWidth || b.y > mapSize - 1 - halfRoadWidth)
-        {
-            edgeCost = 100000f;
-        }
-
-        return slopeCost + edgeCost;
-    }
-
-    private static List<Vector3> RetracePath(Node node, float[][] heightMap)
-    {
-        List<Vector3> path = new List<Vector3>();
-        Node currentNode = node;
-        while (currentNode != null)
-        {
-            path.Add(new Vector3(currentNode.x, heightMap[currentNode.x][currentNode.y], currentNode.y));
-            currentNode = currentNode.parent;
-        }
-
-        path.Reverse();
+        Vector3[] path;
+        path = FindPath(heightMap, maxRoadWidth, roadStart2nd, roadEnd2nd);
+        path = SmoothPath(path, roadStart, roadEnd);
         return path;
     }
 
-    private static List<Vector3> SmoothPath(List<Vector3> path)
+
+    private static Vector3[] FindPath(float[][] heightMap, float maxRoadWidth, Vector3 roadStart, Vector3 roadEnd)
+    {
+        int mapSize = heightMap.Length;
+
+        NativeArray<float> heightMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
+        
+        for (int i = 0; i < mapSize; i++)
+        {
+            int start = i * mapSize;
+            heightMapNat.GetSubArray(start, mapSize).CopyFrom(heightMap[i]);
+        }
+
+        NativeList<int2> pathNat = new NativeList<int2>(Allocator.TempJob);
+
+        FindPathJob burstJob = new FindPathJob
+        {
+            heightMap = heightMapNat,
+            roadStart = roadStart,
+            roadEnd = roadEnd,
+            mapSize = mapSize,
+            maxRoadWidth = maxRoadWidth,
+            path = pathNat,
+            stepSize = RoadSettings.stepSize
+        };
+
+        burstJob.Schedule().Complete();
+
+        Vector3[] path = new Vector3[pathNat.Length];
+        for (int i = 0; i < pathNat.Length; i++)
+        {
+            int x = pathNat[i].x;
+            int z = pathNat[i].y;
+            path[i] = new Vector3(x, heightMap[x][z], z);
+        }
+
+        heightMapNat.Dispose();
+        pathNat.Dispose();
+
+        return path;
+    } 
+
+    private static Vector3[] SmoothPath(Vector3[] path, Vector3 roadStart, Vector3 roadEnd)
+    {
+        return BezierSmoothPath(new List<Vector3>(path)).ToArray();
+    }
+    
+    private static Vector3[] SuperSmoothPath(Vector3[] path, Vector3 roadStart, Vector3 roadEnd)
+    {
+        // The more times we add start and end points smoother end and start of path will be
+        PadPath(path, numChunkEdgeSmoothPoints, roadStart, roadEnd);
+
+        int curvedLength = path.Length * Mathf.RoundToInt(RoadSettings.smoothness) - 1;
+        NativeList<Vector3> smoothedPointsNat = new NativeList<Vector3>(curvedLength, Allocator.TempJob);
+        NativeArray<Vector3> pathNat = new NativeArray<Vector3>(path, Allocator.TempJob);
+
+        SmoothPathJob smoothPathJob = new SmoothPathJob
+        {
+            smoothedPoints = smoothedPointsNat,
+            path = pathNat,
+        };
+
+        smoothPathJob.Schedule().Complete();
+        
+        path = smoothedPointsNat.ToArray();
+
+        smoothedPointsNat.Dispose();
+        pathNat.Dispose();
+
+        return path;
+    }
+
+
+    private static List<Vector3> BezierSmoothPath(List<Vector3> path)
     {
         // Pad path so that we have a multiple of 3 points + 1 for bezier curves
         while (path.Count % 3 != 1)
@@ -300,50 +210,48 @@ public static class RoadGenerator
         return smoothedPoints;
     }
 
-    // Results in a smoother path than the bezier curve approach however 
-    // is very costly for performance
-    private static List<Vector3> VerySmoothPath(List<Vector3> path)
+    private static Vector3[] PadPath(Vector3[] path, int numPads, Vector3 roadStart, Vector3 roadEnd)
     {
-        List<Vector3> smoothedPoints;
-        List<Vector3> points;
-        int pointsLength = path.Count;
-        int curvedLength = (pointsLength * Mathf.RoundToInt(RoadSettings.smoothness)) - 1;
-        smoothedPoints = new List<Vector3>(curvedLength);
-
-        float t = 0.0f;
-        for (int pointInTimeOnCurve = 0; pointInTimeOnCurve < curvedLength + 1; pointInTimeOnCurve++)
+        Vector3[] paddedPath = new Vector3[path.Length + (numPads * 2)];
+        for (int i = 0; i < numPads; i++)
         {
-            t = Mathf.InverseLerp(0, curvedLength, pointInTimeOnCurve);
-
-            points = new List<Vector3>(path);
-
-            for (int j = pointsLength - 1; j > 0; j--)
-            {
-                for (int i = 0; i < j; i++)
-                {
-                    points[i] = (1 - t) * points[i] + t * points[i + 1];
-                }
-            }
-
-            smoothedPoints.Add(points[0]);
+            paddedPath[i] = roadEnd;
         }
-        return smoothedPoints;
-    }
 
-    private static void CarvePath(
-        float[][] finalHeightMap,
-        float[][] referenceHeightMap,
+        for (int i = 0; i < path.Length; i++)
+        {
+            paddedPath[i + numPads] = path[i];
+        }
+
+
+        for (int i = 0; i < numPads; i++)
+        {
+            int offset = numPads + path.Length;
+            paddedPath[i + offset] = roadStart;
+        }
+        return paddedPath;
+    }    
+
+
+    public static RoadData CreateRoad(
         Vector3[] path,
+        float[][] finalHeightMap,
+        float[][] originalHeightMap,
         List<RoadSettings> roadSettingsList,
-        float[][] roadStrengthMap,
         BiomeInfo info
     )
-    {
-        int mapSize = referenceHeightMap.Length;
+    {   
+        int mapSize = originalHeightMap.Length;
         int numBiomes = info.numBiomes;
 
+        float[][] roadStrengthMap = new float[mapSize][];
+        for (int i = 0; i < mapSize; i++)
+        {
+            roadStrengthMap[i] = new float[mapSize];
+        }
+        
         NativeArray<float> finalHeightMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
-        NativeArray<float> referenceHeightMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
+        NativeArray<float> originalHeightMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
         NativeArray<Vector3> pathNat = new NativeArray<Vector3>(path.Length, Allocator.TempJob);
         NativeArray<RoadSettingsStruct> roadSettingsNat = new NativeArray<RoadSettingsStruct>(roadSettingsList.Count, Allocator.TempJob);
         NativeArray<float> roadStrengthMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
@@ -354,20 +262,9 @@ public static class RoadGenerator
         {
             start = i * mapSize;
             finalHeightMapNat.GetSubArray(start, mapSize).CopyFrom(finalHeightMap[i]);
-            referenceHeightMapNat.GetSubArray(start, mapSize).CopyFrom(referenceHeightMap[i]);
-            roadStrengthMapNat.GetSubArray(start, mapSize).CopyFrom(roadStrengthMap[i]);
+            originalHeightMapNat.GetSubArray(start, mapSize).CopyFrom(originalHeightMap[i]);
         }
-
-        for (int i = 0; i < mapSize; i++)
-        {
-            for (int j = 0; j < mapSize; j++)
-            {
-                for (int k = 0; k < numBiomes; k++)
-                {
-                    biomeStrengthsNat[i * mapSize * numBiomes + j * numBiomes + k] = info.biomeStrengths[i][j][k];
-                }
-            }
-        }
+        biomeStrengthsNat.CopyFrom(info.biomeStrengths);
 
         pathNat.CopyFrom(path);
 
@@ -379,7 +276,7 @@ public static class RoadGenerator
         CarvePathJob burstJob = new CarvePathJob
         {
             finalHeightMap = finalHeightMapNat,
-            referenceHeightMap = referenceHeightMapNat,
+            originalHeightMap = originalHeightMapNat,
             roadStrengthMap = roadStrengthMapNat,
             path = pathNat,
             roadSettings = roadSettingsNat,
@@ -397,64 +294,15 @@ public static class RoadGenerator
         }
 
         finalHeightMapNat.Dispose();
-        referenceHeightMapNat.Dispose();
+        originalHeightMapNat.Dispose();
         pathNat.Dispose();
         roadSettingsNat.Dispose();
         roadStrengthMapNat.Dispose();
         biomeStrengthsNat.Dispose();
+
+        return new RoadData(finalHeightMap, roadStrengthMap);
     }
 
-    private class Node : IHeapItem<Node>
-    {
-        public int x;
-        public int y;
-        public float height;
-        public float gCost;
-        public float hCost;
-
-        int heapIndex;
-
-        public Node parent;
-
-        public Node(int x, int y, float height)
-        {
-            this.x = x;
-            this.y = y;
-            this.height = height;
-            gCost = 0;
-            hCost = 0;
-        }
-
-        public float fCost
-        {
-            get
-            {
-                return gCost + hCost;
-            }
-        }
-
-        public int HeapIndex
-        {
-            get
-            {
-                return heapIndex;
-            }
-            set
-            {
-                heapIndex = value;
-            }
-        }
-
-        public int CompareTo(Node nodeToCompare)
-        {
-            int compare = fCost.CompareTo(nodeToCompare.fCost);
-            if (compare == 0)
-            {
-                compare = hCost.CompareTo(nodeToCompare.hCost);
-            }
-            return -compare;
-        }
-    }
 
     public struct RoadRoute
     {

@@ -11,21 +11,21 @@ public static class HydraulicErosion
     }
 
     public static float[][] Erode(
-        float[][] values,
+        float[][] originalHeightMap,
         TerrainSettings terrainSettings,
         ErosionSettings erosionSettings,
         BiomeInfo info
     )
     {
-        int mapSize = values.Length;
+        int mapSize = originalHeightMap.Length;
         int numBiomes = terrainSettings.biomeSettings.Length;
 
-        float[] map = new float[mapSize * mapSize];
+        float[] erodedHeightMap = new float[mapSize * mapSize];
         for (int i = 0; i < mapSize; i++)
         {
             for (int j = 0; j < mapSize; j++)
             {
-                map[i * mapSize + j] = values[i][j];
+                erodedHeightMap[i * mapSize + j] = originalHeightMap[i][j];
             }
         }
 
@@ -33,11 +33,11 @@ public static class HydraulicErosion
 
         if (terrainSettings.IsMainThread())
         {
-            GPUErosion(erosionSettings, mapSize, map, ref gpuDone);
+            GPUErosion(erosionSettings, mapSize, erodedHeightMap, ref gpuDone);
         }
         else
         {
-            Dispatcher.RunOnMainThread(() => GPUErosion(erosionSettings, mapSize, map, ref gpuDone));
+            Dispatcher.RunOnMainThread(() => GPUErosion(erosionSettings, mapSize, erodedHeightMap, ref gpuDone));
         }
 
         while (!gpuDone)
@@ -45,8 +45,14 @@ public static class HydraulicErosion
             Thread.Sleep(1);
         }
 
-        // Fade away erosion at edge
-        float blendDistance = 5f;
+        FadeEdgeErosion(erodedHeightMap, originalHeightMap);
+        
+        return originalHeightMap;
+    }
+
+    public static void FadeEdgeErosion(float[] erodedHeightMap, float[][] originalHeightMap, float blendDistance = 5f)
+    {
+        int mapSize = originalHeightMap.Length;
         for (int i = 0; i < mapSize; i++)
         {
             for (int j = 0; j < mapSize; j++)
@@ -56,10 +62,9 @@ public static class HydraulicErosion
                 float distFromEdge = nearDist < farDist ? nearDist : farDist;
                 distFromEdge = distFromEdge - 3f < 0f ? 0f : distFromEdge - 3f ;
                 float edgeMultiplier = distFromEdge / blendDistance < 1f ? distFromEdge / blendDistance :1f;
-                values[i][j] = edgeMultiplier * map[i * mapSize + j] + (1f - edgeMultiplier) * values[i][j];
+                originalHeightMap[i][j] = edgeMultiplier * erodedHeightMap[i * mapSize + j] + (1f - edgeMultiplier) * originalHeightMap[i][j];
             }
         }
-        return values;
     }
 
     public static void GPUErosion(ErosionSettings settings, int mapSize, float[] heightMap, ref bool gpuDone)

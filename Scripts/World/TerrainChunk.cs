@@ -201,10 +201,10 @@ public class TerrainChunk
                     int texIndex = k / biomesPerTexture;
 
                     Color biomeStrengths = new Color(
-                        (k < numBiomes) ? info.biomeStrengths[x + offset][y + offset][k] : 0f,
-                        (k + 1 < numBiomes) ? info.biomeStrengths[x + offset][y + offset][k + 1] : 0f,
-                        (k + 2 < numBiomes) ? info.biomeStrengths[x + offset][y + offset][k + 2] : 0f,
-                        (k + 3 < numBiomes) ? info.biomeStrengths[x + offset][y + offset][k + 3] : 0f
+                        (k < numBiomes) ? info.GetBiomeStrength(x + offset, y + offset, k) : 0f,
+                        (k + 1 < numBiomes) ? info.GetBiomeStrength(x + offset, y + offset, k + 1) : 0f,
+                        (k + 2 < numBiomes) ? info.GetBiomeStrength(x + offset, y + offset, k + 2) : 0f,
+                        (k + 3 < numBiomes) ? info.GetBiomeStrength(x + offset, y + offset, k + 3) : 0f
                     );
                     biomeStrengthTexPixels[texIndex][y * width + x] = biomeStrengths;
                 }

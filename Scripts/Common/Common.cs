@@ -263,4 +263,21 @@ public static class Common
         }
         return centre /= points.Count;
     }
+
+    public static void FadeEdgeHeightMap(float[][] originalHeightMap, float[][] finalHeightMap, float blendDistance)
+    {
+        int mapSize = originalHeightMap.Length;
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                float nearDist = i < j ? i : j;
+                float farDist = mapSize - 1 - (i > j ? i : j);
+                float distFromEdge = nearDist < farDist ? nearDist : farDist;
+                distFromEdge = distFromEdge - 3f < 0f ? 0f : distFromEdge - 3f ;
+                float edgeMultiplier = distFromEdge / blendDistance < 1f ? distFromEdge / blendDistance :1f;
+                finalHeightMap[i][j] = edgeMultiplier * finalHeightMap[i][j] + (1f - edgeMultiplier) * originalHeightMap[i][j];
+            }
+        }
+    }
 }

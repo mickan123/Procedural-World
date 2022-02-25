@@ -86,7 +86,7 @@ public static class BiomeHeightMapGenerator
             {
                 for (int biome = 0; biome < numBiomes; biome++)
                 {
-                    finalNoiseMapValues[x][y] += biomeNoiseMaps[biome][x][y] * biomeInfo.biomeStrengths[x][y][biome];
+                    finalNoiseMapValues[x][y] += biomeNoiseMaps[biome][x][y] * biomeInfo.GetBiomeStrength(x, y, biome);
                 }
             }
         }
@@ -98,15 +98,10 @@ public static class BiomeHeightMapGenerator
     {
         int numBiomes = settings.biomeSettings.Length;
         int[][] biomeMap = new int[width][];
-        float[][][] biomeStrengths = new float[width][][];
+        float[] biomeStrengths = new float[width * height * numBiomes];
         for (int i = 0; i < width; i++)
         {
             biomeMap[i] = new int[height];
-            biomeStrengths[i] = new float[height][];
-            for (int j = 0; j < height; j++)
-            {
-                biomeStrengths[i][j] = new float[numBiomes];
-            }
         }
 
         for (int i = 0; i < width; i++)
@@ -128,7 +123,7 @@ public static class BiomeHeightMapGenerator
                     {
 
                         biomeMap[i][j] = k;
-                        biomeStrengths[i][j][k] = 1f;
+                        biomeStrengths[i * height * numBiomes + j * numBiomes + k] = 1f;
                         k = numBiomes;
                     }
                 }
@@ -167,8 +162,8 @@ public static class BiomeHeightMapGenerator
 
                         if (distToBiome <= actualBiomeTransitionDist)
                         {
-                            biomeStrengths[i][j][k] = (1f - (distToBiome / actualBiomeTransitionDist));
-                            totalBiomeStrength += biomeStrengths[i][j][k];
+                            biomeStrengths[i * height * numBiomes + j * numBiomes + k] = (1f - (distToBiome / actualBiomeTransitionDist));
+                            totalBiomeStrength += biomeStrengths[i * height * numBiomes + j * numBiomes + k];
                         }
                     }
                 }
@@ -176,7 +171,7 @@ public static class BiomeHeightMapGenerator
                 // Normalize by biome strengths in range [0, 1]
                 for (int k = 0; k < numBiomes; k++)
                 {
-                    biomeStrengths[i][j][k] /= totalBiomeStrength;
+                    biomeStrengths[i * height * numBiomes + j * numBiomes + k] /= totalBiomeStrength;
                 }
             }
         }
@@ -184,16 +179,14 @@ public static class BiomeHeightMapGenerator
         return new BiomeInfo(
             biomeMap,
             biomeStrengths,
-            CalculateMainBiomeIndex(biomeStrengths)
+            width,
+            height,
+            numBiomes
         );
     }
 
-    private static int CalculateMainBiomeIndex(float[][][] biomeStrengths)
+    private static int CalculateMainBiomeIndex(float[] biomeStrengths, int width, int height, int numBiomes)
     {
-        int width = biomeStrengths.Length;
-        int height = biomeStrengths[0].Length;
-        int numBiomes = biomeStrengths[0][0].Length;
-
         float[] totalBiomeStrenths = new float[numBiomes];
         for (int i = 0; i < width; i++)
         {
@@ -201,7 +194,7 @@ public static class BiomeHeightMapGenerator
             {
                 for (int k = 0; k < numBiomes; k++)
                 {
-                    totalBiomeStrenths[k] += biomeStrengths[i][j][k];
+                    totalBiomeStrenths[k] += biomeStrengths[i * height * numBiomes + j * numBiomes + k];
                 }
             }
         }
@@ -236,19 +229,23 @@ public struct BiomeData
 public struct BiomeInfo
 {
     public int[][] biomeMap; // Holds index of biome at each point
-    public float[][][] biomeStrengths; // E.g. 0.75 means 75-25 main biome nearest biome blend, has values in range [0, 1]
-    public int mainBiome;
+    public float[] biomeStrengths; // E.g. 0.75 means 75-25 main biome nearest biome blend, has values in range [0, 1]
+    public int numBiomes;
+    public int width;
+    public int height;
 
-    public BiomeInfo(int[][] biomeMap, float[][][] biomeStrengths, int mainBiome)
+    public BiomeInfo(int[][] biomeMap, float[] biomeStrengths, int width, int height, int numBiomes)
     {
         this.biomeMap = biomeMap;
         this.biomeStrengths = biomeStrengths;
-        this.mainBiome = mainBiome;
+        
+        this.width = width;
+        this.height = height;
+        this.numBiomes = numBiomes;
     }
-    
-    public int numBiomes {
-        get {
-            return this.biomeStrengths[0][0].Length;
-        } 
+
+    public float GetBiomeStrength(int x, int y, int biome)
+    {
+        return this.biomeStrengths[x * height * numBiomes + y * numBiomes + biome];
     }
 }
