@@ -1,170 +1,172 @@
-﻿using System.Collections;
+﻿using UnityEngine;
+using Unity.Burst;
+using Unity.Jobs;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Mathematics;
 using System.Collections.Generic;
-using UnityEngine;
 
 public static class PoissonDiskSampling
 {
-    public static List<Vector3> GeneratePoints(
-        PoissonDiskSamplingSettings settings,
-        Vector2 sampleCentre,
-        float[][] heightMap,
-        System.Random prng,
-        float[] randomValues,
-        TerrainSettings terrainSettings,
-        int numSamplesBeforeRejection = 25
-    )
+
+    [BurstCompile]
+    public struct PoissonDiskSamplingJob : IJob
     {
-        int mapSize = heightMap.Length;
+        public NativeArray<float> heightMap;
+        public NativeArray<float> spawnNoiseMap;
 
-        float[][] spawnNoiseMap;
-        if (settings.varyRadius)
-        {
-            spawnNoiseMap = Noise.GenerateNoiseMap(
-                mapSize,
-                mapSize,
-                settings.noiseMapSettings.perlinNoiseSettings,
-                sampleCentre,
-                settings.noiseMapSettings.noiseType,
-                settings.noiseMapSettings.seed
-            );
-        }
-        else
-        {
-            spawnNoiseMap = null;
-        }
-        float spawnSize = mapSize - 1;
+        public NativeList<Vector3> points;
 
-        float maxRadius = settings.varyRadius ? settings.maxRadius : settings.radius;
-        float cellSize = maxRadius / Mathf.Sqrt(2);
-        
-        int maxPointsPerCell = Mathf.CeilToInt(cellSize / (float)(Mathf.Sqrt(settings.minRadius)));
+        public Vector2 sampleCentre;
 
-        // Initialize 2d grid of lists
-        int gridWidth = Mathf.CeilToInt(spawnSize / cellSize);
-        List<int>[][] grid = new List<int>[gridWidth][];
-        for (int x = 0; x < gridWidth; x++)
-        {
-            grid[x] = new List<int>[gridWidth];
-            for (int y = 0; y < gridWidth; y++)
+        public int meshScale;
+        public int numSamplesBeforeRejection;
+
+        // Poisson Disk Sampling settings
+        public bool varyRadius;
+        public float radius;
+        public float minRadius;
+        public float maxRadius;
+
+        public int mapSize;
+        public int seed;
+
+        public void Execute() 
+        {            
+            float spawnSize = mapSize - 1;
+
+            float maxRadiusLocal = varyRadius ? maxRadius : radius;
+            float cellSize = maxRadiusLocal / Mathf.Sqrt(2);
+            
+            // Initialize 2d grid of lists
+            int gridWidth = Mathf.CeilToInt(spawnSize / cellSize);
+            int maxPointsPerCell = Mathf.CeilToInt(cellSize / (float)(Mathf.Sqrt(minRadius)));
+
+            NativeArray<UnsafeList<int>> grid = new NativeArray<UnsafeList<int>>(gridWidth * gridWidth, Allocator.Temp);
+            for (int i = 0; i < gridWidth * gridWidth; i++)
             {
-                grid[x][y] = new List<int>(maxPointsPerCell);
+                grid[i] = new UnsafeList<int>(maxPointsPerCell * 5, Allocator.Temp);
             }
-        }
+    
+            Unity.Mathematics.Random prng = new Unity.Mathematics.Random((uint)seed);
 
-        List<Vector2> points2d = new List<Vector2>();
-        List<Vector2> spawnPoints = new List<Vector2>();
+            NativeList<Vector2> points2d = new NativeList<Vector2>(Allocator.Temp);
+            NativeList<Vector2> spawnPoints = new NativeList<Vector2>(Allocator.Temp);
 
-        int numPoints = 0;
-        int randIdx = 0;
-        spawnPoints.Add(new Vector2(spawnSize / 2, spawnSize / 2));
+            grid[0].Add(0);
+            spawnPoints.Add(new Vector2(spawnSize / 2, spawnSize / 2));
 
-        Vector2 dir = new Vector2(); // Construct once and reuse
-        while (spawnPoints.Count > 0)
-        {
-            numPoints++;
-            int spawnIndex = prng.Next(0, spawnPoints.Count);
-            Vector2 spawnCentre = spawnPoints[spawnIndex];
-            bool candidateAccepted = false;
-
-            for (int i = 0; i < numSamplesBeforeRejection; i++)
+            while (spawnPoints.Length > 0)
             {
-                float randomFloat = randomValues[randIdx];
-                float angle = randomFloat * Mathf.PI * 2;
-                float radius = settings.radius;
-                if (settings.varyRadius)
+                int spawnIndex = prng.NextInt(0, spawnPoints.Length);
+                Vector2 spawnCentre = spawnPoints[spawnIndex];
+                bool candidateAccepted = false;
+
+                for (int i = 0; i < numSamplesBeforeRejection; i++)
                 {
-                    radius = spawnNoiseMap[(int)(spawnCentre.x)][(int)(spawnCentre.y)]
-                                * (settings.maxRadius - settings.minRadius) + settings.minRadius;
-                }
-                dir.Set(Mathf.Sin(angle), Mathf.Cos(angle));
-
-                Vector2 candidate = spawnCentre + dir * (randomValues[randIdx + 1] * radius + radius);
-
-                // Check if the candidate we have randomly selected is valid
-                if (IsValid(candidate, spawnSize, cellSize, radius, points2d, grid))
-                {
-                    points2d.Add(candidate);
-                    spawnPoints.Add(candidate);
-
-                    int cellX = (int)(candidate.x / cellSize);
-                    int cellY = (int)(candidate.y / cellSize);
-                    grid[cellX][cellY].Add(points2d.Count);
-                    candidateAccepted = true;
-                    break;
-                }
-
-                 // Update random index
-                randIdx += 2;
-                if (randIdx >= randomValues.Length - 1)
-                {
-                    randIdx = 0;
-                }
-            }
-            if (!candidateAccepted)
-            {
-                spawnPoints.RemoveAt(spawnIndex);
-            }
-        }
-
-        List<Vector3> points3d = new List<Vector3>(points2d.Count);
-        for (int point = 0; point < points2d.Count; point++)
-        {
-            float height = Common.HeightFromFloatCoord(points2d[point].x, points2d[point].y, heightMap);
-            float offset = 1f; // Take into account offset due to extra points around edges
-
-            Vector3 adjustedPoint = new Vector3((points2d[point].x) * terrainSettings.meshSettings.meshScale - offset,
-                                                Common.HeightFromFloatCoord(points2d[point].x, points2d[point].y, heightMap),
-                                                (points2d[point].y) * terrainSettings.meshSettings.meshScale - offset);
-            if (adjustedPoint.x >= 0f && adjustedPoint.y >= 0f && adjustedPoint.x <= mapSize - 3 && adjustedPoint.y <= mapSize - 3)
-            {
-                points3d.Add(adjustedPoint);
-            }
-        }
-
-        return points3d;
-    }
-
-    static bool IsValid(Vector2 candidate,
-                        float spawnSize,
-                        float cellSize,
-                        float radius,
-                        List<Vector2> points,
-                        List<int>[][] grid)
-    {
-        if (candidate.x < 0 || candidate.x >= spawnSize || candidate.y < 0 || candidate.y >= spawnSize)
-        {
-            return false;
-        }
-        int cellX = (int)(candidate.x / cellSize);
-        int cellY = (int)(candidate.y / cellSize);
-
-        int maxIndex = grid.Length - 1;
-
-        // Set range and clamp it inside grid indices
-        int searchStartX = ((cellX - 1) > 0) ? (cellX - 1) : 0; 
-        int searchEndX = ((cellX + 1) > maxIndex) ? maxIndex : (cellX + 1); 
-        int searchStartY = ((cellY - 1) > 0) ? (cellY - 1) : 0; 
-        int searchEndY = ((cellY + 1) > maxIndex) ? maxIndex : (cellY + 1); 
-
-        for (int x = searchStartX; x <= searchEndX; x++)
-        {
-            for (int y = searchStartY; y <= searchEndY; y++)
-            {
-                for (int i = 0; i < grid[x][y].Count; i++)
-                {
-                    int pointIndex = grid[x][y][i] - 1;
-                    if (pointIndex != -1)
+                    float randomFloat = prng.NextFloat();
+                    float angle = randomFloat * Mathf.PI * 2;
+                    float localRadius = radius;
+                    if (varyRadius)
                     {
-                        float sqrDst = (candidate - points[pointIndex]).sqrMagnitude;
-                        if (sqrDst < radius * radius)
+                        localRadius = spawnNoiseMap[(int)(spawnCentre.x) * mapSize + (int)(spawnCentre.y)]
+                                    * (maxRadius - minRadius) + minRadius;
+                    }
+                    Vector2 dir = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle));
+
+                    Vector2 candidate = spawnCentre + dir * (prng.NextFloat() * localRadius + localRadius);
+
+                    // Check if the candidate we have randomly selected is valid
+                    if (IsValid(candidate, spawnSize, cellSize, localRadius, points2d, grid, gridWidth))
+                    {
+                        points2d.Add(candidate);
+                        spawnPoints.Add(candidate);
+
+                        int cellX = (int)(candidate.x / cellSize);
+                        int cellY = (int)(candidate.y / cellSize);
+
+                        var list = grid[cellX * gridWidth + cellY];
+                        list.Add(points2d.Length);
+                        grid[cellX * gridWidth + cellY] = list;
+
+                        candidateAccepted = true;
+                        break;
+                    }
+                }
+                if (!candidateAccepted)
+                {
+                    spawnPoints.RemoveAt(spawnIndex);
+                }
+            }
+
+            for (int point = 0; point < points2d.Length; point++)
+            {
+                float offset = 1f; // Take into account offset due to extra points around edges
+
+                float adjustedX = (points2d[point].x) * meshScale - offset;
+                float adjustedY = Common.HeightFromFloatCoord(points2d[point].x, points2d[point].y, heightMap, mapSize);
+                float adjustedZ = (points2d[point].y) * meshScale - offset;
+                Vector3 adjustedPoint = new Vector3(adjustedX, adjustedY, adjustedZ);
+
+                if (adjustedPoint.x >= 0f && adjustedPoint.y >= 0f && adjustedPoint.x <= mapSize - 3 && adjustedPoint.y <= mapSize - 3)
+                {
+                    points.Add(adjustedPoint);
+                }
+            }   
+
+            // Dispose native arrays/lists
+            for (int i = 0; i < gridWidth * gridWidth; i++)
+            {
+                grid[i].Dispose();
+            }
+            grid.Dispose();
+            points2d.Dispose();
+            spawnPoints.Dispose();
+        }
+
+        private bool IsValid(Vector2 candidate,
+                            float spawnSize,
+                            float cellSize,
+                            float localRadius,
+                            NativeList<Vector2> points,
+                            NativeArray<UnsafeList<int>> grid,
+                            int gridWidth)
+        {
+            if (candidate.x < 0 || candidate.x >= spawnSize || candidate.y < 0 || candidate.y >= spawnSize)
+            {
+                return false;
+            }
+            int cellX = (int)(candidate.x / cellSize);
+            int cellY = (int)(candidate.y / cellSize);
+
+            int maxIndex = gridWidth - 1;
+
+            // Set range and clamp it inside grid indices
+            int searchStartX = Mathf.Max(0, cellX - 1); 
+            int searchEndX = Mathf.Min(cellX + 1, maxIndex);
+            int searchStartY = Mathf.Max(0, cellY - 1);
+            int searchEndY = Mathf.Min(cellY + 1, maxIndex);
+
+            for (int x = searchStartX; x <= searchEndX; x++)
+            {
+                for (int y = searchStartY; y <= searchEndY; y++)
+                {
+                    for (int i = 0; i < grid[x * gridWidth + y].Length; i++)
+                    {
+                        int pointIndex = grid[x * gridWidth + y][i] - 1;
+                        if (pointIndex != -1)
                         {
-                            return false;
+                            float sqrDst = (candidate - points[pointIndex]).sqrMagnitude;
+                            if (sqrDst < localRadius * localRadius)
+                            {
+                                return false;
+                            }
                         }
                     }
                 }
             }
+            return true;
         }
-        return true;
     }
 }
 
@@ -206,5 +208,4 @@ public class PoissonDiskSamplingSettings
     }
 
 #endif
-
 }

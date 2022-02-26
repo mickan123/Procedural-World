@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using Unity.Collections;
 
 public static class Common
 {
@@ -16,6 +17,34 @@ public static class Common
     public static float HeightFromFloatCoord(Vector2 coord, float[][] heightMap)
     {
         return HeightFromFloatCoord(coord.x, coord.y, heightMap);
+    }
+
+    public static float HeightFromFloatCoord(float x, float y, NativeArray<float> heightMap, int mapSize)
+    {
+        // Technically subtracting 0.001f reduces slightly incorrect results however
+        // this means we don't have to do any bounds checking in later steps so the
+        // slight accuracy loss is worth it for the performance
+        float maxIndex = heightMap.Length - 1.001f;
+        x = (x < maxIndex) ? x : maxIndex;
+        y = (y < maxIndex) ? y : maxIndex;
+        
+        int indexX = (int)x;
+        int indexY = (int)y;
+
+        x = x - indexX;
+        y = y - indexY;
+
+        float heightNW = heightMap[indexX * mapSize + indexY];
+        float heightNE = heightMap[(indexX + 1) * mapSize + indexY];
+        float heightSW = heightMap[indexX * mapSize + indexY + 1];
+        float heightSE = heightMap[(indexX + 1) * mapSize + indexY + 1];
+
+        float height = heightNW * (1 - x) * (1 - y)
+                     + heightNE * x * (1 - y)
+                     + heightSW * (1 - x) * y
+                     + heightSE * x * y;
+
+        return height;
     }
 
     public static float HeightFromFloatCoord(float x, float y, float[][] heightMap)

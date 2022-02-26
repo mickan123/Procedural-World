@@ -1,6 +1,7 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Jobs;
+using Unity.Collections;
 using XNode;
 
 [XNode.Node.CreateNodeMenuAttribute("Objects/PoissonPoints")]
@@ -29,7 +30,61 @@ public class PoissonPointsNode : BiomeGraphNode
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
         System.Random prng = new System.Random(this.seed);
 
-        List<Vector3> points = PoissonDiskSampling.GeneratePoints(settings, heightMapData.sampleCentre, heightMapData.heightMap, prng, this.randomValues, heightMapData.terrainSettings);
+        int mapSize = heightMapData.heightMap.Length;
+
+        // Copy heightmap into native array
+        NativeArray<float> heightMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
+        for (int i = 0; i < mapSize; i++)
+        {
+            int start = i * mapSize;
+            heightMapNat.GetSubArray(start, mapSize).CopyFrom(heightMapData.heightMap[i]);
+        }
+
+        // Initialize spawnNoiseMap 
+        NativeArray<float> spawnNoiseMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
+        float[][] spawnNoiseMap;
+        if (settings.varyRadius)
+        {
+            spawnNoiseMap = Noise.GenerateNoiseMap(
+                mapSize,
+                mapSize,
+                settings.noiseMapSettings.perlinNoiseSettings,
+                heightMapData.sampleCentre,
+                settings.noiseMapSettings.noiseType,
+                settings.noiseMapSettings.seed
+            );
+            for (int i = 0; i < mapSize; i++)
+            {
+                int start = i * mapSize;
+                spawnNoiseMapNat.GetSubArray(start, mapSize).CopyFrom(spawnNoiseMap[i]);
+            }
+        }
+
+        NativeList<Vector3> pointsNat = new NativeList<Vector3>(Allocator.TempJob);
+
+        PoissonDiskSampling.PoissonDiskSamplingJob burstJob = new PoissonDiskSampling.PoissonDiskSamplingJob
+        {
+            heightMap = heightMapNat,
+            spawnNoiseMap = spawnNoiseMapNat,
+            sampleCentre = heightMapData.sampleCentre,
+            points = pointsNat,
+            meshScale = heightMapData.terrainSettings.meshSettings.meshScale,
+            numSamplesBeforeRejection = 25,
+            varyRadius = settings.varyRadius,
+            radius = settings.radius,
+            minRadius = settings.minRadius,
+            maxRadius = settings.maxRadius,
+            mapSize = mapSize,
+            seed = this.seed
+        };
+
+        burstJob.Schedule().Complete();
+
+        List<Vector3> points = new List<Vector3>(pointsNat.ToArray());
+
+        heightMapNat.Dispose();
+        spawnNoiseMapNat.Dispose();
+        pointsNat.Dispose();
 
         float[] xCoords = new float[points.Count];
         float[] yCoords = new float[points.Count];
