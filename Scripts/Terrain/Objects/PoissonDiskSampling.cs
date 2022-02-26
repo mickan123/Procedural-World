@@ -12,10 +12,17 @@ public static class PoissonDiskSampling
     [BurstCompile]
     public struct PoissonDiskSamplingJob : IJob
     {
+        [ReadOnly]
         public NativeArray<float> heightMap;
+        [ReadOnly]
         public NativeArray<float> spawnNoiseMap;
 
-        public NativeList<Vector3> points;
+        [WriteOnly]
+        public NativeList<float> xCoords;
+        [WriteOnly]
+        public NativeList<float> yCoords;
+        [WriteOnly]
+        public NativeList<float> zCoords;
 
         public Vector2 sampleCentre;
 
@@ -45,7 +52,7 @@ public static class PoissonDiskSampling
             NativeArray<UnsafeList<int>> grid = new NativeArray<UnsafeList<int>>(gridWidth * gridWidth, Allocator.Temp);
             for (int i = 0; i < gridWidth * gridWidth; i++)
             {
-                grid[i] = new UnsafeList<int>(maxPointsPerCell * 5, Allocator.Temp);
+                grid[i] = new UnsafeList<int>(maxPointsPerCell, Allocator.Temp);
             }
     
             Unity.Mathematics.Random prng = new Unity.Mathematics.Random((uint)seed);
@@ -106,11 +113,12 @@ public static class PoissonDiskSampling
                 float adjustedX = (points2d[point].x) * meshScale - offset;
                 float adjustedY = Common.HeightFromFloatCoord(points2d[point].x, points2d[point].y, heightMap, mapSize);
                 float adjustedZ = (points2d[point].y) * meshScale - offset;
-                Vector3 adjustedPoint = new Vector3(adjustedX, adjustedY, adjustedZ);
 
-                if (adjustedPoint.x >= 0f && adjustedPoint.y >= 0f && adjustedPoint.x <= mapSize - 3 && adjustedPoint.y <= mapSize - 3)
+                if (adjustedX >= 0f && adjustedZ >= 0f && adjustedX <= mapSize - 3 && adjustedZ <= mapSize - 3)
                 {
-                    points.Add(adjustedPoint);
+                    xCoords.Add(adjustedX);
+                    yCoords.Add(adjustedY);
+                    zCoords.Add(adjustedZ);
                 }
             }   
 

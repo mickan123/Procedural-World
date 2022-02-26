@@ -28,7 +28,6 @@ public class PoissonPointsNode : BiomeGraphNode
     {
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
-        System.Random prng = new System.Random(this.seed);
 
         int mapSize = heightMapData.heightMap.Length;
 
@@ -60,14 +59,20 @@ public class PoissonPointsNode : BiomeGraphNode
             }
         }
 
-        NativeList<Vector3> pointsNat = new NativeList<Vector3>(Allocator.TempJob);
+        // Create output native arrays
+        NativeList<float> poissonPointsX = new NativeList<float>(Allocator.TempJob);
+        NativeList<float> poissonPointsY = new NativeList<float>(Allocator.TempJob);
+        NativeList<float> poissonPointsZ = new NativeList<float>(Allocator.TempJob);
 
+        // Run poisson points job
         PoissonDiskSampling.PoissonDiskSamplingJob burstJob = new PoissonDiskSampling.PoissonDiskSamplingJob
         {
             heightMap = heightMapNat,
             spawnNoiseMap = spawnNoiseMapNat,
             sampleCentre = heightMapData.sampleCentre,
-            points = pointsNat,
+            xCoords = poissonPointsX,
+            yCoords = poissonPointsY,
+            zCoords = poissonPointsZ,
             meshScale = heightMapData.terrainSettings.meshSettings.meshScale,
             numSamplesBeforeRejection = 25,
             varyRadius = settings.varyRadius,
@@ -77,27 +82,17 @@ public class PoissonPointsNode : BiomeGraphNode
             mapSize = mapSize,
             seed = this.seed
         };
-
         burstJob.Schedule().Complete();
 
-        List<Vector3> points = new List<Vector3>(pointsNat.ToArray());
+        // Read outputs
+        ObjectPositions positions = new ObjectPositions(poissonPointsX.ToArray(), poissonPointsY.ToArray(), poissonPointsZ.ToArray());
 
+        // Cleanup native arrays
         heightMapNat.Dispose();
         spawnNoiseMapNat.Dispose();
-        pointsNat.Dispose();
-
-        float[] xCoords = new float[points.Count];
-        float[] yCoords = new float[points.Count];
-        float[] zCoords = new float[points.Count];
-
-        for (int i = 0; i < points.Count; i++)
-        {
-            xCoords[i] = points[i].x;
-            yCoords[i] = points[i].y;
-            zCoords[i] = points[i].z;
-        }
-
-        ObjectPositions positions = new ObjectPositions(xCoords, yCoords, zCoords);
+        poissonPointsX.Dispose();
+        poissonPointsY.Dispose();
+        poissonPointsZ.Dispose();
 
         return new ObjectPositionData(positions, heightMapData.heightMap);
     }
