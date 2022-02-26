@@ -57,16 +57,16 @@ public static class PoissonDiskSampling
     
             Unity.Mathematics.Random prng = new Unity.Mathematics.Random((uint)seed);
 
-            NativeList<Vector2> points2d = new NativeList<Vector2>(Allocator.Temp);
-            NativeList<Vector2> spawnPoints = new NativeList<Vector2>(Allocator.Temp);
+            NativeList<float2> points2d = new NativeList<float2>(Allocator.Temp);
+            NativeList<float2> spawnPoints = new NativeList<float2>(Allocator.Temp);
 
             grid[0].Add(0);
-            spawnPoints.Add(new Vector2(spawnSize / 2, spawnSize / 2));
+            spawnPoints.Add(new float2(spawnSize / 2, spawnSize / 2));
 
             while (spawnPoints.Length > 0)
             {
                 int spawnIndex = prng.NextInt(0, spawnPoints.Length);
-                Vector2 spawnCentre = spawnPoints[spawnIndex];
+                float2 spawnCentre = spawnPoints[spawnIndex];
                 bool candidateAccepted = false;
 
                 for (int i = 0; i < numSamplesBeforeRejection; i++)
@@ -79,9 +79,9 @@ public static class PoissonDiskSampling
                         localRadius = spawnNoiseMap[(int)(spawnCentre.x) * mapSize + (int)(spawnCentre.y)]
                                     * (maxRadius - minRadius) + minRadius;
                     }
-                    Vector2 dir = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle));
+                    float2 dir = new float2(Mathf.Sin(angle), Mathf.Cos(angle));
 
-                    Vector2 candidate = spawnCentre + dir * (prng.NextFloat() * localRadius + localRadius);
+                    float2 candidate = spawnCentre + dir * (prng.NextFloat() * localRadius + localRadius);
 
                     // Check if the candidate we have randomly selected is valid
                     if (IsValid(candidate, spawnSize, cellSize, localRadius, points2d, grid, gridWidth))
@@ -132,11 +132,11 @@ public static class PoissonDiskSampling
             spawnPoints.Dispose();
         }
 
-        private bool IsValid(Vector2 candidate,
+        private bool IsValid(float2 candidate,
                             float spawnSize,
                             float cellSize,
                             float localRadius,
-                            NativeList<Vector2> points,
+                            NativeList<float2> points,
                             NativeArray<UnsafeList<int>> grid,
                             int gridWidth)
         {
@@ -164,7 +164,7 @@ public static class PoissonDiskSampling
                         int pointIndex = grid[x * gridWidth + y][i] - 1;
                         if (pointIndex != -1)
                         {
-                            float sqrDst = (candidate - points[pointIndex]).sqrMagnitude;
+                            float sqrDst = math.distancesq(candidate, points[pointIndex]);
                             if (sqrDst < localRadius * localRadius)
                             {
                                 return false;
