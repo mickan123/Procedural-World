@@ -241,7 +241,7 @@ void ThermalFluxComputation(int index)
         max(deltaHeight.z, deltaHeight.w)
     );
 
-    float deltaVolume = thermalErosionRate * HARDNESS(state) * maxHeightDifference * 0.5f;
+    float deltaVolume = thermalErosionRate * HARDNESS(state) * maxHeightDifference * 0.5;
 
     // Calculate threshold angle to determine if mass falls in that direction
     float threshold = HARDNESS(state) * talusAngleCoeff + talusAngleTangentBias;
