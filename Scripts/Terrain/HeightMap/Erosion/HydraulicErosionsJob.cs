@@ -6,7 +6,7 @@ using Unity.Mathematics;
 
 
 [BurstCompile(CompileSynchronously = true)]
-struct HydraulicErosionJob : IJob
+struct HydraulicErosionJob : IJobParallelFor
 {
     public NativeArray<float> heightMap;
     public NativeArray<float> waterMap;
@@ -37,246 +37,227 @@ struct HydraulicErosionJob : IJob
 
     [ReadOnly] public int numIterations;
     
-    public void Execute()
+    public void Execute(int index)
     {
-        for (int i = 0; i < numIterations; i++) 
+        if (index >= width && index < width * height - width)
         {
-            WaterIncrease();
-            FluxComputation();
-            VelocityComputation();
-            ErosionDeposition();
-            SedimentTransportation();
-            ThermalFluxComputation();
-            ApplyThermalErosion();
-        }
-        // WaterIncrease();
-    }
-
-    public void WaterIncrease()
-    {
-        for (int i = 0; i < width * height; i++)
-        {
-            waterMap[i] += rainRate;
+            for (int i = 0; i < numIterations; i++) 
+            {
+                WaterIncrease(index);
+                FluxComputation(index);
+                VelocityComputation(index);
+                ErosionDeposition(index);
+                SedimentTransportation(index);
+                ThermalFluxComputation(index);
+                ApplyThermalErosion(index);
+            }
         }
     }
 
-    public void FluxComputation()
+    public void WaterIncrease(int index)
+    {
+        waterMap[index] += rainRate;
+    }
+
+    public void FluxComputation(int index)
     {
         const float pipeArea = 60f;
-        for (int i = width; i < width * height - width; i++)
+        float heightLeft = heightMap[index - 1];
+        float waterLeft = waterMap[index - 1];
+
+        float heightRight = heightMap[index + 1];
+        float waterRight = waterMap[index + 1];
+
+        float heightTop = heightMap[index - width];
+        float waterTop = waterMap[index - width];
+
+        float heightBottom = heightMap[index + width];
+        float waterBottom = waterMap[index + width];
+
+        float height = heightMap[index];
+        float water = waterMap[index];
+        float totalHeight = height + water;
+
+        float4 deltaHeight = new float4(
+            totalHeight - heightLeft - waterLeft,
+            totalHeight - heightRight - waterRight,
+            totalHeight - heightTop - waterTop,
+            totalHeight - heightBottom - waterBottom
+        );
+
+        float4 currentFlux = waterFluxMap[index];
+        
+        float4 outputFlux = new float4(
+            math.max(0, currentFlux.x + timestep * gravity * deltaHeight.x * pipeArea),
+            math.max(0, currentFlux.y + timestep * gravity * deltaHeight.y * pipeArea),
+            math.max(0, currentFlux.z + timestep * gravity * deltaHeight.z * pipeArea),
+            math.max(0, currentFlux.w + timestep * gravity * deltaHeight.w * pipeArea)
+        );
+
+        float sumOutputFlux = outputFlux.x + outputFlux.y + outputFlux.z + outputFlux.w;
+
+        if (sumOutputFlux != 0)
         {
-            float heightLeft = heightMap[i - 1];
-            float waterLeft = waterMap[i - 1];
-
-            float heightRight = heightMap[i + 1];
-            float waterRight = waterMap[i + 1];
-
-            float heightTop = heightMap[i - width];
-            float waterTop = waterMap[i - width];
-
-            float heightBottom = heightMap[i + width];
-            float waterBottom = waterMap[i + width];
-
-            float height = heightMap[i];
-            float water = waterMap[i];
-            float totalHeight = height + water;
-
-            float4 deltaHeight = new float4(
-                totalHeight - heightLeft - waterLeft,
-                totalHeight - heightRight - waterRight,
-                totalHeight - heightTop - waterTop,
-                totalHeight - heightBottom - waterBottom
-            );
-
-            float4 currentFlux = waterFluxMap[i];
+            outputFlux.x *= math.min(1, water / (sumOutputFlux * timestep));
+            outputFlux.y *= math.min(1, water / (sumOutputFlux * timestep));
+            outputFlux.w *= math.min(1, water / (sumOutputFlux * timestep));
+            outputFlux.z *= math.min(1, water / (sumOutputFlux * timestep));
+        }
             
-            float4 outputFlux = new float4(
-                math.max(0, currentFlux.x + timestep * gravity * deltaHeight.x * pipeArea),
-                math.max(0, currentFlux.y + timestep * gravity * deltaHeight.y * pipeArea),
-                math.max(0, currentFlux.z + timestep * gravity * deltaHeight.z * pipeArea),
-                math.max(0, currentFlux.w + timestep * gravity * deltaHeight.w * pipeArea)
-            );
-
-            float sumOutputFlux = outputFlux.x + outputFlux.y + outputFlux.z + outputFlux.w;
-
-            if (sumOutputFlux != 0)
-            {
-                outputFlux.x *= math.min(1, water / (sumOutputFlux * timestep));
-                outputFlux.y *= math.min(1, water / (sumOutputFlux * timestep));
-                outputFlux.w *= math.min(1, water / (sumOutputFlux * timestep));
-                outputFlux.z *= math.min(1, water / (sumOutputFlux * timestep));
-            }
-            
-            waterFluxMap[i] = outputFlux;
-        }
+        waterFluxMap[index] = outputFlux;
     }
 
-    public void VelocityComputation()
+    public void VelocityComputation(int index)
     {
-        for (int i = width; i < width * height - width; i++)
-        {
-            float4 outputFlux = waterFluxMap[i];
-            float4 leftFlux = waterFluxMap[i - 1];
-            float4 rightFlux = waterFluxMap[i + 1];
-            float4 topFlux = waterFluxMap[i - width];
-            float4 bottomFlux = waterFluxMap[i + width];
+        float4 outputFlux = waterFluxMap[index];
+        float4 leftFlux = waterFluxMap[index - 1];
+        float4 rightFlux = waterFluxMap[index + 1];
+        float4 topFlux = waterFluxMap[index - width];
+        float4 bottomFlux = waterFluxMap[index + width];
 
-            float4 inputFlux = new float4(
-                RightDir(leftFlux),
-                LeftDir(rightFlux),
-                BottomDir(topFlux),
-                TopDir(bottomFlux)
-            );
+        float4 inputFlux = new float4(
+            RightDir(leftFlux),
+            LeftDir(rightFlux),
+            BottomDir(topFlux),
+            TopDir(bottomFlux)
+        );
 
-            float deltaVolume = timestep * (SumComponents(inputFlux) - SumComponents(outputFlux));
+        float deltaVolume = timestep * (SumComponents(inputFlux) - SumComponents(outputFlux));
 
-            waterMap[i] += deltaVolume;
+        waterMap[index] += deltaVolume;
 
-            velocityMap[i] = new float2(
-                0.5f * (LeftDir(inputFlux) - LeftDir(outputFlux) + RightDir(outputFlux) + RightDir(inputFlux)),
-                0.5f * (BottomDir(inputFlux) - BottomDir(outputFlux) + TopDir(outputFlux) + TopDir(inputFlux))
-            );
-        }
+        velocityMap[index] = new float2(
+            0.5f * (LeftDir(inputFlux) - LeftDir(outputFlux) + RightDir(outputFlux) + RightDir(inputFlux)),
+            0.5f * (BottomDir(inputFlux) - BottomDir(outputFlux) + TopDir(outputFlux) + TopDir(inputFlux))
+        );
     }
 
-    public void ErosionDeposition()
+    public void ErosionDeposition(int index)
     {
-        for (int i = width; i < width * height - width; i++)
+        float curHeight = heightMap[index];
+
+        float heightLeft = heightMap[index - 1];
+        float heightRight = heightMap[index + 1];
+        float heightTop = heightMap[index - width];
+        float heightBottom = heightMap[index + width];
+
+        float2 velocity = velocityMap[index];
+
+        // Tilt angle computation
+        float3 dhdx = new float3(2f, heightRight - heightLeft, 0f);
+        float3 dhdy = new float3(0f, heightTop - heightBottom, 2f);
+        float3 normal = math.cross(dhdx, dhdy);
+        float sinTiltAngle = math.abs(normal.y) / math.length(normal);
+
+        float deltaHeight = initialHeightMap[index] - curHeight;
+        float maxErosionMultiplier = 1f - math.max(0, deltaHeight) / maxErosionDepth;
+        maxErosionMultiplier = 1f;
+
+        float sedimentCapacity = sedimentCapacityFactor * math.length(velocity) * math.min(sinTiltAngle, 0.05f) * maxErosionMultiplier;
+
+        // Take sediment from soil if we haven't filled up capacity
+        float curSediment = sedimentMap[index];
+        if (curSediment < sedimentCapacity)
         {
-            float curHeight = heightMap[i];
-
-            float heightLeft = heightMap[i - 1];
-            float heightRight = heightMap[i + 1];
-            float heightTop = heightMap[i - width];
-            float heightBottom = heightMap[i + width];
-
-            float2 velocity = velocityMap[i];
-
-            // Tilt angle computation
-            float3 dhdx = new float3(2f, heightRight - heightLeft, 0f);
-            float3 dhdy = new float3(0f, heightTop - heightBottom, 2f);
-            float3 normal = math.cross(dhdx, dhdy);
-            float sinTiltAngle = math.abs(normal.y) / math.length(normal);
-
-            float deltaHeight = initialHeightMap[i] - curHeight;
-            float maxErosionMultiplier = 1f - math.max(0, deltaHeight) / maxErosionDepth;
-            maxErosionMultiplier = 1f;
-
-            float sedimentCapacity = sedimentCapacityFactor * math.length(velocity) * math.min(sinTiltAngle, 0.05f) * maxErosionMultiplier;
-
-            // Take sediment from soil if we haven't filled up capacity
-            float curSediment = sedimentMap[i];
-            if (curSediment < sedimentCapacity)
-            {
-                float deltaSediment = timestep * sedimentDisolveFactor * hardnessMap[i] * (sedimentCapacity - curSediment);
-                heightMap[i] -= deltaSediment;
-                waterMap[i] += deltaSediment;
-                sedimentMap[i] += deltaSediment;
-            }
-            else // Deposit sediment if we are over capacity
-            {
-                float deltaSediment = timestep * sedimentDisolveFactor * hardnessMap[i] * (curSediment - sedimentCapacity);
-                heightMap[i] += deltaSediment;
-                waterMap[i] -= deltaSediment;
-                sedimentMap[i] -= deltaSediment;
-            }
-
-            // Water evaporation.
-            waterMap[i] *= (1 - evaporateSpeed) * timestep;
-
-            // Hardness update
-            hardnessMap[i] = hardnessMap[i] - timestep * sedimentSofteningFactor * sedimentDisolveFactor * (sedimentMap[i] - sedimentCapacity);
-            hardnessMap[i] = math.clamp(hardnessMap[i], 0.1f, 1f);
+            float deltaSediment = timestep * sedimentDisolveFactor * hardnessMap[index] * (sedimentCapacity - curSediment);
+            heightMap[index] -= deltaSediment;
+            waterMap[index] += deltaSediment;
+            sedimentMap[index] += deltaSediment;
         }
+        else // Deposit sediment if we are over capacity
+        {
+            float deltaSediment = timestep * sedimentDisolveFactor * hardnessMap[index] * (curSediment - sedimentCapacity);
+            heightMap[index] += deltaSediment;
+            waterMap[index] -= deltaSediment;
+            sedimentMap[index] -= deltaSediment;
+        }
+
+        // Water evaporation.
+        waterMap[index] *= (1 - evaporateSpeed) * timestep;
+
+        // Hardness update
+        hardnessMap[index] = hardnessMap[index] - timestep * sedimentSofteningFactor * sedimentDisolveFactor * (sedimentMap[index] - sedimentCapacity);
+        hardnessMap[index] = math.clamp(hardnessMap[index], 0.1f, 1f);
     }
 
-    public void SedimentTransportation()
+    public void SedimentTransportation(int index)
     {
         float maxIndex = width - 1;
         float minIndex = 0;
-        for (int i = 0; i < width * height; i++)
+        float2 velocity = velocityMap[index];
+        float2 pos = new float2(
+            math.floor(index % width),
+            math.floor(index / height)
+        );
+
+        float updatedX = math.clamp(pos.x + velocity.x * timestep, minIndex, maxIndex);
+        float updatedY = math.clamp(pos.y + velocity.y * timestep, minIndex, maxIndex);
+
+        float2 updatedPos = new float2(updatedX, updatedY);
+
+        sedimentMap[index] = SampleBillinear(updatedPos);
+    }
+
+    public void ThermalFluxComputation(int index)
+    {
+        float heightLeft = heightMap[index - 1];
+        float heightRight = heightMap[index + 1];
+        float heightTop = heightMap[index - width];
+        float heightBottom = heightMap[index + width];
+
+        float height = heightMap[index];
+
+        float4 deltaHeight = new float4(
+            height - heightLeft,
+            height - heightRight,
+            height - heightTop,
+            height - heightBottom
+        );  
+
+        float maxHeightDifference = math.cmax(deltaHeight);
+        float deltaVolume = thermalErosionRate * hardnessMap[index] * maxHeightDifference * 0.5f;
+
+        // Calculate threshold angle to determine if mass falls in that direction
+        float threshold = hardnessMap[index] * talusAngleCoeff + talusAngleTangentBias;
+
+        float4 tanAngle = deltaHeight;
+        float4 k = new float4();
+        
+        if (tanAngle.x > threshold)
+            k.x = deltaHeight.x;
+        if (tanAngle.y > threshold)
+            k.y = deltaHeight.y;
+        if (tanAngle.z > threshold)
+            k.z = deltaHeight.z;
+        if (tanAngle.w > threshold)
+            k.w = deltaHeight.w;
+
+        float sumProportions = SumComponents(k);
+        if (sumProportions != 0)
         {
-            float2 velocity = velocityMap[i];
-            float2 pos = new float2(
-                math.floor(i % width),
-                math.floor(i / height)
-            );
-
-            float updatedX = math.clamp(pos.x + velocity.x * timestep, minIndex, maxIndex);
-            float updatedY = math.clamp(pos.y + velocity.y * timestep, minIndex, maxIndex);
-
-            float2 updatedPos = new float2(updatedX, updatedY);
-
-            sedimentMap[i] = SampleBillinear(updatedPos);
+            thermalFluxMap[index] = deltaVolume * k / sumProportions;
         }
     }
 
-    public void ThermalFluxComputation()
+    public void ApplyThermalErosion(int index)
     {
-        for (int i = width; i < width * height - width; i++)
-        {
-            float heightLeft = heightMap[i - 1];
-            float heightRight = heightMap[i + 1];
-            float heightTop = heightMap[i - width];
-            float heightBottom = heightMap[i + width];
+        float4 outputFlux = thermalFluxMap[index];
 
-            float height = heightMap[i];
+        float4 leftFlux = thermalFluxMap[index - 1];
+        float4 rightFlux = thermalFluxMap[index + 1];
+        float4 topFlux = thermalFluxMap[index - width];
+        float4 bottomFlux = thermalFluxMap[index + width];
 
-            float4 deltaHeight = new float4(
-                height - heightLeft,
-                height - heightRight,
-                height - heightTop,
-                height - heightBottom
-            );  
+        float4 inputFlux = new float4(
+            RightDir(leftFlux),
+            LeftDir(rightFlux),
+            BottomDir(topFlux),
+            TopDir(bottomFlux)
+        );
 
-            float maxHeightDifference = math.cmax(deltaHeight);
-            float deltaVolume = thermalErosionRate * hardnessMap[i] * maxHeightDifference * 0.5f;
+        float deltaVolume = SumComponents(inputFlux) - SumComponents(outputFlux);
 
-            // Calculate threshold angle to determine if mass falls in that direction
-            float threshold = hardnessMap[i] * talusAngleCoeff + talusAngleTangentBias;
-
-            float4 tanAngle = deltaHeight;
-            float4 k = new float4();
-            
-            if (tanAngle.x > threshold)
-                k.x = deltaHeight.x;
-            if (tanAngle.y > threshold)
-                k.y = deltaHeight.y;
-            if (tanAngle.z > threshold)
-                k.z = deltaHeight.z;
-            if (tanAngle.w > threshold)
-                k.w = deltaHeight.w;
-
-            float sumProportions = SumComponents(k);
-            if (sumProportions != 0)
-            {
-                thermalFluxMap[i] = deltaVolume * k / sumProportions;
-            }
-        }   
-    }
-
-    public void ApplyThermalErosion()
-    {
-        for (int i = width; i < width * height - width; i++)
-        {
-            float4 outputFlux = thermalFluxMap[i];
-
-            float4 leftFlux = thermalFluxMap[i - 1];
-            float4 rightFlux = thermalFluxMap[i + 1];
-            float4 topFlux = thermalFluxMap[i - width];
-            float4 bottomFlux = thermalFluxMap[i + width];
-
-            float4 inputFlux = new float4(
-                RightDir(leftFlux),
-                LeftDir(rightFlux),
-                BottomDir(topFlux),
-                TopDir(bottomFlux)
-            );
-
-            float deltaVolume = SumComponents(inputFlux) - SumComponents(outputFlux);
-
-            heightMap[i] += timestep * deltaVolume * thermalErosionRate;
-        }
+        heightMap[index] += timestep * deltaVolume * thermalErosionRate;
     }
 
     public float SampleBillinear(float2 pos)

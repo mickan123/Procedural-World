@@ -6,7 +6,7 @@ using Unity.Mathematics;
 
 public static class HydraulicErosion
 {
-    private static readonly bool gpuErosion = false;
+    private static readonly bool gpuErosion = true;
 
     public static void Init(TerrainSettings settings)
     {
@@ -204,7 +204,9 @@ public static class HydraulicErosion
             velocityMap = velocityMapNat,
             initialHeightMap = initialHeightMapNat
         };
-        burstJob.Schedule(heightMapNat.Length, 1).Complete();
+        Debug.Log(mapSize);
+        Debug.Log(heightMapNat.Length);
+        burstJob.Schedule(mapSize + 5, 1).Complete();
 
         heightMapNat.CopyTo(heightMap);
 
