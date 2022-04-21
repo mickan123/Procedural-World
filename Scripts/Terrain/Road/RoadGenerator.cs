@@ -3,6 +3,7 @@ using UnityEngine;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using BurstGridSearch;
 
 public static class RoadGenerator
 {
@@ -50,7 +51,7 @@ public static class RoadGenerator
         for (int i = 0; i < routes.Count; i++)
         {
             Vector3[] path = CreatePath(routes[i], originalHeightMap, terrainSettings.maxRoadWidth);
-            RoadData data = CreateRoad(path, finalHeightMap, originalHeightMap, roadSettingsList, info);
+            RoadData data = CreateRoad(path, finalHeightMap, originalHeightMap, roadSettingsList, info, terrainSettings.maxRoadWidth);
 
             finalHeightMap = data.heightMap;
 
@@ -238,7 +239,8 @@ public static class RoadGenerator
         float[][] finalHeightMap,
         float[][] originalHeightMap,
         List<RoadSettings> roadSettingsList,
-        BiomeInfo info
+        BiomeInfo info,
+        float maxRoadWidth
     )
     {   
         int mapSize = originalHeightMap.Length;
@@ -265,8 +267,9 @@ public static class RoadGenerator
             originalHeightMapNat.GetSubArray(start, mapSize).CopyFrom(originalHeightMap[i]);
         }
         biomeStrengthsNat.CopyFrom(info.biomeStrengths);
-
         pathNat.CopyFrom(path);
+
+        NativeArray<int> closestPathIndexesNat = GetClosestPathIndexes(mapSize, maxRoadWidth, path, originalHeightMap);
 
         for (int i = 0; i < roadSettingsList.Count; i++)
         {
@@ -283,6 +286,7 @@ public static class RoadGenerator
             mapSize = mapSize,
             numBiomes = numBiomes,
             biomeStrengths = biomeStrengthsNat,
+            closestPathIndexes = closestPathIndexesNat,
         };
 
         burstJob.Schedule().Complete();
@@ -300,7 +304,78 @@ public static class RoadGenerator
         roadStrengthMapNat.Dispose();
         biomeStrengthsNat.Dispose();
 
+        closestPathIndexesNat.Dispose();
+
         return new RoadData(finalHeightMap, roadStrengthMap);
+    }
+
+    public static NativeArray<int> GetClosestPathIndexes(int mapSize, float maxRoadWidth, Vector3[] path, float[][] originalHeightMap)
+    {
+        bool[] getClosestPathIndex = new bool[mapSize * mapSize];
+
+        for (int i = 0; i < path.Length; i++)
+        {
+            // Calculate search area and clamp it within map bounds
+            int startX = (int)math.max(0f, path[i].x - maxRoadWidth);
+            int endX = (int)math.min(mapSize - 1, path[i].x + maxRoadWidth + 1);
+            int startZ = (int)math.max(0f, path[i].z - maxRoadWidth);
+            int endZ = (int)math.min(mapSize - 1, path[i].z + maxRoadWidth + 1);
+
+            for (int x = startX; x <= endX; x++)
+            {
+                for (int z = startZ; z <= endZ; z++)
+                {   
+                    getClosestPathIndex[x * mapSize + z] = true;
+                }
+            }
+        }
+
+        int queryLength = 0;
+        for (int i = 0; i < mapSize * mapSize; i++)
+        {
+            if (getClosestPathIndex[i]) 
+            {
+                queryLength++;
+            }
+        }
+
+        Vector3[] queries = new Vector3[queryLength];
+        int queryIdx = 0;
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                if (getClosestPathIndex[i * mapSize + j]) 
+                {
+                    float height = originalHeightMap[i][j];
+                    queries[queryIdx] = new Vector3(i, height, j);
+                    queryIdx++;
+                }
+            }
+        }
+        GridSearchBurst gsb = new GridSearchBurst(maxRoadWidth);
+        gsb.initGrid(path);
+
+        int[] closestPoints = gsb.searchClosestPoint(queries);
+        NativeArray<int> closestPathIndexesNat = new NativeArray<int>(mapSize * mapSize, Allocator.TempJob);
+
+        int closetsPathIndexCounter = 0;
+        for (int i = 0; i < mapSize * mapSize; i++)
+        {
+            if (getClosestPathIndex[i])
+            {
+                closestPathIndexesNat[i] = closestPoints[closetsPathIndexCounter];
+                closetsPathIndexCounter++;   
+            }
+            else
+            {
+                closestPathIndexesNat[i] = -1;
+            }
+        }
+
+        gsb.clean();
+        
+        return closestPathIndexesNat;
     }
 
 

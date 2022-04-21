@@ -2,20 +2,23 @@ using UnityEngine;
 using Unity.Burst;
 using Unity.Jobs;
 using Unity.Collections;
+using Unity.Mathematics;
 
 [BurstCompile]
 struct CarvePathJob : IJob
 {
     public NativeArray<float> finalHeightMap;
-    public NativeArray<float> originalHeightMap;
+    [ReadOnly] public NativeArray<float> originalHeightMap;
     public NativeArray<float> roadStrengthMap;
     public NativeArray<Vector3> path;
 
-    public NativeArray<RoadSettingsStruct> roadSettings;
+    [ReadOnly] public NativeArray<RoadSettingsStruct> roadSettings;
 
-    public NativeArray<float> biomeStrengths;
-    public int numBiomes;
-    public int mapSize;
+    [ReadOnly] public NativeArray<float> biomeStrengths;
+    [ReadOnly] public int numBiomes;
+    [ReadOnly] public int mapSize;
+
+    [ReadOnly] public NativeArray<int> closestPathIndexes;
 
     public void Execute() 
     {
@@ -27,7 +30,21 @@ struct CarvePathJob : IJob
                 maxWidth = roadSettings[i].width;
             }
         }
-        NativeArray<int> closestPathIndexes = FindClosestPathIndexes(originalHeightMap, path, maxWidth, mapSize);
+
+        NativeArray<AverageRoadSettings> averageRoadSettings = new NativeArray<AverageRoadSettings>(mapSize * mapSize, Allocator.Temp);
+        NativeArray<Vector3> closestPointsOnLine = new NativeArray<Vector3>(mapSize * mapSize, Allocator.Temp);
+        for (int x = 0; x < mapSize; x++)
+        {
+            for (int y = 0; y < mapSize; y++)
+            {
+                if (closestPathIndexes[x * mapSize + y] != -1)
+                {
+                    averageRoadSettings[x * mapSize + y] = CalculateAverageRoadSettings(x, y);
+                    closestPointsOnLine[x * mapSize + y] = ClosestPointOnLine(x, y, closestPathIndexes[x * mapSize + y]);
+                }
+            }
+        }
+        
 
         for (int x = 0; x < mapSize; x++)
         {
@@ -35,18 +52,13 @@ struct CarvePathJob : IJob
             {
                 if (closestPathIndexes[x * mapSize + y] != -1)
                 {
-                    AverageRoadSettings averageRoadSettings = CalculateAverageRoadSettings(mapSize, numBiomes, x, y, roadSettings, biomeStrengths);
-                    Vector3 closestPointOnLine = ClosestPointOnLine(mapSize, x, y, originalHeightMap, closestPathIndexes[x * mapSize + y], path);
                     Vector3 curPoint = new Vector3(x, originalHeightMap[x * mapSize + y], y);
                     CarvePoint(
                         curPoint,
-                        closestPointOnLine,
-                        finalHeightMap,
-                        originalHeightMap,
-                        mapSize,
+                        closestPointsOnLine[x * mapSize + y],
                         x,
                         y,
-                        averageRoadSettings
+                        averageRoadSettings[x * mapSize + y]
                     );
                 }
             }
@@ -59,95 +71,26 @@ struct CarvePathJob : IJob
             {
                 if (closestPathIndexes[x * mapSize + y] != -1)
                 {
-                    AverageRoadSettings averageRoadSettings = CalculateAverageRoadSettings(mapSize, numBiomes, x, y, roadSettings, biomeStrengths);
-                    Vector3 closestPointOnLine = ClosestPointOnLine(mapSize, x, y, originalHeightMap, closestPathIndexes[x * mapSize + y], path);
                     Vector3 curPoint = new Vector3(x, originalHeightMap[x * mapSize + y], y);
                     CalculateRoadStrength(
                         curPoint,
-                        closestPointOnLine,
-                        finalHeightMap,
-                        originalHeightMap,
-                        mapSize,
+                        closestPointsOnLine[x * mapSize + y],
                         x,
                         y,
-                        averageRoadSettings,
-                        roadStrengthMap
+                        averageRoadSettings[x * mapSize + y]
                     );
                 }
             }
         }
 
-        closestPathIndexes.Dispose();
+        averageRoadSettings.Dispose();
+        closestPointsOnLine.Dispose();
     }
 
-    // Finds closest point on path at every point
-    private static NativeArray<int> FindClosestPathIndexes(NativeArray<float> originalHeightMap, NativeArray<Vector3> path, float maxRoadWidth, int mapSize)
-    {
-        NativeArray<bool> getClosestPathIndex = new NativeArray<bool>(mapSize * mapSize, Allocator.Temp);
-
-        // Check whether a coordinate is approx within roadSettings.width range of 
-        // a point on path to determine whether we bother getting the closest path index
-        // Points not within this distance dont' matter
-        for (int i = 0; i < path.Length; i++)
-        {
-            // Calculate search area and clamp it within map bounds
-            int startX = (int)Mathf.Max(0f, path[i].x - maxRoadWidth);
-            int endX = (int)Mathf.Min(mapSize - 1, path[i].x + maxRoadWidth + 1);
-            int startZ = (int)Mathf.Max(0f, path[i].z - maxRoadWidth);
-            int endZ = (int)Mathf.Min(mapSize - 1, path[i].z + maxRoadWidth + 1);
-
-            for (int x = startX; x <= endX; x++)
-            {
-                for (int z = startZ; z <= endZ; z++)
-                {
-                    getClosestPathIndex[x * mapSize + z] = true;
-                }
-            }
-        }
-
-        NativeArray<int> closestPathIndexes = new NativeArray<int>(mapSize * mapSize, Allocator.Temp);
-
-        Vector3 delta = new Vector3();
-        for (int x = 0; x < mapSize; x++)
-        {
-            for (int z = 0; z < mapSize; z++)
-            {
-                float y = originalHeightMap[x * mapSize + z];
-                if (getClosestPathIndex[x * mapSize + z])
-                {
-                    float minDist = float.MaxValue;
-                    int closestPointIndex = 0;
-                    for (int k = 0; k < path.Length; k++)
-                    {
-                        delta = path[k] - new Vector3(x, y, z);
-                        float dist = delta.sqrMagnitude;
-                        if (dist < minDist)
-                        {
-                            minDist = dist;
-                            closestPointIndex = k;
-                        }
-                    }
-                    closestPathIndexes[x* mapSize + z] = closestPointIndex;
-                }
-                else
-                {
-                    closestPathIndexes[x * mapSize + z] = -1;
-                }
-            }
-        }
-
-        getClosestPathIndex.Dispose();
-
-        return closestPathIndexes;
-    }
-
-    private static Vector3 ClosestPointOnLine(
-        int mapSize,
+    private Vector3 ClosestPointOnLine(
         int x,
         int z,
-        NativeArray<float> originalHeightMap,
-        int closestPointIndex,
-        NativeArray<Vector3> path
+        int closestPointIndex
     )
     {
         Vector3 curPoint = new Vector3(x, originalHeightMap[x * mapSize + z], z);
@@ -193,12 +136,9 @@ struct CarvePathJob : IJob
         return closestPoint;    
     }
 
-    private static void CarvePoint(
+    private void CarvePoint(
         Vector3 curPoint,
         Vector3 closestPointOnLine,
-        NativeArray<float> finalHeightMap,
-        NativeArray<float> originalHeightMap,
-        int mapSize,
         int x,
         int y,
         AverageRoadSettings averageRoadSettings
@@ -206,7 +146,7 @@ struct CarvePathJob : IJob
     {            
         float deltaX = closestPointOnLine.x - curPoint.x;
         float deltaZ = closestPointOnLine.z - curPoint.z;
-        float distance = Mathf.Sqrt(deltaX * deltaX + deltaZ * deltaZ);
+        float distance = math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
         if (distance > averageRoadSettings.width)
         {
             return;
@@ -216,8 +156,7 @@ struct CarvePathJob : IJob
         // Calculate slope multiplier
         float angle = CalculateAngle(mapSize, x, y, finalHeightMap);
         float slopeMultiplier = 1f - averageRoadSettings.angleBlendFactor * angle / averageRoadSettings.maxAngle;
-        slopeMultiplier = slopeMultiplier < 0f ? 0f : slopeMultiplier;
-        slopeMultiplier = slopeMultiplier > 1f ? 1f : slopeMultiplier;
+        slopeMultiplier = math.clamp(slopeMultiplier, 0f, 1f);
         
         // If within half width of road then fully carve path, otherwise smooth outwards
         float halfRoadWidth = averageRoadSettings.width / 2f;
@@ -239,21 +178,17 @@ struct CarvePathJob : IJob
         }
     }
 
-    private static void CalculateRoadStrength(
+    private void CalculateRoadStrength(
         Vector3 curPoint,
         Vector3 closestPointOnLine,
-        NativeArray<float> finalHeightMap,
-        NativeArray<float> originalHeightMap,
-        int mapSize,
         int x,
         int y,
-        AverageRoadSettings averageRoadSettings,
-        NativeArray<float> roadStrengthMap
+        AverageRoadSettings averageRoadSettings
     )
     {
         float deltaX = closestPointOnLine.x - curPoint.x;
         float deltaZ = closestPointOnLine.z - curPoint.z;
-        float distance = Mathf.Sqrt(deltaX * deltaX + deltaZ * deltaZ);
+        float distance = math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
         if (distance > averageRoadSettings.width)
         {
             return;
@@ -269,26 +204,26 @@ struct CarvePathJob : IJob
         float halfRoadWidth = averageRoadSettings.width / 2f;
         if (distance < halfRoadWidth)
         {
-            roadStrengthMap[x * mapSize + y] = Mathf.Max(slopeMultiplier, roadStrengthMap[x * mapSize + y]);
+            roadStrengthMap[x * mapSize + y] = math.max(slopeMultiplier, roadStrengthMap[x * mapSize + y]);
         }
         else if (distance < averageRoadSettings.width)
         {
             float percentage = (distance - halfRoadWidth) / halfRoadWidth;
             slopeMultiplier = slopeMultiplier * (1f - percentage);
-            roadStrengthMap[x * mapSize + y] = Mathf.Max(slopeMultiplier, roadStrengthMap[x * mapSize + y]);
+            roadStrengthMap[x * mapSize + y] = math.max(slopeMultiplier, roadStrengthMap[x * mapSize + y]);
         }
     }
 
     private static readonly int[] offsets1d = {  1, 0 , 0, 1, -1, 0, 0, -1 }; // 1d offsets for burst compiler
 
-    public static float CalculateAngle(int mapSize, int xIn, int yIn, NativeArray<float> heightMap)
+    public float CalculateAngle(int mapSize, int xIn, int yIn, NativeArray<float> heightMap)
     {
         float maxAngle = 0f;
 
         for (int i = 0; i < 4; i++)
         {
-            int x2 = Mathf.Min(Mathf.Max(xIn + offsets1d[i * 2], 0), mapSize - 1);
-            int y2 = Mathf.Min(Mathf.Max(yIn + offsets1d[i * 2 + 1], 0), mapSize - 1);
+            int x2 = math.clamp(xIn + offsets1d[i * 2], 0, mapSize - 1);
+            int y2 = math.clamp(yIn + offsets1d[i * 2 + 1], 0, mapSize - 1);
             float angle = AngleBetweenTwoPoints(
                 xIn,
                 yIn,
@@ -297,18 +232,18 @@ struct CarvePathJob : IJob
                 mapSize,
                 heightMap
             );
-            maxAngle = Mathf.Max(angle, maxAngle);
+            maxAngle = math.max(angle, maxAngle);
         }
         return maxAngle;
     }
 
-    private static float AngleBetweenTwoPoints(int x1, int y1, int x2, int y2, int mapSize, NativeArray<float> heightMap)
+    private float AngleBetweenTwoPoints(int x1, int y1, int x2, int y2, int mapSize, NativeArray<float> heightMap)
     {
-        float angle = Mathf.Rad2Deg * Mathf.Atan2(
+        float angle = math.degrees(math.atan2(
             heightMap[x1 * mapSize + y1] - heightMap[x2 * mapSize + y2],
             1f
-        );
-        angle = Mathf.Abs(angle); // Get abs value
+        ));
+        angle = math.abs(angle); // Get abs value
         return angle;
     }
 
@@ -328,7 +263,7 @@ struct CarvePathJob : IJob
         }
     }
 
-    private static AverageRoadSettings CalculateAverageRoadSettings(int mapSize, int numBiomes, int x, int y, NativeArray<RoadSettingsStruct> roadSettingsList, NativeArray<float> biomeStrengths)
+    private AverageRoadSettings CalculateAverageRoadSettings(int x, int y)
     {
         float maxAngle = 0f;
         float distanceBlendFactor = 0f;
@@ -337,10 +272,10 @@ struct CarvePathJob : IJob
 
         for (int biome = 0; biome < numBiomes; biome++)
         {
-            maxAngle += biomeStrengths[x * mapSize * numBiomes + y * numBiomes + biome] * roadSettingsList[biome].maxAngle;
-            distanceBlendFactor += biomeStrengths[x * mapSize * numBiomes + y * numBiomes + biome] * roadSettingsList[biome].distanceBlendFactor;
-            angleBlendFactor += biomeStrengths[x * mapSize * numBiomes + y * numBiomes + biome] * roadSettingsList[biome].angleBlendFactor;
-            width += biomeStrengths[x * mapSize * numBiomes + y * numBiomes + biome] * roadSettingsList[biome].width;
+            maxAngle += biomeStrengths[x * mapSize * numBiomes + y * numBiomes + biome] * roadSettings[biome].maxAngle;
+            distanceBlendFactor += biomeStrengths[x * mapSize * numBiomes + y * numBiomes + biome] * roadSettings[biome].distanceBlendFactor;
+            angleBlendFactor += biomeStrengths[x * mapSize * numBiomes + y * numBiomes + biome] * roadSettings[biome].angleBlendFactor;
+            width += biomeStrengths[x * mapSize * numBiomes + y * numBiomes + biome] * roadSettings[biome].width;
         }
         return new AverageRoadSettings(maxAngle, distanceBlendFactor, angleBlendFactor, width);
     }
