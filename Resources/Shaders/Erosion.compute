@@ -20,6 +20,8 @@
 #define IS_TOP_BORDER (uint(uint(index) / uint(mapSize)) < 1)
 #define IS_BOTTOM_BORDER (uint(uint(index) / uint(mapSize)) > uint(mapSize) - 2)
 
+#define PIPEAREA 60
+
 // Heightmap, r = height, g = water height, b = sediment, r = placeholder
 RWStructuredBuffer<float4> HeightMap;
 
@@ -102,7 +104,7 @@ void FluxComputation(int index)
     );
 
     float pipeArea = 60;
-    outputFlux = max(0, outputFlux + timestep * gravity * deltaHeight * pipeArea);
+    outputFlux = max(0, outputFlux + deltaHeight * (timestep * gravity * PIPEAREA));
     
     // Rescale flux to not exceed total amount of water in a cell
     float sumOutputFlux = SUM_COMPS(outputFlux);
