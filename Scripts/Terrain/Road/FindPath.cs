@@ -7,10 +7,8 @@ using Unity.Mathematics;
 [BurstCompile(Debug = true)]
 struct FindPathJob : IJob
 {   
-    [ReadOnly]
-    public NativeArray<float> heightMap;
-    [WriteOnly]
-    public NativeList<int2> path;
+    [ReadOnly] public NativeArray<float> heightMap;
+    [WriteOnly] public NativeList<int2> path;
 
     public Vector3 roadStart;
     public Vector3 roadEnd;
