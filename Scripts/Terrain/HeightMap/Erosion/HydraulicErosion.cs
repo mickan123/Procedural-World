@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Threading;
 using Unity.Collections;
+using System.Collections.Generic;
 using Unity.Jobs;
 using Unity.Mathematics;
 
@@ -8,9 +9,14 @@ public static class HydraulicErosion
 {
     private static readonly bool gpuErosion = true;
 
+    private static readonly object locker = new object();
+
+    private static Dictionary<Thread, bool> gpuDone;
+
     public static void Init(TerrainSettings settings)
     {
         ErosionSettings.erosionShader = Resources.Load<ComputeShader>("Shaders/Erosion");
+        gpuDone = new Dictionary<Thread, bool>();
     }
 
     public static float[][] Erode(
@@ -34,20 +40,37 @@ public static class HydraulicErosion
 
         if (gpuErosion)
         {
-            bool gpuDone = false;
+            UnityEngine.Rendering.AsyncGPUReadbackRequest request = new UnityEngine.Rendering.AsyncGPUReadbackRequest();
 
+            NativeArray<float> gpuData = new NativeArray<float>(mapSize * mapSize * 4, Allocator.Persistent);
+
+            Thread curThread = System.Threading.Thread.CurrentThread;
+
+            lock(locker)
+            {
+                gpuDone[curThread] = false;
+            }
+            
             if (terrainSettings.IsMainThread())
             {
-                GPUErosion(erosionSettings, mapSize, erodedHeightMap, ref gpuDone);
+                GPUErosion(erosionSettings, mapSize, erodedHeightMap, curThread, gpuData, ref request);
+                request.WaitForCompletion();
             }
             else
             {
-                Dispatcher.RunOnMainThread(() => GPUErosion(erosionSettings, mapSize, erodedHeightMap, ref gpuDone));
+                Dispatcher.RunOnMainThread(() => GPUErosion(erosionSettings, mapSize, erodedHeightMap, curThread, gpuData, ref request));
+                while (!gpuDone[curThread])
+                {
+                    Thread.Sleep(1);
+                }
             }
-            while (!gpuDone)
+
+            for (int i = 0; i < mapSize * mapSize; i++)
             {
-                Thread.Sleep(1);
+                float delta = erodedHeightMap[i] - gpuData[i * 4];
+                erodedHeightMap[i] = gpuData[i * 4];
             }
+            gpuData.Dispose();
         }
         else
         {
@@ -76,7 +99,7 @@ public static class HydraulicErosion
         }
     }
 
-    public static void GPUErosion(ErosionSettings settings, int mapSize, float[] heightMap, ref bool gpuDone)
+    public static void GPUErosion(ErosionSettings settings, int mapSize, float[] heightMap, Thread threadId, NativeArray<float> gpuData, ref UnityEngine.Rendering.AsyncGPUReadbackRequest request)
     {
         int length = heightMap.Length;
 
@@ -145,13 +168,15 @@ public static class HydraulicErosion
             );
         }
         
-        heightMapBuffer.GetData(computeShaderHeightMap);
-        for (int i = 0; i < length; i++)
+        request = UnityEngine.Rendering.AsyncGPUReadback.Request(heightMapBuffer, (req) =>
         {
-            heightMap[i] = computeShaderHeightMap[i * 4];
-        }
-
-        gpuDone = true;
+            var tempData = req.GetData<float>();
+            tempData.CopyTo(gpuData);
+            lock(locker)
+            {
+                gpuDone[threadId] = true;
+            }
+        });
 
         fluxBuffer.Release();
         thermalFluxBuffer.Release();

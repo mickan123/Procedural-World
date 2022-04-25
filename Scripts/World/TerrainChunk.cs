@@ -115,7 +115,7 @@ public class TerrainChunk
         OnChunkDataReceived(this.chunkData);
     }
 
-    void OnChunkDataReceived(object chunkData)
+    private void OnChunkDataReceived(object chunkData)
     {
         this.chunkData = (ChunkData)chunkData;
         this.heightMap = this.chunkData.biomeData.heightNoiseMap;
@@ -129,7 +129,6 @@ public class TerrainChunk
         {
             spawnObjects[i].Spawn(meshObject.transform);
         }
-
     }
 
     public void UpdateMaterial()
