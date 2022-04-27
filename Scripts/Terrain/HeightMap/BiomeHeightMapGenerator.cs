@@ -15,43 +15,38 @@ public static class BiomeHeightMapGenerator
         Vector2 paddedChunkCentre = new Vector2(chunkCentre.x, chunkCentre.y);
 
         BiomeGraph humidityGraph = terrainSettings.humidityMapGraph;
-        float[][] humidityNoiseMap = humidityGraph.GetHeightMap(
+        float[] humidityNoiseMap = humidityGraph.GetHeightMap(
             terrainSettings,
             paddedChunkCentre,
-            width,
-            height
+            width
         );
 
         BiomeGraph temperatureGraph = terrainSettings.temperatureMapGraph;
-        float[][] temperatureNoiseMap = temperatureGraph.GetHeightMap(
+        float[] temperatureNoiseMap = temperatureGraph.GetHeightMap(
             terrainSettings,
             paddedChunkCentre,
-            width,
-            height
+            width
         );
 
         BiomeInfo biomeInfo = GenerateBiomeInfo(
             width,
-            height,
             humidityNoiseMap,
             temperatureNoiseMap,
             terrainSettings
         );
         
-        float[][] heightNoiseMap = GenerateBiomeHeightMap(
+        float[] heightNoiseMap = GenerateBiomeHeightMap(
             width,
-            height,
             terrainSettings,
             paddedChunkCentre,
             biomeInfo
         );
 
-        return new BiomeData(heightNoiseMap, biomeInfo);
+        return new BiomeData(heightNoiseMap, biomeInfo, width);
     }
 
-    public static float[][] GenerateBiomeHeightMap(
+    public static float[] GenerateBiomeHeightMap(
         int width,
-        int height,
         TerrainSettings terrainSettings,
         Vector2 sampleCentre,
         BiomeInfo biomeInfo
@@ -59,7 +54,7 @@ public static class BiomeHeightMapGenerator
     {
         // Generate noise maps for all nearby and present biomes
         int numBiomes = terrainSettings.biomeSettings.Length;
-        float[][][] biomeNoiseMaps = new float[numBiomes][][];
+        float[][] biomeNoiseMaps = new float[numBiomes][];
         for (int i = 0; i < numBiomes; i++)
         {
             BiomeGraph graph = terrainSettings.biomeSettings[i].biomeGraph;
@@ -68,25 +63,19 @@ public static class BiomeHeightMapGenerator
                 terrainSettings,
                 sampleCentre,
                 i,
-                width,
-                height
+                width
             );
         }
 
         // Calculate final noise map values by blending where near another biome
-        float[][] finalNoiseMapValues = new float[width][];
-        for (int i = 0; i < height; i++)
-        {
-            finalNoiseMapValues[i] = new float[height];
-        }
-
+        float[] finalNoiseMapValues = new float[width * width];
         for (int x = 0; x < width; x++)
         {
-            for (int y = 0; y < height; y++)
+            for (int y = 0; y < width; y++)
             {
                 for (int biome = 0; biome < numBiomes; biome++)
                 {
-                    finalNoiseMapValues[x][y] += biomeNoiseMaps[biome][x][y] * biomeInfo.GetBiomeStrength(x, y, biome);
+                    finalNoiseMapValues[x * width + y] += biomeNoiseMaps[biome][x * width + y] * biomeInfo.GetBiomeStrength(x, y, biome);
                 }
             }
         }
@@ -94,22 +83,18 @@ public static class BiomeHeightMapGenerator
         return finalNoiseMapValues;
     }
 
-    public static BiomeInfo GenerateBiomeInfo(int width, int height, float[][] humidityNoiseMap, float[][] temperatureNoiseMap, TerrainSettings settings)
+    public static BiomeInfo GenerateBiomeInfo(int width, float[] humidityNoiseMap, float[] temperatureNoiseMap, TerrainSettings settings)
     {
         int numBiomes = settings.biomeSettings.Length;
-        int[][] biomeMap = new int[width][];
-        float[] biomeStrengths = new float[width * height * numBiomes];
-        for (int i = 0; i < width; i++)
-        {
-            biomeMap[i] = new int[height];
-        }
+        int[] biomeMap = new int[width * width];
+        float[] biomeStrengths = new float[width * width * numBiomes];
 
         for (int i = 0; i < width; i++)
         {
-            for (int j = 0; j < height; j++)
+            for (int j = 0; j < width; j++)
             {
-                float humidity = humidityNoiseMap[i][j];
-                float temperature = temperatureNoiseMap[i][j];
+                float humidity = humidityNoiseMap[i * width + j];
+                float temperature = temperatureNoiseMap[i * width + j];
 
                 // Get current biome
                 for (int k = 0; k < numBiomes; k++)
@@ -122,14 +107,14 @@ public static class BiomeHeightMapGenerator
                         && temperature < curBiome.endTemperature)
                     {
 
-                        biomeMap[i][j] = k;
-                        biomeStrengths[i * height * numBiomes + j * numBiomes + k] = 1f;
+                        biomeMap[i * width + j] = k;
+                        biomeStrengths[i * width * numBiomes + j * numBiomes + k] = 1f;
                         k = numBiomes;
                     }
                 }
 
                 // Get strengths of all other biomes for blending
-                int actualBiomeIndex = biomeMap[i][j];
+                int actualBiomeIndex = biomeMap[i * width + j];
                 float actualBiomeTransitionDist = settings.transitionDistance;
                 if (actualBiomeTransitionDist <= 0)
                 {
@@ -162,8 +147,8 @@ public static class BiomeHeightMapGenerator
 
                         if (distToBiome <= actualBiomeTransitionDist)
                         {
-                            biomeStrengths[i * height * numBiomes + j * numBiomes + k] = (1f - (distToBiome / actualBiomeTransitionDist));
-                            totalBiomeStrength += biomeStrengths[i * height * numBiomes + j * numBiomes + k];
+                            biomeStrengths[i * width * numBiomes + j * numBiomes + k] = (1f - (distToBiome / actualBiomeTransitionDist));
+                            totalBiomeStrength += biomeStrengths[i * width * numBiomes + j * numBiomes + k];
                         }
                     }
                 }
@@ -171,7 +156,7 @@ public static class BiomeHeightMapGenerator
                 // Normalize by biome strengths in range [0, 1]
                 for (int k = 0; k < numBiomes; k++)
                 {
-                    biomeStrengths[i * height * numBiomes + j * numBiomes + k] /= totalBiomeStrength;
+                    biomeStrengths[i * width * numBiomes + j * numBiomes + k] /= totalBiomeStrength;
                 }
             }
         }
@@ -180,7 +165,6 @@ public static class BiomeHeightMapGenerator
             biomeMap,
             biomeStrengths,
             width,
-            height,
             numBiomes
         );
     }
@@ -216,36 +200,37 @@ public static class BiomeHeightMapGenerator
 [System.Serializable]
 public struct BiomeData
 {
-    public float[][] heightNoiseMap;
+    public float[] heightNoiseMap;
     public BiomeInfo biomeInfo;
 
-    public BiomeData(float[][] heightNoiseMap, BiomeInfo biomeInfo)
+    public int width;
+
+    public BiomeData(float[] heightNoiseMap, BiomeInfo biomeInfo, int width)
     {
         this.heightNoiseMap = heightNoiseMap;
         this.biomeInfo = biomeInfo;
+        this.width = width;
     }
 }
 
 public struct BiomeInfo
 {
-    public int[][] biomeMap; // Holds index of biome at each point
+    public int[] biomeMap; // Holds index of biome at each point
     public float[] biomeStrengths; // E.g. 0.75 means 75-25 main biome nearest biome blend, has values in range [0, 1]
     public int numBiomes;
     public int width;
-    public int height;
 
-    public BiomeInfo(int[][] biomeMap, float[] biomeStrengths, int width, int height, int numBiomes)
+    public BiomeInfo(int[] biomeMap, float[] biomeStrengths, int width, int numBiomes)
     {
         this.biomeMap = biomeMap;
         this.biomeStrengths = biomeStrengths;
         
         this.width = width;
-        this.height = height;
         this.numBiomes = numBiomes;
     }
 
     public float GetBiomeStrength(int x, int y, int biome)
     {
-        return this.biomeStrengths[x * height * numBiomes + y * numBiomes + biome];
+        return this.biomeStrengths[x * width * numBiomes + y * numBiomes + biome];
     }
 }

@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Collections;
+using Unity.Burst;
+using Unity.Jobs;
+using Unity.Mathematics;
 
 public class TerrainChunk
 {
@@ -24,7 +28,7 @@ public class TerrainChunk
     private int colliderLODIndex;
 
     public ChunkData chunkData;
-    private float[][] heightMap;
+    private float[] heightMap;
     private bool heightMapReceived;
     private int previousLODIndex = -1;
     private bool hasSetCollider;
@@ -40,6 +44,8 @@ public class TerrainChunk
     private Texture2D biomeMapTex;
     private Texture2D[] biomeStrengthTextures;
     private Texture2DArray biomeStrengthTexArray;
+
+    public bool readyToSpawnObjects = false;
 
     public TerrainChunk(
         ChunkCoord coord,
@@ -64,36 +70,36 @@ public class TerrainChunk
 
         bounds = new Bounds(sampleCentre, Vector2.one * meshSettings.meshWorldSize);
 
-        meshObject = new GameObject(name);
-        meshRenderer = meshObject.AddComponent<MeshRenderer>();
-        meshFilter = meshObject.AddComponent<MeshFilter>();
-        meshCollider = meshObject.AddComponent<MeshCollider>();
-        meshRenderer.material = this.material;
-        matBlock = new MaterialPropertyBlock();
+        this.meshObject = new GameObject(name);
+        this.meshRenderer = this.meshObject.AddComponent<MeshRenderer>();
+        this.meshFilter = this.meshObject.AddComponent<MeshFilter>();
+        this.meshCollider = this.meshObject.AddComponent<MeshCollider>();
+        this.meshRenderer.material = this.material;
+        this.matBlock = new MaterialPropertyBlock();
 
         this.viewer = (viewer == null) ? meshObject.transform : viewer;
 
-        meshObject.transform.position = new Vector3(
+        this.meshObject.transform.position = new Vector3(
             coord.x * meshSettings.meshWorldSize, 
             0, 
             coord.y * meshSettings.meshWorldSize
         );
-        meshObject.transform.parent = parent;
+        this.meshObject.transform.parent = parent;
         SetVisible(false);
 
-        lodMeshes = new LODMesh[detailLevels.Length];
+        this.lodMeshes = new LODMesh[detailLevels.Length];
         int length = detailLevels.Length;
         for (int i = 0; i < length; i++)
         {
-            lodMeshes[i] = new LODMesh(detailLevels[i].lod);
-            lodMeshes[i].updateCallback += UpdateTerrainChunk;
+            this.lodMeshes[i] = new LODMesh(detailLevels[i].lod);
+            this.lodMeshes[i].updateCallback += UpdateTerrainChunk;
             if (i == colliderLODIndex)
             {
-                lodMeshes[i].updateCallback += UpdateCollisionMesh;
+                this.lodMeshes[i].updateCallback += UpdateCollisionMesh;
             }
         }
-        meshWorldSize = terrainSettings.meshSettings.meshWorldSize - 1;
-        maxViewDst = detailLevels[detailLevels.Length - 1].chunkDistanceThreshold * meshWorldSize;
+        this.meshWorldSize = terrainSettings.meshSettings.meshWorldSize - 1;
+        this.maxViewDst = detailLevels[detailLevels.Length - 1].chunkDistanceThreshold * meshWorldSize;
     }
 
     public void Load()
@@ -119,37 +125,57 @@ public class TerrainChunk
     {
         this.chunkData = (ChunkData)chunkData;
         this.heightMap = this.chunkData.biomeData.heightNoiseMap;
-        heightMapReceived = true;
-        this.UpdateTerrainChunk();
+        this.heightMapReceived = true;
+        this.readyToSpawnObjects = true;
 
+        this.UpdateTerrainChunk();
         this.UpdateMaterial();
 
-        List<ObjectSpawner> spawnObjects = this.chunkData.objects;
-        for (int i = 0; i < spawnObjects.Count; i++)
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
         {
-            spawnObjects[i].Spawn(meshObject.transform);
+            List<ObjectSpawner> spawnObjects = this.chunkData.objects;
+            for (int i = 0; i < spawnObjects.Count; i++)
+            {
+                spawnObjects[i].Spawn(meshObject.transform);
+            }
         }
+#endif
     }
 
     public void UpdateMaterial()
     {
         BiomeInfo info = this.chunkData.biomeData.biomeInfo;
-        int width = info.biomeMap.Length - 3;
+        float[] biomeStrengths = info.biomeStrengths;
+        float[] heightMap = this.chunkData.biomeData.heightNoiseMap;
+
+        int width = info.width;
+        int biomeMapWidth = width - 3;
+        
+        NativeArray<float> heightMapNat = new NativeArray<float>(heightMap, Allocator.TempJob);
+        NativeArray<float> anglesNat = new NativeArray<float>(width * width, Allocator.TempJob);
+
+        Common.CalculateAnglesJob burstJob = new Common.CalculateAnglesJob{
+            heightMap = heightMapNat,
+            angles = anglesNat,
+            width = width
+        };
+        JobHandle handle = burstJob.Schedule();
 
         // Create texture to pass in biome maps and biome strengths
         int numBiomes = this.terrainSettings.biomeSettings.Length;
-        this.biomeMapTex = new Texture2D(width, width, TextureFormat.RGBA32, false, false);
+        this.biomeMapTex = new Texture2D(biomeMapWidth, biomeMapWidth, TextureFormat.RGBA32, false, false);
 
         // Create biomeStrength textures representing the strength of each biome
         int biomesPerTexture = 4;
         this.biomeStrengthTextures = new Texture2D[terrainSettings.maxBiomeCount / biomesPerTexture];
         for (int i = 0; i < terrainSettings.maxBiomeCount / biomesPerTexture; i++)
         {
-            biomeStrengthTextures[i] = new Texture2D(width, width, TextureFormat.RGBA32, false, false);
+            biomeStrengthTextures[i] = new Texture2D(biomeMapWidth, biomeMapWidth, TextureFormat.RGBA32, false, false);
         }
         this.biomeStrengthTexArray = new Texture2DArray(
-            width,
-            width,
+            biomeMapWidth,
+            biomeMapWidth,
             terrainSettings.maxBiomeCount,
             TextureFormat.RGBA32,
             false,
@@ -159,53 +185,46 @@ public class TerrainChunk
         biomeMapTex.filterMode = FilterMode.Trilinear;
         biomeStrengthTexArray.filterMode = FilterMode.Trilinear; // TODO: Should this be bilinear
 
-        float[][] heightMap = this.chunkData.biomeData.heightNoiseMap;
-
         // Create arrays to hold pixel colors so we can use SetPixels vs SetPixel individually
-        Color[] biomeMapTexPixels = new Color[width * width];
-        Color[][] biomeStrengthTexPixels = new Color[biomeStrengthTextures.Length][];
+        byte[] biomeMapTexPixels = new byte[biomeMapWidth * biomeMapWidth * 4];
+        byte[][] biomeStrengthTexPixels = new byte[biomeStrengthTextures.Length][];
         int biomeStrengthTexPixelsLength = biomeStrengthTexPixels.Length;
         for (int i = 0; i < biomeStrengthTexPixelsLength; i++) {
-            biomeStrengthTexPixels[i] = new Color[width * width];
+            biomeStrengthTexPixels[i] = new byte[biomeMapWidth * biomeMapWidth * 4];
         }
 
-        float[][] angles = Common.CalculateAngles(heightMap); // This function call is 90% of this functions execution time
-
+        handle.Complete();
+        
         // Offset of 1 for all xy coords due to having out of mesh vertices for normal calculations
         int offset = 1;
-        for (int x = 0; x < width; x++)
+        for (int x = 0; x < biomeMapWidth; x++)
         {
-            for (int y = 0; y < width; y++)
+            for (int y = 0; y < biomeMapWidth; y++)
             {   
                 // Average 4 corners of a point to get the pixel road strength
-                float roadStrength = (chunkData.roadStrengthMap[x + offset][y + offset] 
-                    + chunkData.roadStrengthMap[x + offset + 1][y + offset] 
-                    + chunkData.roadStrengthMap[x + offset + 1][y + offset + 1]
-                    + chunkData.roadStrengthMap[x + offset][y + offset + 1]) / 4f;
+                float roadStrength = (chunkData.roadStrengthMap[(x + offset) * width + y + offset] 
+                    + chunkData.roadStrengthMap[(x + offset + 1) * width + y + offset] 
+                    + chunkData.roadStrengthMap[(x + offset + 1) * width + y + offset + 1]
+                    + chunkData.roadStrengthMap[(x + offset) * width + y + offset + 1]) / 4f;
 
-                float angle = angles[x][y];
-                angle /= 90f; // Normalize 0 to 1 range
+                float angle = anglesNat[x * width + y] / 90f;
 
-                // Create biomeMap pixel
-                biomeMapTexPixels[y * width + x] = new Color(
-                    chunkData.roadStrengthMap[x + offset][y + offset], 
-                    angle, 
-                    0f, 
-                    0f
-                );
+                // Get biomeMap pixel data (2 unused values b,a out of rgba)
+                int biomeMapTexIdx = y * biomeMapWidth * 4 + x * 4;
+                biomeMapTexPixels[biomeMapTexIdx] =  (byte)(roadStrength * 255);
+                biomeMapTexPixels[biomeMapTexIdx + 1] =  (byte)(angle * 255);
 
-                // Create biomestrength pixels
+                // Create biomestrength pixel data
                 for (int k = 0; k < terrainSettings.maxBiomeCount; k += biomesPerTexture)
                 {
                     int texIndex = k / biomesPerTexture;
+                    int biomeStrengthIdx = (x + offset) * width * numBiomes + (y + offset) * numBiomes + k;
+                    int biomeStrengthTexIdx = y * biomeMapWidth * 4 + x * 4;
 
-                    Color biomeStrengths = new Color(
-                        (k < numBiomes) ? info.GetBiomeStrength(x + offset, y + offset, k) : 0f,
-                        (k + 1 < numBiomes) ? info.GetBiomeStrength(x + offset, y + offset, k + 1) : 0f,
-                        (k + 2 < numBiomes) ? info.GetBiomeStrength(x + offset, y + offset, k + 2) : 0f,
-                        (k + 3 < numBiomes) ? info.GetBiomeStrength(x + offset, y + offset, k + 3) : 0f
-                    );
-                    biomeStrengthTexPixels[texIndex][y * width + x] = biomeStrengths;
+                    biomeStrengthTexPixels[texIndex][biomeStrengthTexIdx] = (k < numBiomes) ? (byte)(biomeStrengths[biomeStrengthIdx] * 255) : (byte)0;
+                    biomeStrengthTexPixels[texIndex][biomeStrengthTexIdx + 1] = (k < numBiomes) ? (byte)(biomeStrengths[biomeStrengthIdx + 1] * 255) : (byte)0;
+                    biomeStrengthTexPixels[texIndex][biomeStrengthTexIdx + 2] = (k < numBiomes) ? (byte)(biomeStrengths[biomeStrengthIdx + 2] * 255) : (byte)0;
+                    biomeStrengthTexPixels[texIndex][biomeStrengthTexIdx + 3] = (k < numBiomes) ? (byte)(biomeStrengths[biomeStrengthIdx + 3] * 255) : (byte)0;
                 }
             }
         }
@@ -213,16 +232,19 @@ public class TerrainChunk
         int biomeStrengthTexturesLength = biomeStrengthTextures.Length;
         for (int i = 0; i < biomeStrengthTexturesLength; i++)
         {
-            biomeStrengthTexArray.SetPixels(biomeStrengthTexPixels[i], i);
+            biomeStrengthTexArray.SetPixelData<byte>(biomeStrengthTexPixels[i], 0, i);
         }
         biomeStrengthTexArray.Apply();
         matBlock.SetTexture("biomeStrengthMap", biomeStrengthTexArray);
 
-        biomeMapTex.SetPixels(biomeMapTexPixels);
+        biomeMapTex.SetPixelData<byte>(biomeMapTexPixels, 0);
         biomeMapTex.Apply();
         matBlock.SetTexture("biomeMapTex", biomeMapTex);
 
         this.meshRenderer.SetPropertyBlock(matBlock);
+
+        heightMapNat.Dispose();
+        anglesNat.Dispose();
     }
 
     public static void SaveTextureAsPNG(Texture2D _texture, string _fullPath)
@@ -246,7 +268,7 @@ public class TerrainChunk
         {
             float viewerDstFromNearestEdge = Mathf.Sqrt(bounds.SqrDistance(viewerPosition));
 
-            bool wasVisible = meshObject.activeSelf;
+            bool wasVisible = this.meshObject.activeSelf;
             bool visible = viewerDstFromNearestEdge <= maxViewDst;
 
             if (visible)
@@ -289,17 +311,17 @@ public class TerrainChunk
         if (lodMesh.hasMesh)
         {
             previousLODIndex = lodIndex;
-            meshFilter.mesh = lodMesh.mesh;
+            this.meshFilter.mesh = lodMesh.mesh;
         }
         else if (!lodMesh.hasRequestedMesh)
         {
-            lodMesh.RequestMesh(heightMap, meshSettings);
+            lodMesh.RequestMesh(this.heightMap, this.meshSettings);
         }
     }
 
     public void UpdateCollisionMesh()
     {
-        if (!hasSetCollider)
+        if (!this.hasSetCollider)
         {
             float sqrDstFromViewerToEdge = bounds.SqrDistance(viewerPosition);
 
@@ -307,18 +329,18 @@ public class TerrainChunk
 
             if (sqrDstFromViewerToEdge < viewDist * viewDist)
             {
-                if (!lodMeshes[colliderLODIndex].hasRequestedMesh)
+                if (!this.lodMeshes[colliderLODIndex].hasRequestedMesh)
                 {
-                    lodMeshes[colliderLODIndex].RequestMesh(heightMap, meshSettings);
+                    this.lodMeshes[colliderLODIndex].RequestMesh(heightMap, meshSettings);
                 }
             }
 
             if (sqrDstFromViewerToEdge < colliderGenerationDistanceThreshold * colliderGenerationDistanceThreshold)
             {
-                if (lodMeshes[colliderLODIndex].hasMesh)
+                if (this.lodMeshes[colliderLODIndex].hasMesh)
                 {
-                    meshCollider.sharedMesh = lodMeshes[colliderLODIndex].mesh;
-                    hasSetCollider = true;
+                    this.meshCollider.sharedMesh = this.lodMeshes[colliderLODIndex].mesh;
+                    this.hasSetCollider = true;
                 }
             }
         }
@@ -326,7 +348,7 @@ public class TerrainChunk
 
     public void SetVisible(bool visible)
     {
-        meshObject.SetActive(visible);
+        this.meshObject.SetActive(visible);
     }
 }
 
@@ -351,13 +373,13 @@ class LODMesh
         updateCallback();
     }
 
-    public void RequestMesh(float[][] heightMap, MeshSettings meshSettings)
+    public void RequestMesh(float[] heightMap, MeshSettings meshSettings)
     {
         hasRequestedMesh = true;
         ThreadedDataRequester.RequestData(() => MeshGenerator.GenerateTerrainMesh(heightMap, meshSettings, lod), OnMeshDataReceived);
     }
 
-    public void GenerateMeshEditor(float[][] heightMap, MeshSettings meshSettings)
+    public void GenerateMeshEditor(float[] heightMap, MeshSettings meshSettings)
     {
         MeshData meshData = MeshGenerator.GenerateTerrainMesh(heightMap, meshSettings, lod);
         this.mesh = meshData.CreateMesh();

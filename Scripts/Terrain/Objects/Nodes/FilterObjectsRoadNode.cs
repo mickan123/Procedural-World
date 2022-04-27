@@ -43,7 +43,8 @@ public class FilterObjectsRoadNode : BiomeGraphNode
             float roadStrength = Common.HeightFromFloatCoord(
                 positionData.positions.xCoords[i] + offset, 
                 positionData.positions.zCoords[i] + offset, 
-                heightMapData.roadStrengthMap
+                heightMapData.roadStrengthMap,
+                heightMapData.width
             );
 
             float randomVal = this.randomValues[i % this.numRandomValues];

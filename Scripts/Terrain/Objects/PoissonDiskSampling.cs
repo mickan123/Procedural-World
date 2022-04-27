@@ -35,12 +35,12 @@ public static class PoissonDiskSampling
         public float minRadius;
         public float maxRadius;
 
-        public int mapSize;
+        public int width;
         public int seed;
 
         public void Execute() 
         {            
-            float spawnSize = mapSize - 1;
+            float spawnSize = width - 1;
 
             float maxRadiusLocal = varyRadius ? maxRadius : radius;
             float cellSize = maxRadiusLocal / Mathf.Sqrt(2);
@@ -76,7 +76,7 @@ public static class PoissonDiskSampling
                     float localRadius = radius;
                     if (varyRadius)
                     {
-                        localRadius = spawnNoiseMap[(int)(spawnCentre.x) * mapSize + (int)(spawnCentre.y)]
+                        localRadius = spawnNoiseMap[(int)(spawnCentre.x) * width + (int)(spawnCentre.y)]
                                     * (maxRadius - minRadius) + minRadius;
                     }
                     float2 dir = new float2(Mathf.Sin(angle), Mathf.Cos(angle));
@@ -111,10 +111,10 @@ public static class PoissonDiskSampling
                 float offset = 1f; // Take into account offset due to extra points around edges
 
                 float adjustedX = (points2d[point].x) * meshScale - offset;
-                float adjustedY = Common.HeightFromFloatCoord(points2d[point].x, points2d[point].y, heightMap, mapSize);
+                float adjustedY = Common.HeightFromFloatCoord(points2d[point].x, points2d[point].y, heightMap, width);
                 float adjustedZ = (points2d[point].y) * meshScale - offset;
 
-                if (adjustedX >= 0f && adjustedZ >= 0f && adjustedX <= mapSize - 3 && adjustedZ <= mapSize - 3)
+                if (adjustedX >= 0f && adjustedZ >= 0f && adjustedX <= width - 3 && adjustedZ <= width - 3)
                 {
                     xCoords.Add(adjustedX);
                     yCoords.Add(adjustedY);

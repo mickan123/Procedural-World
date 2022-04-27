@@ -281,7 +281,6 @@ namespace csDelaunay
 
                     // Step 9
                     edge = Edge.CreateBisectingEdge(bottomSite, newSite);
-                    //UnityEngine.Debug.Log("new edge: " + edge);
                     edges.Add(edge);
 
                     bisector = Halfedge.Create(edge, LR.LEFT);

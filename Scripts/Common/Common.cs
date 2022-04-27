@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Unity.Collections;
+using Unity.Burst;
+using Unity.Jobs;
+using Unity.Mathematics;
 
 public static class Common
 {
@@ -14,12 +17,40 @@ public static class Common
         return value;
     }
 
-    public static float HeightFromFloatCoord(Vector2 coord, float[][] heightMap)
+    public static float HeightFromFloatCoord(Vector2 coord, float[] heightMap, int width)
     {
-        return HeightFromFloatCoord(coord.x, coord.y, heightMap);
+        return HeightFromFloatCoord(coord.x, coord.y, heightMap, width);
     }
 
-    public static float HeightFromFloatCoord(float x, float y, NativeArray<float> heightMap, int mapSize)
+    public static float HeightFromFloatCoord(float x, float y, float[] heightMap, int width)
+    {
+        // Technically subtracting 0.001f reduces slightly incorrect results however
+        // this means we don't have to do any bounds checking in later steps so the
+        // slight accuracy loss is worth it for the performance
+        float maxIndex = width - 1.001f;
+        x = (x < maxIndex) ? x : maxIndex;
+        y = (y < maxIndex) ? y : maxIndex;
+        
+        int indexX = (int)x;
+        int indexY = (int)y;
+
+        x = x - indexX;
+        y = y - indexY;
+
+        float heightNW = heightMap[indexX * width + indexY];
+        float heightNE = heightMap[(indexX + 1) * width + indexY];
+        float heightSW = heightMap[indexX * width + indexY + 1];
+        float heightSE = heightMap[(indexX + 1) * width + indexY + 1];
+
+        float height = heightNW * (1 - x) * (1 - y)
+                     + heightNE * x * (1 - y)
+                     + heightSW * (1 - x) * y
+                     + heightSE * x * y;
+
+        return height;
+    }
+
+    public static float HeightFromFloatCoord(float x, float y, NativeArray<float> heightMap, int width)
     {
         // Technically subtracting 0.001f reduces slightly incorrect results however
         // this means we don't have to do any bounds checking in later steps so the
@@ -34,10 +65,10 @@ public static class Common
         x = x - indexX;
         y = y - indexY;
 
-        float heightNW = heightMap[indexX * mapSize + indexY];
-        float heightNE = heightMap[(indexX + 1) * mapSize + indexY];
-        float heightSW = heightMap[indexX * mapSize + indexY + 1];
-        float heightSE = heightMap[(indexX + 1) * mapSize + indexY + 1];
+        float heightNW = heightMap[indexX * width + indexY];
+        float heightNE = heightMap[(indexX + 1) * width + indexY];
+        float heightSW = heightMap[indexX * width + indexY + 1];
+        float heightSE = heightMap[(indexX + 1) * width + indexY + 1];
 
         float height = heightNW * (1 - x) * (1 - y)
                      + heightNE * x * (1 - y)
@@ -47,140 +78,99 @@ public static class Common
         return height;
     }
 
-    public static float HeightFromFloatCoord(float x, float y, float[][] heightMap)
+    [BurstCompile(CompileSynchronously = true)]
+    public struct CalculateAnglesJob : IJob
     {
-        // Technically subtracting 0.001f reduces slightly incorrect results however
-        // this means we don't have to do any bounds checking in later steps so the
-        // slight accuracy loss is worth it for the performance
-        float maxIndex = heightMap.Length - 1.001f;
-        x = (x < maxIndex) ? x : maxIndex;
-        y = (y < maxIndex) ? y : maxIndex;
-        
-        int indexX = (int)x;
-        int indexY = (int)y;
+        [ReadOnly] public NativeArray<float> heightMap;
+        [WriteOnly] public NativeArray<float> angles;
 
-        x = x - indexX;
-        y = y - indexY;
+        public int width;
 
-        float heightNW = heightMap[indexX][indexY];
-        float heightNE = heightMap[indexX + 1][indexY];
-        float heightSW = heightMap[indexX][indexY + 1];
-        float heightSE = heightMap[indexX + 1][indexY + 1];
+        public void Execute()
+        {
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < width; y++)
+                {
+                    float height = heightMap[x * width + y];
 
-        float height = heightNW * (1 - x) * (1 - y)
-                     + heightNE * x * (1 - y)
-                     + heightSW * (1 - x) * y
-                     + heightSE * x * y;
+                    int dxIdx = math.min((x + 1), width - 1) * width + y;
+                    float dx = math.abs(heightMap[dxIdx] - height);
 
-        return height;
+                    int dyIdx = x * width + math.min(y + 1, width - 1);
+                    float dy = math.abs(heightMap[x * width + math.min(y + 1, width - 1)] - height);
+
+                    float dMax = math.max(dx, dy);
+                    angles[x * width + y] = Mathf.Rad2Deg * Mathf.Atan2(
+                        dMax, 
+                        1
+                    );
+                }
+            }
+        }
     }
 
-    public static float[][] CalculateAngles(float[][] heightMap)
+    public static float[] CalculateAngles(float[] heightMap, int width)
     {   
-        int mapSize = heightMap.Length;
+        NativeArray<float> heightMapNat = new NativeArray<float>(width * width, Allocator.TempJob);
+        NativeArray<float> anglesNat = new NativeArray<float>(heightMap, Allocator.TempJob);
 
-        // Create a padded heightmap so we don't have to check bounds
-        // when calculating angles
-        float[][] paddedHeightMap = new float[mapSize + 1][];
-        for (int i = 0; i < mapSize + 1; i++)
-        {
-            paddedHeightMap[i] = new float[mapSize + 1];
-        }
-        for (int i = 0; i < mapSize; i++)
-        {
-            for (int j = 0; j < mapSize; j++)
-            {
-                paddedHeightMap[i][j] = heightMap[i][j];
-            }
-        }
-        for (int i = 0; i < mapSize; i++)
-        {
-            paddedHeightMap[i][mapSize] = heightMap[i][mapSize - 1];
-            paddedHeightMap[mapSize][i] = heightMap[mapSize - 1][i];
-        }
+        CalculateAnglesJob burstJob = new CalculateAnglesJob{
+            heightMap = heightMapNat,
+            angles = anglesNat,
+            width = width
+        };
+        burstJob.Schedule().Complete();
 
-        // Construct angles array
-        float[][] angles = new float[mapSize][];
-        for (int i = 0 ; i < mapSize; i++) 
-        {
-            angles[i] = new float[mapSize];
-        }
+        float[] angles = anglesNat.ToArray();
 
-        // Calculate angle at every element in heightmap
-        for (int x = 0; x < mapSize; x++)
-        {
-            for (int y = 0; y < mapSize; y++)
-            {
-                float height = heightMap[x][y];
-
-                // Compute the differentials by stepping over 1 in both directions.
-                float dx = paddedHeightMap[x + 1][y] - height;
-                dx = dx > 0 ? dx : -dx;
-
-                float dy = paddedHeightMap[x][y + 1] - height;
-                dy = dy > 0 ? dy : -dy;
-
-                float dMax = dx > dy ? dx : dy;
-                angles[x][y] = Mathf.Rad2Deg * Mathf.Atan2(
-                    dMax, 
-                    1
-                );
-            }
-        }
-
+        anglesNat.Dispose();
+        heightMapNat.Dispose();
+        
         return angles;
     }
 
     // Calculates slopes as opposed to angles, this is useful as angles
     // require many expensive Atan2 operations
-    public static float[][] CalculateSlopes(float[][] heightMap)
+    public static float[] CalculateSlopes(float[] heightMap, int width)
     {   
-        
-        int mapSize = heightMap.Length;
-
         // Create a padded heightmap so we don't have to check bounds
         // when calculating angles
-        float[][] paddedHeightMap = new float[mapSize + 1][];
-        for (int i = 0; i < mapSize + 1; i++)
+        int paddedWidth = width + 1;
+        float[] paddedHeightMap = new float[paddedWidth * paddedWidth];
+        
+        for (int i = 0; i < width; i++)
         {
-            paddedHeightMap[i] = new float[mapSize + 1];
-        }
-        for (int i = 0; i < mapSize; i++)
-        {
-            for (int j = 0; j < mapSize; j++)
+            for (int j = 0; j < width; j++)
             {
-                paddedHeightMap[i][j] = heightMap[i][j];
+                paddedHeightMap[i * paddedWidth + j] = heightMap[i * width + j];
             }
         }
-        for (int i = 0; i < mapSize; i++)
+        for (int i = 0; i < width; i++)
         {
-            paddedHeightMap[i][mapSize] = heightMap[i][mapSize - 1];
-            paddedHeightMap[mapSize][i] = heightMap[mapSize - 1][i];
+            paddedHeightMap[i * paddedWidth + width] = heightMap[i * width + width - 1];
+            paddedHeightMap[width * paddedWidth + i] = heightMap[(width - 1) * width + i];
         }
 
         // Construct slopes array
-        float[][] slopes = new float[mapSize][];
-        for (int i = 0 ; i < mapSize; i++) 
-        {
-            slopes[i] = new float[mapSize];
-        }
+        float[] slopes = new float[width * width];
 
         // Calculate slope at every element in heightmap
-        for (int x = 0; x < mapSize; x++)
+        for (int x = 0; x < width; x++)
         {
-            for (int y = 0; y < mapSize; y++)
+            for (int y = 0; y < width; y++)
             {
-                float height = paddedHeightMap[x][y];
+                float height = paddedHeightMap[x * paddedWidth + y];
 
                 // Compute the differentials by stepping over 1 in both directions.
-                float dx = paddedHeightMap[x + 1][y] - height;
+                float dx = paddedHeightMap[(x + 1) * paddedWidth + y] - height;
                 dx = dx > 0 ? dx : -dx;
 
-                float dy = paddedHeightMap[x][y + 1] - height;
+                float dy = paddedHeightMap[x * paddedWidth + y + 1] - height;
                 dy = dy > 0 ? dy : -dy;
 
                 float dMax = dx > dy ? dx : dy;
-                slopes[x][y] = dMax;
+                slopes[x * width + y] = dMax;
             }
         }
 
@@ -188,43 +178,6 @@ public static class Common
     }
 
     private static readonly int[,] offsets = { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
-
-    public static float CalculateAngle(int xIn, int yIn, float[][] heightMap)
-    {
-        int maxIndex = heightMap.Length - 1;
-
-        float maxAngle = 0f;
-        for (int i = 0; i < 4; i++)
-        {
-            int x2 = xIn + offsets[i, 0];
-            x2 = x2 >= 0 ? x2 : 0;
-            x2 = x2 > maxIndex ? maxIndex : x2;
-
-            int y2 = xIn + offsets[i, 0];
-            y2 = y2 >= 0 ? y2 : 0;
-            y2 = y2 > maxIndex ? maxIndex : y2;
-
-            float angle = AngleBetweenTwoPoints(
-                xIn,
-                yIn,
-                x2,
-                y2,
-                heightMap
-            );
-            maxAngle = maxAngle > angle ? maxAngle : angle;
-        }
-        return maxAngle;
-    }
-
-    private static float AngleBetweenTwoPoints(int x1, int y1, int x2, int y2, float[][] heightMap)
-    {
-        float angle = Mathf.Rad2Deg * Mathf.Atan2(
-            heightMap[x1][y1] - heightMap[x2][y2],
-            1f
-        );
-        angle = angle > 0 ? angle : -angle; // Get abs value
-        return angle;
-    }
 
     public static float DistanceFromLine(Vector2 point, Vector2 origin, Vector2 direction)
     {
@@ -293,19 +246,18 @@ public static class Common
         return centre /= points.Count;
     }
 
-    public static void FadeEdgeHeightMap(float[][] originalHeightMap, float[][] finalHeightMap, float blendDistance)
+    public static void FadeEdgeHeightMap(float[] originalHeightMap, float[] finalHeightMap, int width, float blendDistance = 5f)
     {
-        int mapSize = originalHeightMap.Length;
-        for (int i = 0; i < mapSize; i++)
+        for (int i = 0; i < width; i++)
         {
-            for (int j = 0; j < mapSize; j++)
+            for (int j = 0; j < width; j++)
             {
                 float nearDist = i < j ? i : j;
-                float farDist = mapSize - 1 - (i > j ? i : j);
+                float farDist = width - 1 - (i > j ? i : j);
                 float distFromEdge = nearDist < farDist ? nearDist : farDist;
                 distFromEdge = distFromEdge - 3f < 0f ? 0f : distFromEdge - 3f ;
                 float edgeMultiplier = distFromEdge / blendDistance < 1f ? distFromEdge / blendDistance :1f;
-                finalHeightMap[i][j] = edgeMultiplier * finalHeightMap[i][j] + (1f - edgeMultiplier) * originalHeightMap[i][j];
+                finalHeightMap[i * width + j] = edgeMultiplier * finalHeightMap[i * width + j] + (1f - edgeMultiplier) * originalHeightMap[i * width + j];
             }
         }
     }

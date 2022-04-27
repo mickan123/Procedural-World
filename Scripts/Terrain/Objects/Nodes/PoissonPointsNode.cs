@@ -29,35 +29,24 @@ public class PoissonPointsNode : BiomeGraphNode
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
 
-        int mapSize = heightMapData.heightMap.Length;
+        int width = heightMapData.width;
 
         // Copy heightmap into native array
-        NativeArray<float> heightMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
-        for (int i = 0; i < mapSize; i++)
-        {
-            int start = i * mapSize;
-            heightMapNat.GetSubArray(start, mapSize).CopyFrom(heightMapData.heightMap[i]);
-        }
+        NativeArray<float> heightMapNat = new NativeArray<float>(heightMapData.heightMap, Allocator.TempJob);
 
         // Initialize spawnNoiseMap 
-        NativeArray<float> spawnNoiseMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
-        float[][] spawnNoiseMap;
+        float[] spawnNoiseMap = new float[width * width];
         if (settings.varyRadius)
         {
             spawnNoiseMap = Noise.GenerateNoiseMap(
-                mapSize,
-                mapSize,
+                width,
                 settings.noiseMapSettings.perlinNoiseSettings,
                 heightMapData.sampleCentre,
                 settings.noiseMapSettings.noiseType,
                 settings.noiseMapSettings.seed
             );
-            for (int i = 0; i < mapSize; i++)
-            {
-                int start = i * mapSize;
-                spawnNoiseMapNat.GetSubArray(start, mapSize).CopyFrom(spawnNoiseMap[i]);
-            }
         }
+        NativeArray<float> spawnNoiseMapNat = new NativeArray<float>(spawnNoiseMap, Allocator.TempJob);
 
         // Create output native arrays
         NativeList<float> poissonPointsX = new NativeList<float>(Allocator.TempJob);
@@ -79,7 +68,7 @@ public class PoissonPointsNode : BiomeGraphNode
             radius = settings.radius,
             minRadius = settings.minRadius,
             maxRadius = settings.maxRadius,
-            mapSize = mapSize,
+            width = width,
             seed = this.seed
         };
         burstJob.Schedule().Complete();
@@ -94,6 +83,6 @@ public class PoissonPointsNode : BiomeGraphNode
         poissonPointsY.Dispose();
         poissonPointsZ.Dispose();
 
-        return new ObjectPositionData(positions, heightMapData.heightMap);
+        return new ObjectPositionData(positions, heightMapData.heightMap, width);
     }
 }

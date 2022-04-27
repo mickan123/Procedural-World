@@ -13,23 +13,23 @@ struct FindPathJob : IJob
     public Vector3 roadStart;
     public Vector3 roadEnd;
 
-    public int mapSize;
+    public int width;
     public int stepSize;
     public float maxRoadWidth;
 
     public void Execute()
     {
-        NativeArray<Node> nodes = new NativeArray<Node>(mapSize * mapSize, Allocator.Temp);
+        NativeArray<Node> nodes = new NativeArray<Node>(width * width, Allocator.Temp);
 
-        for (int x = 0; x < mapSize; x++)
+        for (int x = 0; x < width; x++)
         {
-            for (int y = 0; y < mapSize; y++)
+            for (int y = 0; y < width; y++)
             {
                 Node node = new Node();
                 node.x = x;
                 node.y = y;
 
-                node.index = CalculateIndex(x, y, mapSize);
+                node.index = CalculateIndex(x, y, width);
                 node.hCost = 0;
                 node.gCost = float.MaxValue;
                 node.CalculateFCost();
@@ -58,12 +58,12 @@ struct FindPathJob : IJob
         offsets[14] = new int2(-1, 2);
         offsets[15] = new int2(-1, -2);
         
-        Node startNode = nodes[CalculateIndex((int)roadStart.x, (int)roadStart.z, mapSize)];
+        Node startNode = nodes[CalculateIndex((int)roadStart.x, (int)roadStart.z, width)];
         startNode.gCost = 0;
         startNode.CalculateFCost();
         nodes[startNode.index] = startNode;
 
-        Node endNode = nodes[CalculateIndex((int)roadEnd.x, (int)roadEnd.z, mapSize)];
+        Node endNode = nodes[CalculateIndex((int)roadEnd.x, (int)roadEnd.z, width)];
         float3 endNodePos = new float3(endNode.x, heightMap[endNode.index], endNode.y);
 
         NativeList<int> openList = new NativeList<int>(Allocator.Temp);
@@ -101,12 +101,12 @@ struct FindPathJob : IJob
                 int2 offset = offsets[i] * stepSize;
                 int2 neighbourPos  = new int2(curNode.x + offset.x, curNode.y + offset.y);
 
-                if (!IsPositionInsideGride(neighbourPos, mapSize))
+                if (!IsPositionInsideGrid(neighbourPos, width))
                 {
                     continue;
                 }
 
-                int neighbourIndex = CalculateIndex(neighbourPos.x , neighbourPos.y, mapSize);
+                int neighbourIndex = CalculateIndex(neighbourPos.x , neighbourPos.y, width);
 
                 if (closedList.Contains(neighbourIndex))
                 {
@@ -115,7 +115,7 @@ struct FindPathJob : IJob
 
                 Node neighbourNode = nodes[neighbourIndex];
 
-                float neighbourHeight = heightMap[CalculateIndex(neighbourPos.x, neighbourPos.y, mapSize)];
+                float neighbourHeight = heightMap[CalculateIndex(neighbourPos.x, neighbourPos.y, width)];
                 float tentativeGCost = curNode.gCost + CalculateDistanceCost(curNodePos, new float3(neighbourPos.x, neighbourHeight, neighbourPos.y));
                 if (tentativeGCost < neighbourNode.gCost)
                 {
@@ -153,16 +153,16 @@ struct FindPathJob : IJob
         }
     }
     
-    private bool IsPositionInsideGride(int2 pos, int mapSize)
+    private bool IsPositionInsideGrid(int2 pos, int width)
     {
         return 
-            pos.x >= 0 && pos.x < mapSize &&
-            pos.y >= 0 && pos.y < mapSize;
+            pos.x >= 0 && pos.x < width &&
+            pos.y >= 0 && pos.y < width;
     }
 
-    private static int CalculateIndex(int x, int y, int mapSize)
+    private static int CalculateIndex(int x, int y, int width)
     {
-        return x * mapSize + y;
+        return x * width + y;
     }
 
     private float CalculateDistanceCost(float3 a, float3 b)
@@ -180,8 +180,8 @@ struct FindPathJob : IJob
 
         // Penalize being close to edge of chunk
         float edgeCost = 0f;
-        if (b.x < halfRoadWidth || b.x > mapSize - 1 - halfRoadWidth
-            || b.y < halfRoadWidth || b.y > mapSize - 1 - halfRoadWidth)
+        if (b.x < halfRoadWidth || b.x > width - 1 - halfRoadWidth
+            || b.y < halfRoadWidth || b.y > width - 1 - halfRoadWidth)
         {
             edgeCost = 100000f;
         }

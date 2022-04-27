@@ -5,7 +5,7 @@ using Unity.Jobs;
 
 public static class MeshGenerator
 {
-    public static MeshData GenerateTerrainMesh(float[][] heightMap, MeshSettings meshSettings, int levelOfDetail)
+    public static MeshData GenerateTerrainMesh(float[] heightMap, MeshSettings meshSettings, int levelOfDetail)
     {
         int skipIncrement = (levelOfDetail == 0) ? 1 : levelOfDetail * 2;
         int numVertsPerLine = meshSettings.numVerticesPerLine;
@@ -28,14 +28,7 @@ public static class MeshGenerator
 
         NativeArray<Vector3> bakedNormalsNat = new NativeArray<Vector3>(verticesNat.Length, Allocator.TempJob);
 
-        NativeArray<float> heightMapNative = new NativeArray<float>(numVertsPerLine * numVertsPerLine, Allocator.TempJob);
-        for (int i = 0; i < numVertsPerLine; i++)
-        {
-            for (int j = 0; j < numVertsPerLine; j++)
-            {
-                heightMapNative[i * numVertsPerLine + j] = heightMap[i][j];
-            }
-        }
+        NativeArray<float> heightMapNative = new NativeArray<float>(heightMap, Allocator.TempJob);
 
         CalculateMeshDataJob burstJob = new CalculateMeshDataJob
         {

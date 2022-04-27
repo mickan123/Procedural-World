@@ -29,29 +29,27 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
     private void FilterBySlope(ObjectPositionData positionData)
     {
         // Generate slope at every point
-        int mapSize = positionData.heightMap.Length;
+        int width = positionData.width;
 
-        float[][] slopes = Common.CalculateSlopes(positionData.heightMap);
+        float[] slopes = Common.CalculateSlopes(positionData.heightMap, width);
 
         // Create a padded slopes array so we don't have to do any bounds checking 
         // in later calculations for improved performance
-        float[][] paddedSlopes = new float[mapSize + 1][];
-        for (int i = 0; i < mapSize + 1; i++)
-        {
-            paddedSlopes[i] = new float[mapSize + 1];
-        }
+
+        int paddedWidth = width + 1;
+        float[] paddedSlopes = new float[paddedWidth * paddedWidth];
         
-        for (int i = 0; i < mapSize; i++)
+        for (int i = 0; i < width; i++)
         {
-            for (int j = 0; j < mapSize; j++)
+            for (int j = 0; j < width; j++)
             {
-                paddedSlopes[i][j] = slopes[i][j];
+                paddedSlopes[i * paddedWidth + j] = slopes[i * width + j];
             }
         }
-        for (int i = 0; i < mapSize; i++)
+        for (int i = 0; i < width; i++)
         {
-            paddedSlopes[i][mapSize] = paddedSlopes[i][mapSize - 1];
-            paddedSlopes[mapSize][i] = paddedSlopes[mapSize - 1][i];
+            paddedSlopes[i * paddedWidth + width] = paddedSlopes[i * paddedWidth + width - 1];
+            paddedSlopes[width * paddedWidth + i] = paddedSlopes[(width - 1) * paddedWidth + i];
         }
 
         // Iterate over points and filter those that don't match slope criteria
@@ -77,8 +75,8 @@ public class FilterObjectsSlopeNode : BiomeGraphNode
             float x = xIn - coordX;
             float y = yIn - coordZ;
 
-            float xSlope = x * paddedSlopes[coordX][coordZ] + (1f - x) * paddedSlopes[coordX + 1][coordZ];
-            float ySlope = y * paddedSlopes[coordX][coordZ] + (1f - y) * paddedSlopes[coordX][coordZ + 1];
+            float xSlope = x * paddedSlopes[coordX * paddedWidth + coordZ] + (1f - x) * paddedSlopes[(coordX + 1) * paddedWidth + coordZ];
+            float ySlope = y * paddedSlopes[coordX * paddedWidth + coordZ] + (1f - y) * paddedSlopes[coordX * paddedWidth + coordZ + 1];
 
             float slope = (xSlope + ySlope) / 2f;
 

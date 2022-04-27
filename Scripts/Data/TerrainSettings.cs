@@ -99,17 +99,16 @@ public class TerrainSettings : ScriptableObject
 
         if (drawMode == DrawMode.NoiseMapTexture)
         {
-            float[][] heightMap = this.biomeSettings[noiseMapBiomeIndex].biomeGraph.GetHeightMap(
+            float[] heightMap = this.biomeSettings[noiseMapBiomeIndex].biomeGraph.GetHeightMap(
                 this,
                 this.offset,
-                width,
-                height
+                width
             );
-            DrawTexture(TextureGenerator.TextureFromHeightMap(heightMap));
+            DrawTexture(TextureGenerator.TextureFromHeightMap(heightMap, width));
         }
         else if (drawMode == DrawMode.FalloffMapTexture)
         {
-            DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(width)));
+            DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(width), width));
         }
         else if (drawMode == DrawMode.BiomesMesh)
         {
@@ -121,30 +120,28 @@ public class TerrainSettings : ScriptableObject
         }
         else
         {
-            float[][] humidityMap = this.humidityMapGraph.GetHeightMap(
+            float[] humidityMap = this.humidityMapGraph.GetHeightMap(
                 this,
                 offset,
-                width,
-                height
+                width
             );
 
-            float[][] temperatureMap = this.temperatureMapGraph.GetHeightMap(
+            float[] temperatureMap = this.temperatureMapGraph.GetHeightMap(
                 this,
                 offset,
-                width,
-                height
+                width
             );
             if (drawMode == DrawMode.BiomesTexture)
             {
-                DrawBiomes(width, height, humidityMap, temperatureMap);
+                DrawBiomes(width, humidityMap, temperatureMap);
             }
             else if (drawMode == DrawMode.HumidityMapTexture)
             {
-                DrawTexture(TextureGenerator.TextureFromHeightMap(humidityMap));
+                DrawTexture(TextureGenerator.TextureFromHeightMap(humidityMap, width));
             }
             else if (drawMode == DrawMode.TemperatureMapTexture)
             {
-                DrawTexture(TextureGenerator.TextureFromHeightMap(temperatureMap));
+                DrawTexture(TextureGenerator.TextureFromHeightMap(temperatureMap, width));
             }
         }
     }
@@ -232,25 +229,21 @@ public class TerrainSettings : ScriptableObject
 #endif
     }
 
-    private void DrawBiomes(int width, int height, float[][] humidityMap, float[][] temperatureMap)
+    private void DrawBiomes(int width, float[] humidityMap, float[] temperatureMap)
     {
-        BiomeInfo biomeInfo = BiomeHeightMapGenerator.GenerateBiomeInfo(width, height, humidityMap, temperatureMap, this);
+        BiomeInfo biomeInfo = BiomeHeightMapGenerator.GenerateBiomeInfo(width, humidityMap, temperatureMap, this);
 
         int numBiomes = this.biomeSettings.Length;
-        float[][] biomeTextureMap = new float[width][];
+        float[] biomeTextureMap = new float[width * width];
         for (int i = 0; i < width; i++)
         {
-            biomeTextureMap[i] = new float[height];
-        }
-        for (int i = 0; i < width; i++)
-        {
-            for (int j = 0; j < height; j++)
+            for (int j = 0; j < width; j++)
             {
-                biomeTextureMap[i][j] = (float)biomeInfo.biomeMap[i][j] / (float)(numBiomes - 1);
+                biomeTextureMap[i * width + j] = (float)biomeInfo.biomeMap[i * width + j] / (float)(numBiomes - 1);
             }
         }
 
-        DrawTexture(TextureGenerator.TextureFromHeightMap(biomeTextureMap));
+        DrawTexture(TextureGenerator.TextureFromHeightMap(biomeTextureMap, width));
     }
 
     public void DrawTexture(Texture2D texture)

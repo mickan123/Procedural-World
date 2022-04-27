@@ -19,30 +19,27 @@ public static class HydraulicErosion
         gpuDone = new Dictionary<Thread, bool>();
     }
 
-    public static float[][] Erode(
-        float[][] originalHeightMap,
+    public static float[] Erode(
+        float[] originalHeightMap,
         TerrainSettings terrainSettings,
         ErosionSettings erosionSettings,
         BiomeInfo info
     )
     {
-        int mapSize = originalHeightMap.Length;
+        int width = info.width;
         int numBiomes = terrainSettings.biomeSettings.Length;
 
-        float[] erodedHeightMap = new float[mapSize * mapSize];
-        for (int i = 0; i < mapSize; i++)
+        float[] erodedHeightMap = new float[width * width];
+        for (int i = 0; i < width * width; i++)
         {
-            for (int j = 0; j < mapSize; j++)
-            {
-                erodedHeightMap[i * mapSize + j] = originalHeightMap[i][j];
-            }
+            erodedHeightMap[i] = originalHeightMap[i];
         }
 
         if (gpuErosion)
         {
             UnityEngine.Rendering.AsyncGPUReadbackRequest request = new UnityEngine.Rendering.AsyncGPUReadbackRequest();
 
-            NativeArray<float> gpuData = new NativeArray<float>(mapSize * mapSize * 4, Allocator.Persistent);
+            NativeArray<float> gpuData = new NativeArray<float>(width * width * 4, Allocator.Persistent);
 
             Thread curThread = System.Threading.Thread.CurrentThread;
 
@@ -53,19 +50,19 @@ public static class HydraulicErosion
             
             if (terrainSettings.IsMainThread())
             {
-                GPUErosion(erosionSettings, mapSize, erodedHeightMap, curThread, gpuData, ref request);
+                GPUErosion(erosionSettings, width, erodedHeightMap, curThread, gpuData, ref request);
                 request.WaitForCompletion();
             }
             else
             {
-                Dispatcher.RunOnMainThread(() => GPUErosion(erosionSettings, mapSize, erodedHeightMap, curThread, gpuData, ref request));
+                Dispatcher.RunOnMainThread(() => GPUErosion(erosionSettings, width, erodedHeightMap, curThread, gpuData, ref request));
                 while (!gpuDone[curThread])
                 {
                     Thread.Sleep(1);
                 }
             }
 
-            for (int i = 0; i < mapSize * mapSize; i++)
+            for (int i = 0; i < width * width; i++)
             {
                 float delta = erodedHeightMap[i] - gpuData[i * 4];
                 erodedHeightMap[i] = gpuData[i * 4];
@@ -74,32 +71,14 @@ public static class HydraulicErosion
         }
         else
         {
-            CPUErosion(erosionSettings, mapSize, erodedHeightMap);
+            CPUErosion(erosionSettings, width, erodedHeightMap);
         }
-
-        FadeEdgeErosion(erodedHeightMap, originalHeightMap);
+        Common.FadeEdgeHeightMap(originalHeightMap, erodedHeightMap, width);
         
-        return originalHeightMap;
+        return erodedHeightMap;
     }
 
-    public static void FadeEdgeErosion(float[] erodedHeightMap, float[][] originalHeightMap, float blendDistance = 5f)
-    {
-        int mapSize = originalHeightMap.Length;
-        for (int i = 0; i < mapSize; i++)
-        {
-            for (int j = 0; j < mapSize; j++)
-            {
-                float nearDist = i < j ? i : j;
-                float farDist = mapSize - 1 - (i > j ? i : j);
-                float distFromEdge = nearDist < farDist ? nearDist : farDist;
-                distFromEdge = distFromEdge - 3f < 0f ? 0f : distFromEdge - 3f ;
-                float edgeMultiplier = distFromEdge / blendDistance < 1f ? distFromEdge / blendDistance :1f;
-                originalHeightMap[i][j] = edgeMultiplier * erodedHeightMap[i * mapSize + j] + (1f - edgeMultiplier) * originalHeightMap[i][j];
-            }
-        }
-    }
-
-    public static void GPUErosion(ErosionSettings settings, int mapSize, float[] heightMap, Thread threadId, NativeArray<float> gpuData, ref UnityEngine.Rendering.AsyncGPUReadbackRequest request)
+    public static void GPUErosion(ErosionSettings settings, int width, float[] heightMap, Thread threadId, NativeArray<float> gpuData, ref UnityEngine.Rendering.AsyncGPUReadbackRequest request)
     {
         int length = heightMap.Length;
 
@@ -113,10 +92,10 @@ public static class HydraulicErosion
             computeShaderHeightMap[i * 4 + 3] = 1; // Hardness
         }
 
-        ComputeBuffer heightMapBuffer = new ComputeBuffer(mapSize * mapSize, sizeof(float) * 4);
+        ComputeBuffer heightMapBuffer = new ComputeBuffer(width * width, sizeof(float) * 4);
         heightMapBuffer.SetData(computeShaderHeightMap);
 
-        ComputeBuffer initialHeightMapBuffer = new ComputeBuffer(mapSize * mapSize, sizeof(float));
+        ComputeBuffer initialHeightMapBuffer = new ComputeBuffer(width * width, sizeof(float));
         initialHeightMapBuffer.SetData(heightMap);
 
         // Set initial flux and velocity to zeros
@@ -133,7 +112,7 @@ public static class HydraulicErosion
         velocityBuffer.SetData(velocity);
 
         // Set erosion shader parameters
-        ErosionSettings.erosionShader.SetInt("mapSize", mapSize);
+        ErosionSettings.erosionShader.SetInt("width", width);
         ErosionSettings.erosionShader.SetFloat("timestep", settings.timestep);
         ErosionSettings.erosionShader.SetFloat("evaporateSpeed", settings.evaporateSpeed);
         ErosionSettings.erosionShader.SetFloat("rainRate", settings.rainRate);
@@ -162,7 +141,7 @@ public static class HydraulicErosion
         {
             ErosionSettings.erosionShader.Dispatch(
                 0, 
-                mapSize * mapSize / (int)threadsPerGroupX, 
+                width * width / (int)threadsPerGroupX, 
                 1,
                 1
             );
@@ -185,18 +164,18 @@ public static class HydraulicErosion
         initialHeightMapBuffer.Release();
     }
 
-    public static void CPUErosion(ErosionSettings settings, int mapSize, float[] heightMap)
+    public static void CPUErosion(ErosionSettings settings, int width, float[] heightMap)
     {
-        NativeArray<float> initialHeightMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
+        NativeArray<float> initialHeightMapNat = new NativeArray<float>(width * width, Allocator.TempJob);
 
-        NativeArray<float> heightMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
-        NativeArray<float> waterMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
-        NativeArray<float> sedimentMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
-        NativeArray<float> hardnessMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
+        NativeArray<float> heightMapNat = new NativeArray<float>(width * width, Allocator.TempJob);
+        NativeArray<float> waterMapNat = new NativeArray<float>(width * width, Allocator.TempJob);
+        NativeArray<float> sedimentMapNat = new NativeArray<float>(width * width, Allocator.TempJob);
+        NativeArray<float> hardnessMapNat = new NativeArray<float>(width * width, Allocator.TempJob);
 
-        NativeArray<float4> waterFluxMapNat = new NativeArray<float4>(mapSize * mapSize, Allocator.TempJob);
-        NativeArray<float4> thermalFluxMapNat = new NativeArray<float4>(mapSize * mapSize, Allocator.TempJob);
-        NativeArray<float2> velocityMapNat = new NativeArray<float2>(mapSize * mapSize, Allocator.TempJob);
+        NativeArray<float4> waterFluxMapNat = new NativeArray<float4>(width * width, Allocator.TempJob);
+        NativeArray<float4> thermalFluxMapNat = new NativeArray<float4>(width * width, Allocator.TempJob);
+        NativeArray<float2> velocityMapNat = new NativeArray<float2>(width * width, Allocator.TempJob);
 
         heightMapNat.CopyFrom(heightMap);
         initialHeightMapNat.CopyFrom(heightMap);
@@ -206,8 +185,8 @@ public static class HydraulicErosion
         }
 
         HydraulicErosionJob burstJob = new HydraulicErosionJob{
-            width = mapSize,
-            height = mapSize,
+            width = width,
+            height = width,
             timestep = settings.timestep,
             evaporateSpeed = settings.evaporateSpeed,
             rainRate = settings.rainRate,
@@ -230,9 +209,7 @@ public static class HydraulicErosion
             velocityMap = velocityMapNat,
             initialHeightMap = initialHeightMapNat
         };
-        Debug.Log(mapSize);
-        Debug.Log(heightMapNat.Length);
-        burstJob.Schedule(mapSize + 5, 1).Complete();
+        burstJob.Schedule(width + 5, 1).Complete();
 
         heightMapNat.CopyTo(heightMap);
 

@@ -6,7 +6,7 @@ using XNode;
 [XNode.Node.CreateNodeMenuAttribute("HeightMap/Constant")]
 public class HeightMapConstantNode : BiomeGraphNode
 {
-    [Output] public float[][] heightMapOut;
+    [Output] public float[] heightMapOut;
 
     public float value = 1f;
 
@@ -16,22 +16,14 @@ public class HeightMapConstantNode : BiomeGraphNode
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
 
         int width = heightMapData.width;
-        int height = heightMapData.height;
 
-        float[][] result = new float[width][];
-        for (int i = 0; i < width; i++)
-        {
-            result[i] = new float[height];
-        }
+        float[] result = new float[width * width];
 
         if (port.fieldName == "heightMapOut")
         {
-            for (int i = 0; i < width; i++)
+            for (int i = 0; i < width * width; i++)
             {
-                for (int j = 0; j < height; j++)
-                {
-                    result[i][j] = value;
-                }
+                result[i] = value;
             }
         }
         return result;

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class WorldManager
@@ -18,7 +19,7 @@ public class WorldManager
     private Vector2 viewerPosition;
     private Vector2 viewerPositionOld;
 
-    private Dictionary<ChunkCoord, TerrainChunkData> terrainChunkDictionary = new Dictionary<ChunkCoord, TerrainChunkData>();
+    private Dictionary<ChunkCoord, TerrainChunk> terrainChunkDictionary = new Dictionary<ChunkCoord, TerrainChunk>();
     private List<TerrainChunk> visibleTerrainChunks = new List<TerrainChunk>();
 
     public bool destroyed = false;
@@ -77,7 +78,7 @@ public class WorldManager
                 {
                     if (terrainChunkDictionary.ContainsKey(viewedChunkCoord))
                     {
-                        terrainChunkDictionary[viewedChunkCoord].terrainChunk.UpdateTerrainChunk();
+                        terrainChunkDictionary[viewedChunkCoord].UpdateTerrainChunk();
                     }
                     else
                     {
@@ -86,6 +87,20 @@ public class WorldManager
                 }
             }
         }
+    }
+
+    public List<TerrainChunk> GetTerrainChunksReadyToSpawnObjects()
+    {
+        List<TerrainChunk> chunks = new List<TerrainChunk>();
+        foreach (TerrainChunk chunk in visibleTerrainChunks)
+        {
+            if (chunk.readyToSpawnObjects)
+            {
+                chunks.Add(chunk);
+                chunk.readyToSpawnObjects = false;
+            }
+        }
+        return chunks;
     }
 
     private void GenerateChunk(ChunkCoord coord)
@@ -99,7 +114,7 @@ public class WorldManager
             mapMaterial,
             viewer
         );
-        terrainChunkDictionary.Add(coord, new TerrainChunkData(newChunk));
+        terrainChunkDictionary.Add(coord, newChunk);
         newChunk.onVisibilityChanged += OnTerrainChunkVisibilityChanged;
         newChunk.Load();
     }
@@ -117,21 +132,6 @@ public class WorldManager
     }
 }
 
-public struct TerrainChunkData
-{
-    public TerrainChunk terrainChunk;
-
-    public bool doneStage1Erosion;
-
-    public float[][] heightMap;
-
-    public TerrainChunkData(TerrainChunk terrainChunk)
-    {
-        this.terrainChunk = terrainChunk;
-        doneStage1Erosion = false;
-        heightMap = null;
-    }
-}
 
 [System.Serializable]
 public struct LODInfo

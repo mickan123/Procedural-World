@@ -34,9 +34,9 @@ public struct ChunkData
 {
     public BiomeData biomeData;
     public List<ObjectSpawner> objects;
-    public float[][] roadStrengthMap;
+    public float[] roadStrengthMap;
 
-    public ChunkData(BiomeData biomeData, List<ObjectSpawner> objects, float[][] roadStrengthMap)
+    public ChunkData(BiomeData biomeData, List<ObjectSpawner> objects, float[] roadStrengthMap)
     {
         this.biomeData = biomeData;
         this.objects = objects;

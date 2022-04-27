@@ -13,11 +13,11 @@ public static class RoadGenerator
     public static RoadData GenerateRoads(
         TerrainSettings terrainSettings, 
         Vector2 chunkCentre, 
-        float[][] originalHeightMap, 
+        float[] originalHeightMap, 
         BiomeInfo info
     )
     {
-        int mapSize = originalHeightMap.Length;
+        int width = info.width;
 
         // Create list of roadsettings
         List<RoadSettings> roadSettingsList = new List<RoadSettings>();
@@ -29,95 +29,79 @@ public static class RoadGenerator
         }
 
         // Allocate road strength map and final heightmap
-        float[][] finalRoadStrengthMap = new float[mapSize][];
-        float[][] finalHeightMap = new float[mapSize][];
-        for (int i = 0; i < mapSize; i++)
-        {
-            finalRoadStrengthMap[i] = new float[mapSize];
-            finalHeightMap[i] = new float[mapSize];
-        }
+        float[] finalRoadStrengthMap = new float[width * width];
+        float[] finalHeightMap = new float[width * width];
 
         // Initialise finalHeightMap to be same is originalHeightMap
-        for (int i = 0; i < mapSize; i++)
+        for (int i = 0; i < width * width; i++)
         {
-            for (int j = 0; j < mapSize; j++)
-            {
-                finalHeightMap[i][j] = originalHeightMap[i][j];
-            }
+            finalHeightMap[i] = originalHeightMap[i];
         }
 
         // Create roads
-        List<RoadRoute> routes = GetRoadDestinations(mapSize, chunkCentre);
+        List<RoadRoute> routes = GetRoadDestinations(width, chunkCentre);
         for (int i = 0; i < routes.Count; i++)
         {
-            Vector3[] path = CreatePath(routes[i], originalHeightMap, terrainSettings.maxRoadWidth);
+            Vector3[] path = CreatePath(routes[i], originalHeightMap, width, terrainSettings.maxRoadWidth);
             RoadData data = CreateRoad(path, finalHeightMap, originalHeightMap, roadSettingsList, info, terrainSettings.maxRoadWidth);
 
             finalHeightMap = data.heightMap;
 
             // Update roadstrengthmap
-            for (int x = 0; x < mapSize; x++)
+            for (int x = 0; x < width; x++)
             {
-                for (int y = 0; y < mapSize; y++)
+                for (int y = 0; y < width; y++)
                 {
-                    finalRoadStrengthMap[x][y] = Mathf.Max(data.roadStrengthMap[x][y], finalRoadStrengthMap[x][y]);
+                    finalRoadStrengthMap[x * width + y] = Mathf.Max(data.roadStrengthMap[x * width + y], finalRoadStrengthMap[x * width + y]);
                 }
             }
         }
 
         // Fade away any road carving from edge so that cross chunk roads blend smoothly
-        Common.FadeEdgeHeightMap(originalHeightMap, finalHeightMap, 5f);
+        Common.FadeEdgeHeightMap(originalHeightMap, finalHeightMap, width, 5f);
         
         return new RoadData(finalHeightMap, finalRoadStrengthMap);
     }
 
 
-    public static List<RoadRoute> GetRoadDestinations(float mapSize, Vector2 chunkCentre)
+    public static List<RoadRoute> GetRoadDestinations(float width, Vector2 chunkCentre)
     {
         List<RoadRoute> destinations = new List<RoadRoute>();
 
-        destinations.Add(new RoadRoute(new Vector2(mapSize / 2, 0),
-                                       new Vector2(mapSize / 2, mapSize - 1)));
+        destinations.Add(new RoadRoute(new Vector2(width / 2, 0),
+                                       new Vector2(width / 2, width - 1)));
 
-        destinations.Add(new RoadRoute(new Vector2(0, mapSize / 2),
-                                       new Vector2(mapSize - 1, mapSize / 2)));
+        destinations.Add(new RoadRoute(new Vector2(0, width / 2),
+                                       new Vector2(width - 1, width / 2)));
 
         return destinations;
     }
 
 
-    public static Vector3[] CreatePath(RoadRoute route, float[][] heightMap, float maxRoadWidth)
+    public static Vector3[] CreatePath(RoadRoute route, float[] heightMap, int width, float maxRoadWidth)
     {
-        int mapSize = heightMap.Length;
-        Vector3 roadStart = new Vector3(route.roadStart.x, Common.HeightFromFloatCoord(route.roadStart, heightMap), route.roadStart.y);
-        Vector3 roadEnd = new Vector3(route.roadEnd.x, Common.HeightFromFloatCoord(route.roadEnd, heightMap), route.roadEnd.y);
+        Vector3 roadStart = new Vector3(route.roadStart.x, Common.HeightFromFloatCoord(route.roadStart, heightMap, width), route.roadStart.y);
+        Vector3 roadEnd = new Vector3(route.roadEnd.x, Common.HeightFromFloatCoord(route.roadEnd, heightMap, width), route.roadEnd.y);
 
         // Create second point perpendicular to edge from start and end points to make sure last part of path is perpendicular to edge of chunk
-        Vector3 roadStart2nd = roadStart + new Vector3((roadStart.x == 0) ? 5 : (roadStart.x == mapSize - 1) ? -5 : 0,
+        Vector3 roadStart2nd = roadStart + new Vector3((roadStart.x == 0) ? 5 : (roadStart.x == width - 1) ? -5 : 0,
                                                         0,
-                                                        (roadStart.z == 0) ? 5 : (roadStart.z == mapSize - 1) ? -5 : 0);
-        Vector3 roadEnd2nd = roadEnd + new Vector3((roadEnd.x == 0) ? 5 : (roadEnd.x == mapSize - 1) ? -5 : 0,
+                                                        (roadStart.z == 0) ? 5 : (roadStart.z == width - 1) ? -5 : 0);
+        Vector3 roadEnd2nd = roadEnd + new Vector3((roadEnd.x == 0) ? 5 : (roadEnd.x == width - 1) ? -5 : 0,
                                                     0,
-                                                    (roadEnd.z == 0) ? 5 : (roadEnd.z == mapSize - 1) ? -5 : 0);
+                                                    (roadEnd.z == 0) ? 5 : (roadEnd.z == width - 1) ? -5 : 0);
         Vector3[] path;
-        path = FindPath(heightMap, maxRoadWidth, roadStart2nd, roadEnd2nd);
+        path = FindPath(heightMap, width, maxRoadWidth, roadStart2nd, roadEnd2nd);
         path = SmoothPath(path, roadStart, roadEnd);
         return path;
     }
 
 
-    private static Vector3[] FindPath(float[][] heightMap, float maxRoadWidth, Vector3 roadStart, Vector3 roadEnd)
+    private static Vector3[] FindPath(float[] heightMap, int width, float maxRoadWidth, Vector3 roadStart, Vector3 roadEnd)
     {
-        int mapSize = heightMap.Length;
 
-        NativeArray<float> heightMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
+        NativeArray<float> heightMapNat = new NativeArray<float>(heightMap, Allocator.TempJob);
         
-        for (int i = 0; i < mapSize; i++)
-        {
-            int start = i * mapSize;
-            heightMapNat.GetSubArray(start, mapSize).CopyFrom(heightMap[i]);
-        }
-
         NativeList<int2> pathNat = new NativeList<int2>(Allocator.TempJob);
 
         FindPathJob burstJob = new FindPathJob
@@ -125,7 +109,7 @@ public static class RoadGenerator
             heightMap = heightMapNat,
             roadStart = roadStart,
             roadEnd = roadEnd,
-            mapSize = mapSize,
+            width = width,
             maxRoadWidth = maxRoadWidth,
             path = pathNat,
             stepSize = RoadSettings.stepSize
@@ -138,7 +122,7 @@ public static class RoadGenerator
         {
             int x = pathNat[i].x;
             int z = pathNat[i].y;
-            path[i] = new Vector3(x, heightMap[x][z], z);
+            path[i] = new Vector3(x, heightMap[x * width + z], z);
         }
 
         heightMapNat.Dispose();
@@ -236,40 +220,28 @@ public static class RoadGenerator
 
     public static RoadData CreateRoad(
         Vector3[] path,
-        float[][] finalHeightMap,
-        float[][] originalHeightMap,
+        float[] finalHeightMap,
+        float[] originalHeightMap,
         List<RoadSettings> roadSettingsList,
         BiomeInfo info,
         float maxRoadWidth
     )
     {   
-        int mapSize = originalHeightMap.Length;
+        int width = info.width;
         int numBiomes = info.numBiomes;
 
-        float[][] roadStrengthMap = new float[mapSize][];
-        for (int i = 0; i < mapSize; i++)
-        {
-            roadStrengthMap[i] = new float[mapSize];
-        }
+        float[] roadStrengthMap = new float[width * width];
         
-        NativeArray<float> finalHeightMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
-        NativeArray<float> originalHeightMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
-        NativeArray<Vector3> pathNat = new NativeArray<Vector3>(path.Length, Allocator.TempJob);
+        NativeArray<float> finalHeightMapNat = new NativeArray<float>(finalHeightMap, Allocator.TempJob);
+        NativeArray<float> originalHeightMapNat = new NativeArray<float>(originalHeightMap, Allocator.TempJob);
+        NativeArray<Vector3> pathNat = new NativeArray<Vector3>(path, Allocator.TempJob);
         NativeArray<RoadSettingsStruct> roadSettingsNat = new NativeArray<RoadSettingsStruct>(roadSettingsList.Count, Allocator.TempJob);
-        NativeArray<float> roadStrengthMapNat = new NativeArray<float>(mapSize * mapSize, Allocator.TempJob);
-        NativeArray<float> biomeStrengthsNat = new NativeArray<float>(mapSize * mapSize * numBiomes, Allocator.TempJob);
+        NativeArray<float> roadStrengthMapNat = new NativeArray<float>(width * width, Allocator.TempJob);
+        NativeArray<float> biomeStrengthsNat = new NativeArray<float>(info.biomeStrengths, Allocator.TempJob);
 
-        int start = 0;
-        for (int i = 0; i < mapSize; i++)
-        {
-            start = i * mapSize;
-            finalHeightMapNat.GetSubArray(start, mapSize).CopyFrom(finalHeightMap[i]);
-            originalHeightMapNat.GetSubArray(start, mapSize).CopyFrom(originalHeightMap[i]);
-        }
-        biomeStrengthsNat.CopyFrom(info.biomeStrengths);
         pathNat.CopyFrom(path);
 
-        NativeArray<int> closestPathIndexesNat = GetClosestPathIndexes(mapSize, maxRoadWidth, path, originalHeightMap);
+        NativeArray<int> closestPathIndexesNat = GetClosestPathIndexes(width, maxRoadWidth, path, originalHeightMap);
 
         for (int i = 0; i < roadSettingsList.Count; i++)
         {
@@ -283,19 +255,16 @@ public static class RoadGenerator
             roadStrengthMap = roadStrengthMapNat,
             path = pathNat,
             roadSettings = roadSettingsNat,
-            mapSize = mapSize,
+            width = width,
             numBiomes = numBiomes,
             biomeStrengths = biomeStrengthsNat,
             closestPathIndexes = closestPathIndexesNat,
         };
 
         burstJob.Schedule().Complete();
-        for (int i = 0; i < mapSize; i++)
-        {
-            start = i * mapSize;
-            finalHeightMapNat.GetSubArray(start, mapSize).CopyTo(finalHeightMap[i]);
-            roadStrengthMapNat.GetSubArray(start, mapSize).CopyTo(roadStrengthMap[i]);
-        }
+
+        finalHeightMapNat.CopyTo(finalHeightMap);
+        roadStrengthMapNat.CopyTo(roadStrengthMap);
 
         finalHeightMapNat.Dispose();
         originalHeightMapNat.Dispose();
@@ -309,29 +278,29 @@ public static class RoadGenerator
         return new RoadData(finalHeightMap, roadStrengthMap);
     }
 
-    public static NativeArray<int> GetClosestPathIndexes(int mapSize, float maxRoadWidth, Vector3[] path, float[][] originalHeightMap)
+    public static NativeArray<int> GetClosestPathIndexes(int width, float maxRoadWidth, Vector3[] path, float[] originalHeightMap)
     {
-        bool[] getClosestPathIndex = new bool[mapSize * mapSize];
+        bool[] getClosestPathIndex = new bool[width * width];
 
         for (int i = 0; i < path.Length; i++)
         {
             // Calculate search area and clamp it within map bounds
             int startX = (int)math.max(0f, path[i].x - maxRoadWidth);
-            int endX = (int)math.min(mapSize - 1, path[i].x + maxRoadWidth + 1);
+            int endX = (int)math.min(width - 1, path[i].x + maxRoadWidth + 1);
             int startZ = (int)math.max(0f, path[i].z - maxRoadWidth);
-            int endZ = (int)math.min(mapSize - 1, path[i].z + maxRoadWidth + 1);
+            int endZ = (int)math.min(width - 1, path[i].z + maxRoadWidth + 1);
 
             for (int x = startX; x <= endX; x++)
             {
                 for (int z = startZ; z <= endZ; z++)
                 {   
-                    getClosestPathIndex[x * mapSize + z] = true;
+                    getClosestPathIndex[x * width + z] = true;
                 }
             }
         }
 
         int queryLength = 0;
-        for (int i = 0; i < mapSize * mapSize; i++)
+        for (int i = 0; i < width * width; i++)
         {
             if (getClosestPathIndex[i]) 
             {
@@ -341,13 +310,13 @@ public static class RoadGenerator
 
         Vector3[] queries = new Vector3[queryLength];
         int queryIdx = 0;
-        for (int i = 0; i < mapSize; i++)
+        for (int i = 0; i < width; i++)
         {
-            for (int j = 0; j < mapSize; j++)
+            for (int j = 0; j < width; j++)
             {
-                if (getClosestPathIndex[i * mapSize + j]) 
+                if (getClosestPathIndex[i * width + j]) 
                 {
-                    float height = originalHeightMap[i][j];
+                    float height = originalHeightMap[i * width + j];
                     queries[queryIdx] = new Vector3(i, height, j);
                     queryIdx++;
                 }
@@ -357,10 +326,10 @@ public static class RoadGenerator
         gsb.initGrid(path);
 
         int[] closestPoints = gsb.searchClosestPoint(queries);
-        NativeArray<int> closestPathIndexesNat = new NativeArray<int>(mapSize * mapSize, Allocator.TempJob);
+        NativeArray<int> closestPathIndexesNat = new NativeArray<int>(width * width, Allocator.TempJob);
 
         int closetsPathIndexCounter = 0;
-        for (int i = 0; i < mapSize * mapSize; i++)
+        for (int i = 0; i < width * width; i++)
         {
             if (getClosestPathIndex[i])
             {
@@ -395,10 +364,10 @@ public static class RoadGenerator
 
 public struct RoadData
 {
-    public float[][] heightMap;
-    public float[][] roadStrengthMap;
+    public float[] heightMap;
+    public float[] roadStrengthMap;
 
-    public RoadData(float[][] heightMap, float[][] roadStrengthMap)
+    public RoadData(float[] heightMap, float[] roadStrengthMap)
     {
         this.heightMap = heightMap;
         this.roadStrengthMap = roadStrengthMap;

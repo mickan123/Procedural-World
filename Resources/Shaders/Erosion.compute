@@ -15,10 +15,10 @@
 
 #define SUM_COMPS(v) ((v.r + v.g + v.b + v.a))
 
-#define IS_LEFT_BORDER (index % mapSize < 1)
-#define IS_RIGHT_BORDER (index % mapSize > mapSize - 2)
-#define IS_TOP_BORDER (uint(uint(index) / uint(mapSize)) < 1)
-#define IS_BOTTOM_BORDER (uint(uint(index) / uint(mapSize)) > uint(mapSize) - 2)
+#define IS_LEFT_BORDER (index % width < 1)
+#define IS_RIGHT_BORDER (index % width > width - 2)
+#define IS_TOP_BORDER (uint(uint(index) / uint(width)) < 1)
+#define IS_BOTTOM_BORDER (uint(uint(index) / uint(width)) > uint(width) - 2)
 
 #define PIPEAREA 60
 
@@ -36,7 +36,7 @@ RWStructuredBuffer<float2> VelocityMap;
 
 RWStructuredBuffer<float> InitialHeightMap;
 
-uint mapSize;
+uint width;
 float timestep;
 float rainRate;
 float evaporateSpeed;
@@ -65,10 +65,10 @@ float4 SampleBilinear(RWStructuredBuffer<float4> buff, float2 uv)
 	float2 d = uv - uva;
 
 	return
-		buff[id00.x + id00.y * mapSize] * (1 - d.x) * (1 - d.y) +
-		buff[id10.x + id10.y * mapSize] * d.x * (1 - d.y) +
-		buff[id01.x + id01.y * mapSize] * (1 - d.x) * d.y +
-		buff[id11.x + id11.y * mapSize] * d.x * d.y;
+		buff[id00.x + id00.y * width] * (1 - d.x) * (1 - d.y) +
+		buff[id10.x + id10.y * width] * d.x * (1 - d.y) +
+		buff[id01.x + id01.y * width] * (1 - d.x) * d.y +
+		buff[id11.x + id11.y * width] * d.x * d.y;
 }
 
 // Step 1: Simulate rain 
@@ -88,8 +88,8 @@ void FluxComputation(int index)
     float4 state = CURRENT_SAMPLE(HeightMap);
     float4 stateLeft = IS_LEFT_BORDER ? state : HeightMap[index - 1];
 	float4 stateRight = IS_RIGHT_BORDER ? state : HeightMap[index + 1];
-	float4 stateTop = IS_TOP_BORDER ? state : HeightMap[index - mapSize];
-	float4 stateBottom = IS_BOTTOM_BORDER ? state : HeightMap[index + mapSize];
+	float4 stateTop = IS_TOP_BORDER ? state : HeightMap[index - width];
+	float4 stateBottom = IS_BOTTOM_BORDER ? state : HeightMap[index + width];
 
     float terrainHeight = TERRAIN_HEIGHT(state);
 	float waterHeight = WATER_HEIGHT(state);
@@ -130,8 +130,8 @@ void VelocityComputation(int index)
 	float4 inputFlux = float4(
 		RDIR(FluxMap[index - 1]),
 		LDIR(FluxMap[index + 1]),
-		BDIR(FluxMap[index - mapSize]),
-		TDIR(FluxMap[index + mapSize])
+		BDIR(FluxMap[index - width]),
+		TDIR(FluxMap[index + width])
     );
 	float waterHeightBefore = WATER_HEIGHT(state);
 
@@ -159,8 +159,8 @@ void ErosionDeposition(int index)
 	float4 state = CURRENT_SAMPLE(HeightMap);
 	float4 stateLeft = IS_LEFT_BORDER ? state : HeightMap[index - 1];
 	float4 stateRight = IS_RIGHT_BORDER ? state : HeightMap[index + 1];
-	float4 stateTop = IS_TOP_BORDER ? state : HeightMap[index - mapSize];
-	float4 stateBottom = IS_BOTTOM_BORDER ? state : HeightMap[index + mapSize];
+	float4 stateTop = IS_TOP_BORDER ? state : HeightMap[index - width];
+	float4 stateBottom = IS_BOTTOM_BORDER ? state : HeightMap[index + width];
 	float2 velocity = CURRENT_SAMPLE(VelocityMap);
 
 	// Tilt angle computation
@@ -210,8 +210,8 @@ void SedimentTransportation(int index)
     float2 velocity = CURRENT_SAMPLE(VelocityMap);
 
     float2 pos = float2(
-        int(index % mapSize),
-        int(index / mapSize)
+        int(index % width),
+        int(index / width)
     );
 
     SEDIMENT(state) = SEDIMENT(SampleBilinear(HeightMap, pos + velocity * timestep));
@@ -225,8 +225,8 @@ void ThermalFluxComputation(int index)
     float4 state = CURRENT_SAMPLE(HeightMap);
     float4 stateLeft = IS_LEFT_BORDER ? state : HeightMap[index - 1];
 	float4 stateRight = IS_RIGHT_BORDER ? state : HeightMap[index + 1];
-	float4 stateTop = IS_TOP_BORDER ? state : HeightMap[index - mapSize];
-	float4 stateBottom = IS_BOTTOM_BORDER ? state : HeightMap[index + mapSize];
+	float4 stateTop = IS_TOP_BORDER ? state : HeightMap[index - width];
+	float4 stateBottom = IS_BOTTOM_BORDER ? state : HeightMap[index + width];
 
     // Calculate neighbour heights
     float4 neighborHeights = float4(
@@ -282,8 +282,8 @@ void ApplyThermalErosion(int index)
     float4 outputFlux = CURRENT_SAMPLE(ThermalFluxMap);
     float4 stateLeft = IS_LEFT_BORDER ? outputFlux : ThermalFluxMap[index - 1];
 	float4 stateRight = IS_RIGHT_BORDER ? outputFlux : ThermalFluxMap[index + 1];
-	float4 stateTop = IS_TOP_BORDER ? outputFlux : ThermalFluxMap[index - mapSize];
-	float4 stateBottom = IS_BOTTOM_BORDER ? outputFlux : ThermalFluxMap[index + mapSize];
+	float4 stateTop = IS_TOP_BORDER ? outputFlux : ThermalFluxMap[index - width];
+	float4 stateBottom = IS_BOTTOM_BORDER ? outputFlux : ThermalFluxMap[index + width];
 
     float4 inputFlux = float4(
         RDIR(stateLeft),

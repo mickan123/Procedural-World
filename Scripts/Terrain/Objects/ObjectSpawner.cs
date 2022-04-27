@@ -1,17 +1,21 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 using Unity.Burst;
 using Unity.Collections;
+using System.Collections.Generic;
 using Unity.Jobs;
 
 public struct ObjectPositionData
 {    
     public ObjectPositions positions;
-    public float[][] heightMap;
+    public float[] heightMap;
+    public int width;
 
-    public ObjectPositionData(ObjectPositions positions, float[][] heightMap)
+    public ObjectPositionData(ObjectPositions positions, float[] heightMap, int width)
     {
         this.positions = positions;
         this.heightMap = heightMap;
+        this.width = width;
     }
 }
 
@@ -81,12 +85,12 @@ public class ObjectSpawner
         new Vector2(0f, 0f),
     };
 
-    private bool isDetail;
+    public bool isDetail;
 
     // Detail only settings
     private Material[] detailMaterials;
     public enum DetailMode { Billboard, Circle, Triangle, GeometryShader };
-    private DetailMode detailMode;
+    public DetailMode detailMode;
 
     // Mesh object only settings
     public GameObject[] terrainObjects;
@@ -99,7 +103,8 @@ public class ObjectSpawner
 
     // Internal vars
     private GameObject[] spawnedObjects;
-    private Transform parent;
+
+    public Transform parent;
 
     public ObjectSpawner(
         GameObject[] terrainObjects,
@@ -142,15 +147,6 @@ public class ObjectSpawner
         this.hide = hide;
     }
 
-    public void SetParent(Transform transform)
-    {
-        int length = terrainObjects.Length;
-        for (int i = 0; i < length; i++)
-        {
-            terrainObjects[i].gameObject.transform.parent = transform;
-        }
-    }
-
     public void Spawn(Transform parent)
     {
         this.parent = parent;
@@ -160,11 +156,12 @@ public class ObjectSpawner
         }
         else
         {
-            SpawnMeshObjects();
+            IEnumerator iterator = this.SpawnMeshObjects();
+            while (iterator.MoveNext()) {}
         }
     }
 
-    private void SpawnMeshObjects()
+    public IEnumerator SpawnMeshObjects()
     {
         int length = positions.Length;
         for (int i = 0; i < length; i++)
@@ -178,6 +175,7 @@ public class ObjectSpawner
             obj.transform.localScale = positions.scales[i];
             obj.SetActive(!hide);
             spawnedObjects[i] = obj;
+            yield return null;
         }
         if (spawnedObjects.Length > 0 && staticBatch)
         {
@@ -185,61 +183,36 @@ public class ObjectSpawner
         }
     }
 
-    private void SpawnDetails()
+    public void SpawnDetails()
     {
         if (this.detailMode == DetailMode.GeometryShader)
         {
             this.GeometryShaderDetails();
             return;
         }
-
-        int numDetailMaterials = this.detailMaterials.Length;
-
-        GameObject[] detailObjects = new GameObject[numDetailMaterials];
-        for (int i = 0; i < numDetailMaterials; i++)
-        {
-            detailObjects[i] = new GameObject();
-            detailObjects[i].transform.parent = this.parent;
-            detailObjects[i].transform.localPosition = new Vector3(0f, 0f, 0f);
-        }
-
+        
         Mesh[] meshes;
         if (this.detailMode == DetailMode.Billboard)
         {
             meshes = this.GenerateBillboardDetailsMesh();
+            CreateGameObjects(meshes);
         }
         else if (this.detailMode == DetailMode.Triangle)
         {
             meshes = this.GenerateTriangleDetailsMesh();
+            CreateGameObjects(meshes);
         }
         else if (this.detailMode == DetailMode.Circle)
         {
-            meshes = this.GenerateCircleDetailsMesh();
-        }
-        else
-        {
-            meshes = this.GenerateCircleDetailsMesh();
-        }
-
-        for (int i = 0; i < numDetailMaterials; i++)
-        {
-            MeshFilter groupMeshFilter = detailObjects[i].AddComponent<MeshFilter>();
-            MeshRenderer groupMeshRenderer = detailObjects[i].AddComponent<MeshRenderer>();
-            groupMeshFilter.sharedMesh = meshes[i];
-            groupMeshRenderer.sharedMaterial = this.detailMaterials[i];
-
-            // TODO options for lighting on details
-            groupMeshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
-            groupMeshRenderer.receiveShadows = true;
-            groupMeshRenderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.BlendProbes;
-
-            detailObjects[i].SetActive(!hide);
+            IEnumerator iterator = this.SpawnCircleDetailsMesh();
+            while (iterator.MoveNext()) {}
         }
     }
 
-    private void GeometryShaderDetails()
+    // TODO Geometry shader details
+    public void GeometryShaderDetails()
     {
-
+    
     }
 
     // TODO make burst job
@@ -561,70 +534,119 @@ public class ObjectSpawner
                 }
             }
         }
-
     }
 
-    private Mesh[] GenerateCircleDetailsMesh()
+    public IEnumerator SpawnCircleDetailsMesh()
     {
+        int maxObjectsPerMesh = 1024;
+
         int verticesPerPosition = 24;
         int trianglesPerPosition = 36;
         
         int numDetailTypes = this.detailMaterials.Length;
-        int numObjects = this.positions.Length;
-        int numObjectsPerDetail = numObjects / numDetailTypes;
+        int totalNumObjects = this.positions.Length;
 
-        int verticesLength = numObjectsPerDetail * verticesPerPosition;
-        int trianglesLength = numObjectsPerDetail * trianglesPerPosition;
-        int uvsLength = numObjectsPerDetail * verticesPerPosition;
-        int normalsLength = numObjectsPerDetail * verticesPerPosition;
+        int numObjectsPerDetail = totalNumObjects / numDetailTypes;
 
-        NativeArray<Vector3> verticesNat = new NativeArray<Vector3>(numDetailTypes * verticesLength, Allocator.TempJob);
-        NativeArray<int> trianglesNat = new NativeArray<int>(numDetailTypes * trianglesLength, Allocator.TempJob);
-        NativeArray<Vector2> uvsNat = new NativeArray<Vector2>(numDetailTypes * uvsLength, Allocator.TempJob);
-        NativeArray<Vector3> normalsNat = new NativeArray<Vector3>(numDetailTypes * normalsLength, Allocator.TempJob);
+        int verticesLength = maxObjectsPerMesh * verticesPerPosition;
+        int trianglesLength = maxObjectsPerMesh * trianglesPerPosition;
+        int uvsLength = maxObjectsPerMesh * verticesPerPosition;
+        int normalsLength = maxObjectsPerMesh * verticesPerPosition;
 
-        NativeArray<float> xCoordsNat = new NativeArray<float>(this.positions.xCoords, Allocator.TempJob);
-        NativeArray<float> yCoordsNat = new NativeArray<float>(this.positions.yCoords, Allocator.TempJob);
-        NativeArray<float> zCoordsNat = new NativeArray<float>(this.positions.zCoords, Allocator.TempJob);
-        NativeArray<Vector3> scalesNat = new NativeArray<Vector3>(this.positions.scales, Allocator.TempJob);
+        int verticesPerDetail = verticesLength / numDetailTypes;
+        int trianglesPerDetail = trianglesLength / numDetailTypes;
+        int uvsPerDetail = uvsLength / numDetailTypes;
+        int normalsPerDetail = normalsLength / numDetailTypes;
 
-        GenerateCircleDetailsMeshDataJob burstJob = new GenerateCircleDetailsMeshDataJob
+        int numJobs = totalNumObjects / maxObjectsPerMesh;
+        int numMeshes = numJobs * numDetailTypes;
+        Mesh[] meshes = new Mesh[numMeshes];
+
+        for (int i = 0; i < numJobs; i++)
         {
-            vertices = verticesNat,
-            uvs = uvsNat,
-            triangles = trianglesNat,
-            normals = normalsNat,
-            xCoords = xCoordsNat,
-            yCoords = yCoordsNat,
-            zCoords = zCoordsNat,
-            scales = scalesNat,
-            numDetailTypes = numDetailTypes,
-            numObjects = numObjects,
-        };
-            
-        burstJob.Schedule().Complete();
+            NativeArray<Vector3> verticesNat = new NativeArray<Vector3>(verticesLength, Allocator.TempJob);
+            NativeArray<int> trianglesNat = new NativeArray<int>(trianglesLength, Allocator.TempJob);
+            NativeArray<Vector2> uvsNat = new NativeArray<Vector2>(uvsLength, Allocator.TempJob);
+            NativeArray<Vector3> normalsNat = new NativeArray<Vector3>(normalsLength, Allocator.TempJob);
 
-        Mesh[] meshes = new Mesh[numDetailTypes];
-        for (int i = 0; i < numDetailTypes; i++)
-        {
-            meshes[i] = new Mesh();
-            meshes[i].indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-            meshes[i].SetVertices(verticesNat, i * verticesLength, verticesLength);
-            meshes[i].SetTriangles(trianglesNat.GetSubArray(i * trianglesLength, trianglesLength).ToArray(), 0);
-            meshes[i].SetNormals(normalsNat, i * normalsLength, normalsLength);
-            meshes[i].SetUVs(0, uvsNat.GetSubArray(i * uvsLength, uvsLength));
+            NativeArray<float> xCoordsNat = new NativeArray<float>(maxObjectsPerMesh, Allocator.TempJob);
+            NativeArray<float> yCoordsNat = new NativeArray<float>(maxObjectsPerMesh, Allocator.TempJob);
+            NativeArray<float> zCoordsNat = new NativeArray<float>(maxObjectsPerMesh, Allocator.TempJob);
+            NativeArray<Vector3> scalesNat = new NativeArray<Vector3>(maxObjectsPerMesh, Allocator.TempJob);
+
+            NativeArray<float>.Copy(this.positions.xCoords, i * maxObjectsPerMesh, xCoordsNat, 0, maxObjectsPerMesh);
+            NativeArray<float>.Copy(this.positions.yCoords, i * maxObjectsPerMesh, yCoordsNat, 0, maxObjectsPerMesh);
+            NativeArray<float>.Copy(this.positions.zCoords, i * maxObjectsPerMesh, zCoordsNat, 0, maxObjectsPerMesh);
+            NativeArray<Vector3>.Copy(this.positions.scales, i * maxObjectsPerMesh, scalesNat, 0, maxObjectsPerMesh);
+
+            GenerateCircleDetailsMeshDataJob burstJob = new GenerateCircleDetailsMeshDataJob
+            {
+                vertices = verticesNat,
+                uvs = uvsNat,
+                triangles = trianglesNat,
+                normals = normalsNat,
+                xCoords = xCoordsNat,
+                yCoords = yCoordsNat,
+                zCoords = zCoordsNat,
+                scales = scalesNat,
+                numDetailTypes = numDetailTypes,
+                numObjects = maxObjectsPerMesh,
+            };
+                
+            burstJob.Schedule().Complete();
+
+            for (int j = 0; j < numDetailTypes; j++)
+            {
+                int meshIndex = i * numDetailTypes + j;
+                meshes[meshIndex] = new Mesh();
+                meshes[meshIndex].indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+                meshes[meshIndex].SetVertices(verticesNat, j * verticesPerDetail, verticesPerDetail);
+                meshes[meshIndex].SetTriangles(trianglesNat.GetSubArray(j * trianglesPerDetail, trianglesPerDetail).ToArray(), 0);
+                meshes[meshIndex].SetNormals(normalsNat, j * normalsPerDetail, normalsPerDetail);
+                meshes[meshIndex].SetUVs(0, uvsNat.GetSubArray(j * uvsPerDetail, uvsPerDetail));
+            }
+
+            verticesNat.Dispose();
+            trianglesNat.Dispose();
+            uvsNat.Dispose();
+            normalsNat.Dispose();
+            xCoordsNat.Dispose();
+            yCoordsNat.Dispose();
+            zCoordsNat.Dispose();
+            scalesNat.Dispose();
+
+            yield return null;
         }
 
-        verticesNat.Dispose();
-        trianglesNat.Dispose();
-        uvsNat.Dispose();
-        normalsNat.Dispose();
-        xCoordsNat.Dispose();
-        yCoordsNat.Dispose();
-        zCoordsNat.Dispose();
-        scalesNat.Dispose();
+        CreateGameObjects(meshes);
+    }
 
-        return meshes;
+    private void CreateGameObjects(Mesh[] meshes)
+    {
+        int numMeshes = meshes.Length;
+
+        GameObject[] detailObjects = new GameObject[numMeshes];
+        for (int i = 0; i < numMeshes; i++)
+        {
+            detailObjects[i] = new GameObject();
+            detailObjects[i].transform.parent = this.parent;
+            detailObjects[i].transform.localPosition = new Vector3(0f, 0f, 0f);
+        }
+
+        for (int i = 0; i < meshes.Length; i++)
+        {
+            MeshFilter groupMeshFilter = detailObjects[i].AddComponent<MeshFilter>();
+            MeshRenderer groupMeshRenderer = detailObjects[i].AddComponent<MeshRenderer>();
+            groupMeshFilter.sharedMesh = meshes[i];
+            groupMeshRenderer.sharedMaterial = this.detailMaterials[i % this.detailMaterials.Length];
+
+            // TODO options for lighting on details
+            groupMeshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+            groupMeshRenderer.receiveShadows = true;
+            groupMeshRenderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.BlendProbes;
+
+            detailObjects[i].SetActive(!hide);
+        }
     }
 }
 
