@@ -5,6 +5,7 @@ using Unity.Collections;
 using Unity.Burst;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Stella3D;
 
 public class TerrainChunk
 {
@@ -153,7 +154,9 @@ public class TerrainChunk
         int biomeMapWidth = width - 3;
         
         NativeArray<float> heightMapNat = new NativeArray<float>(heightMap, Allocator.TempJob);
-        NativeArray<float> anglesNat = new NativeArray<float>(width * width, Allocator.TempJob);
+
+        // Use shared array so that we convert between native and non native with no cost
+        SharedArray<float> anglesNat = new SharedArray<float>(width * width);
 
         Common.CalculateAnglesJob burstJob = new Common.CalculateAnglesJob{
             heightMap = heightMapNat,
@@ -194,6 +197,9 @@ public class TerrainChunk
         }
 
         handle.Complete();
+
+        // Convert to managed array as NativeArray has safety checks in editor
+        float[] angles = anglesNat;
         
         // Offset of 1 for all xy coords due to having out of mesh vertices for normal calculations
         int offset = 1;
@@ -207,7 +213,7 @@ public class TerrainChunk
                     + chunkData.roadStrengthMap[(x + offset + 1) * width + y + offset + 1]
                     + chunkData.roadStrengthMap[(x + offset) * width + y + offset + 1]) / 4f;
 
-                float angle = anglesNat[x * width + y] / 90f;
+                float angle = angles[x * width + y] / 90f;
 
                 // Get biomeMap pixel data (2 unused values b,a out of rgba)
                 int biomeMapTexIdx = y * biomeMapWidth * 4 + x * 4;
