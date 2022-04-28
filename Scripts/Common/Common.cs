@@ -101,10 +101,10 @@ public static class Common
                     float dy = math.abs(heightMap[x * width + math.min(y + 1, width - 1)] - height);
 
                     float dMax = math.max(dx, dy);
-                    angles[x * width + y] = Mathf.Rad2Deg * Mathf.Atan2(
+                    angles[x * width + y] = math.degrees(math.atan2(
                         dMax, 
                         1
-                    );
+                    ));
                 }
             }
         }
