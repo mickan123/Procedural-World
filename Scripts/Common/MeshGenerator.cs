@@ -2,6 +2,8 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
+using Stella3D;
+using Unity.Mathematics;
 
 public static class MeshGenerator
 {
@@ -19,25 +21,30 @@ public static class MeshGenerator
         int numMeshEdgeTriangles = 8 * (numVertsPerLine - 4);
         int numMainTriangles = (numMainVerticesPerLine - 1) * (numMainVerticesPerLine - 1) * 2;
 
-        NativeArray<Vector3> verticesNat = new NativeArray<Vector3>(numMeshEdgeVertices + numEdgeConnectionVertices + numMainVertices, Allocator.TempJob);
-        NativeArray<Vector2> uvsNat = new NativeArray<Vector2>(verticesNat.Length, Allocator.TempJob);
-        NativeArray<int> trianglesNat = new NativeArray<int>((numMeshEdgeTriangles + numMainTriangles) * 3, Allocator.TempJob);
+        SharedArray<Vector3, float3> verticesShared = new SharedArray<Vector3, float3>(numMeshEdgeVertices + numEdgeConnectionVertices + numMainVertices);
+        SharedArray<Vector2, float2> uvsShared = new SharedArray<Vector2, float2>(verticesShared.Length);
+        SharedArray<int> trianglesShared = new SharedArray<int>((numMeshEdgeTriangles + numMainTriangles) * 3);
 
-        NativeArray<Vector3> outOfMeshVerticesNat = new NativeArray<Vector3>(numVertsPerLine * 4 - 4, Allocator.TempJob);
+        SharedArray<Vector3, float3> outOfMeshVerticesShared = new SharedArray<Vector3, float3>(numVertsPerLine * 4 - 4);
         NativeArray<int> outOfMeshTrianglesNat = new NativeArray<int>(24 * (numVertsPerLine - 2), Allocator.TempJob);
 
-        NativeArray<Vector3> bakedNormalsNat = new NativeArray<Vector3>(verticesNat.Length, Allocator.TempJob);
+        SharedArray<Vector3, float3> bakedNormalsShared = new SharedArray<Vector3, float3>(verticesShared.Length);
 
         NativeArray<float> heightMapNative = new NativeArray<float>(heightMap, Allocator.TempJob);
 
+        NativeArray<float3> verticesNatFloat3 = verticesShared;
+        NativeArray<float2> uvsNatFloat2 = uvsShared;
+        NativeArray<float3> outOfMeshVerticesNatFloat3 = outOfMeshVerticesShared;
+        NativeArray<float3> bakedNormalsNatFloat3 = bakedNormalsShared;
+
         CalculateMeshDataJob burstJob = new CalculateMeshDataJob
         {
-            vertices = verticesNat,
-            uvs = uvsNat,
-            triangles = trianglesNat,
-            outOfMeshVertices = outOfMeshVerticesNat,
+            vertices = verticesNatFloat3,
+            uvs = uvsNatFloat2,
+            triangles = trianglesShared,
+            outOfMeshVertices = outOfMeshVerticesNatFloat3,
             outOfMeshTriangles = outOfMeshTrianglesNat,
-            bakedNormals = bakedNormalsNat,
+            bakedNormals = bakedNormalsNatFloat3,
             heightMap = heightMapNative,
             numVertsPerLine = numVertsPerLine,
             skipIncrement = skipIncrement,
@@ -45,19 +52,20 @@ public static class MeshGenerator
         };
         burstJob.Schedule().Complete();
 
+
         MeshData meshData = new MeshData(
-            verticesNat,
-            trianglesNat,
-            uvsNat,
-            bakedNormalsNat
+            verticesShared,
+            trianglesShared,
+            uvsShared,
+            bakedNormalsShared
         );
 
-        verticesNat.Dispose();
-        uvsNat.Dispose();
-        trianglesNat.Dispose();
-        outOfMeshVerticesNat.Dispose();
+        verticesShared.Dispose();
+        uvsShared.Dispose();
+        trianglesShared.Dispose();
+        outOfMeshVerticesShared.Dispose();
         outOfMeshTrianglesNat.Dispose();
-        bakedNormalsNat.Dispose();
+        bakedNormalsShared.Dispose();
         heightMapNative.Dispose();
 
         return meshData;
@@ -66,14 +74,14 @@ public static class MeshGenerator
     [BurstCompile]
     struct CalculateMeshDataJob : IJob
     {
-        public NativeArray<Vector3> vertices;
-        public NativeArray<Vector2> uvs;
+        public NativeArray<float3> vertices;
+        public NativeArray<float2> uvs;
         public NativeArray<int> triangles;
 
-        public NativeArray<Vector3> outOfMeshVertices;
+        public NativeArray<float3> outOfMeshVertices;
         public NativeArray<int> outOfMeshTriangles;
 
-        public NativeArray<Vector3> bakedNormals;
+        public NativeArray<float3> bakedNormals;
         
         [ReadOnly]
         public NativeArray<float> heightMap;
@@ -146,8 +154,8 @@ public static class MeshGenerator
             * R R R R R R R R R R R R R
             *
             */
-            Vector2 vertexPosition2D = new Vector2();
-            Vector2 percent = new Vector2();
+            float2 vertexPosition2D = new float2();
+            float2 percent = new float2();
             for (int x = 0; x < numVertsPerLine; x++)
             {
                 for (int y = 0; y < numVertsPerLine; y++)
@@ -169,8 +177,11 @@ public static class MeshGenerator
                                                     && !isMainVertex;
 
                         int vertexIndex = vertexIndicesMap[x * numVertsPerLine + y];
-                        percent.Set((float)(x - 1) / (numVertsPerLine - 3), (float)(y - 1) / (numVertsPerLine - 3));
-                        vertexPosition2D.Set(percent.x * meshWorldSize, percent.y * meshWorldSize);
+
+                        percent.x = (float)(x - 1) / (numVertsPerLine - 3);
+                        percent.y = (float)(y - 1) / (numVertsPerLine - 3);
+                        vertexPosition2D.x = percent.x * meshWorldSize;
+                        vertexPosition2D.y = percent.y * meshWorldSize;
 
                         float height = heightMap[x * numVertsPerLine + y];
 
@@ -252,7 +263,7 @@ public static class MeshGenerator
                 int vertexIndexB = triangles[normalTriangleIndex + 1];
                 int vertexIndexC = triangles[normalTriangleIndex + 2];
 
-                Vector3 triangleNormal = SurfaceNormalFromIndices(vertexIndexA, vertexIndexB, vertexIndexC);
+                float3 triangleNormal = SurfaceNormalFromIndices(vertexIndexA, vertexIndexB, vertexIndexC);
                 bakedNormals[vertexIndexA] += triangleNormal;
                 bakedNormals[vertexIndexB] += triangleNormal;
                 bakedNormals[vertexIndexC] += triangleNormal;
@@ -265,7 +276,7 @@ public static class MeshGenerator
                 int vertexIndexB = outOfMeshTriangles[normalTriangleIndex + 1];
                 int vertexIndexC = outOfMeshTriangles[normalTriangleIndex + 2];
 
-                Vector3 triangleNormal = SurfaceNormalFromIndices(vertexIndexA, vertexIndexB, vertexIndexC);
+                float3 triangleNormal = SurfaceNormalFromIndices(vertexIndexA, vertexIndexB, vertexIndexC);
                 if (vertexIndexA >= 0)
                 {
                     bakedNormals[vertexIndexA] += triangleNormal;
@@ -282,20 +293,20 @@ public static class MeshGenerator
             int length = bakedNormals.Length;
             for (int i = 0; i < length; i++)
             {
-                bakedNormals[i].Normalize();
+                math.normalize(bakedNormals[i]);
             }
         }
 
-        Vector3 SurfaceNormalFromIndices(int indexA, int indexB, int indexC)
+        float3 SurfaceNormalFromIndices(int indexA, int indexB, int indexC)
         {
-            Vector3 pointA = (indexA < 0) ? outOfMeshVertices[-indexA - 1] : vertices[indexA];
-            Vector3 pointB = (indexB < 0) ? outOfMeshVertices[-indexB - 1] : vertices[indexB];
-            Vector3 pointC = (indexC < 0) ? outOfMeshVertices[-indexC - 1] : vertices[indexC];
+            float3 pointA = (indexA < 0) ? outOfMeshVertices[-indexA - 1] : vertices[indexA];
+            float3 pointB = (indexB < 0) ? outOfMeshVertices[-indexB - 1] : vertices[indexB];
+            float3 pointC = (indexC < 0) ? outOfMeshVertices[-indexC - 1] : vertices[indexC];
 
-            Vector3 sideAB = pointB - pointA;
-            Vector3 sideAC = pointC - pointA;
+            float3 sideAB = pointB - pointA;
+            float3 sideAC = pointC - pointA;
 
-            return Vector3.Cross(sideAB, sideAC).normalized;
+            return math.normalize(math.cross(sideAB, sideAC));
         }
     }
 }
@@ -308,21 +319,16 @@ public class MeshData
     Vector3[] bakedNormals;
 
     public MeshData(
-        NativeArray<Vector3> verticesNat,
-        NativeArray<int> trianglesNat,
-        NativeArray<Vector2> uvsNat,
-        NativeArray<Vector3> bakedNormalsNat
+        SharedArray<Vector3, float3> verticesNat,
+        SharedArray<int> trianglesNat,
+        SharedArray<Vector2, float2> uvsNat,
+        SharedArray<Vector3, float3> bakedNormalsNat
     )
     {
-        vertices = new Vector3[verticesNat.Length];
-        triangles = new int[trianglesNat.Length];
-        uvs = new Vector2[uvsNat.Length];
-        bakedNormals = new Vector3[bakedNormalsNat.Length];
-
-        verticesNat.CopyTo(vertices);
-        trianglesNat.CopyTo(triangles);
-        uvsNat.CopyTo(uvs);
-        bakedNormalsNat.CopyTo(bakedNormals);
+        vertices = verticesNat;
+        triangles = trianglesNat;
+        uvs = uvsNat;
+        bakedNormals = bakedNormalsNat;
     }
 
     public Mesh CreateMesh()
