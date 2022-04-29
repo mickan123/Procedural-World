@@ -97,12 +97,13 @@ public class ObjectSpawner
 
     // Common settings
     public ObjectPositions positions;
-    private System.Random prng;
-    private bool hide;
-    private bool staticBatch;
 
     // Internal vars
     private GameObject[] spawnedObjects;
+    private System.Random prng;
+    private bool hide = false;
+    private bool staticBatch = false;
+    private bool generateCollider = false;
 
     public Transform parent;
 
@@ -111,6 +112,7 @@ public class ObjectSpawner
         ObjectPositions positions,
         System.Random prng,
         bool staticBatch,
+        bool generateCollider,
         bool hide
     )
     {
@@ -127,6 +129,7 @@ public class ObjectSpawner
         this.prng = prng;
         this.spawnedObjects = new GameObject[this.positions.Length];
         this.staticBatch = staticBatch;
+        this.generateCollider = generateCollider;
         this.hide = hide;
     }
 
@@ -174,6 +177,10 @@ public class ObjectSpawner
             obj.transform.rotation = positions.rotations[i];
             obj.transform.localScale = positions.scales[i];
             obj.SetActive(!hide);
+            if (this.generateCollider) 
+            {
+                obj.AddComponent<MeshCollider>();
+            }
             spawnedObjects[i] = obj;
             yield return null;
         }

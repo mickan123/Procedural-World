@@ -11,6 +11,7 @@ public class ObjectsOutputNode : BiomeGraphNode
     public bool hide = false;
     public bool isDetail = false;
     public bool staticBatch = false;
+    public bool generateCollider = false;
 
     public GameObject[] terrainObjects;
     public Material[] detailMaterials;
@@ -70,6 +71,7 @@ public class ObjectsOutputNode : BiomeGraphNode
                 positionData.positions,
                 new System.Random(seed),   
                 this.staticBatch,
+                this.generateCollider,
                 this.hide
             );
         }

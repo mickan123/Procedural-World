@@ -19,21 +19,26 @@ public class ObjectsOutputNodeEditor : NodeEditor
 
         SerializedProperty hide = serializedObject.FindProperty("hide");
         NodeEditorGUILayout.PropertyField(hide, true);
+        if (!node.isDetail) 
+        {
+            SerializedProperty generateCollider = serializedObject.FindProperty("generateCollider");
+            NodeEditorGUILayout.PropertyField(generateCollider, true);
+            SerializedProperty staticBatch = serializedObject.FindProperty("staticBatch");
+            NodeEditorGUILayout.PropertyField(staticBatch, true);
+        }
         SerializedProperty isDetail = serializedObject.FindProperty("isDetail");
         NodeEditorGUILayout.PropertyField(isDetail, true);
         if (node.isDetail)
         {
-            SerializedProperty detailMaterials = serializedObject.FindProperty("detailMaterials");
-            NodeEditorGUILayout.PropertyField(detailMaterials, true);
             SerializedProperty detailMode = serializedObject.FindProperty("detailMode");
             NodeEditorGUILayout.PropertyField(detailMode, true);
+            SerializedProperty detailMaterials = serializedObject.FindProperty("detailMaterials");
+            NodeEditorGUILayout.PropertyField(detailMaterials, true);
         }
         else
         {
             SerializedProperty terrainObjects = serializedObject.FindProperty("terrainObjects");
             NodeEditorGUILayout.PropertyField(terrainObjects, true);
-            SerializedProperty staticBatch = serializedObject.FindProperty("staticBatch");
-            NodeEditorGUILayout.PropertyField(staticBatch, true);
         }
 
 
