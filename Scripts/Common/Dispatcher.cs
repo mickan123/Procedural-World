@@ -2,6 +2,7 @@
 using System.Threading;
 using System;
 using UnityEngine;
+using System.Collections;
 
 public class Dispatcher : MonoBehaviour
 {
@@ -31,6 +32,14 @@ public class Dispatcher : MonoBehaviour
         {
             _instance = new GameObject("Dispatcher").AddComponent<Dispatcher>();
             DontDestroyOnLoad(_instance.gameObject);
+        }
+    }
+
+    public static void RunCoroutineOnMainThread(IEnumerator action)
+    {
+        if (_instance != null)
+        {
+            RunOnMainThread(() => _instance.StartCoroutine(action));
         }
     }
 
