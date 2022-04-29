@@ -148,23 +148,10 @@ public class TerrainChunk
     {
         BiomeInfo info = this.chunkData.biomeData.biomeInfo;
         float[] biomeStrengths = info.biomeStrengths;
-        float[] heightMap = this.chunkData.biomeData.heightNoiseMap;
 
         int width = info.width;
         int biomeMapWidth = width - 3;
         
-        NativeArray<float> heightMapNat = new NativeArray<float>(heightMap, Allocator.TempJob);
-
-        // Use shared array so that we convert between native and non native with no cost
-        SharedArray<float> anglesNat = new SharedArray<float>(width * width);
-
-        Common.CalculateAnglesJob burstJob = new Common.CalculateAnglesJob{
-            heightMap = heightMapNat,
-            angles = anglesNat,
-            width = width
-        };
-        JobHandle handle = burstJob.Schedule();
-
         // Create texture to pass in biome maps and biome strengths
         int numBiomes = this.terrainSettings.biomeSettings.Length;
         this.biomeMapTex = new Texture2D(biomeMapWidth, biomeMapWidth, TextureFormat.RGBA32, false, false);
@@ -195,11 +182,6 @@ public class TerrainChunk
         for (int i = 0; i < biomeStrengthTexPixelsLength; i++) {
             biomeStrengthTexPixels[i] = new byte[biomeMapWidth * biomeMapWidth * 4];
         }
-
-        handle.Complete();
-
-        // Convert to managed array as NativeArray has safety checks in editor
-        float[] angles = anglesNat;
         
         // Offset of 1 for all xy coords due to having out of mesh vertices for normal calculations
         int offset = 1;
@@ -213,7 +195,7 @@ public class TerrainChunk
                     + chunkData.roadStrengthMap[(x + offset + 1) * width + y + offset + 1]
                     + chunkData.roadStrengthMap[(x + offset) * width + y + offset + 1]) / 4f;
 
-                float angle = angles[x * width + y] / 90f;
+                float angle = chunkData.angles[x * width + y] / 90f;
 
                 // Get biomeMap pixel data (2 unused values b,a out of rgba)
                 int biomeMapTexIdx = y * biomeMapWidth * 4 + x * 4;
@@ -248,9 +230,6 @@ public class TerrainChunk
         matBlock.SetTexture("biomeMapTex", biomeMapTex);
 
         this.meshRenderer.SetPropertyBlock(matBlock);
-
-        heightMapNat.Dispose();
-        anglesNat.Dispose();
     }
 
     public static void SaveTextureAsPNG(Texture2D _texture, string _fullPath)
