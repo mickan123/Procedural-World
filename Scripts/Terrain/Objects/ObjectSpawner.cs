@@ -548,36 +548,39 @@ public class ObjectSpawner
 
         int numObjectsPerDetail = totalNumObjects / numDetailTypes;
 
-        int verticesLength = maxObjectsPerMesh * verticesPerPosition;
-        int trianglesLength = maxObjectsPerMesh * trianglesPerPosition;
-        int uvsLength = maxObjectsPerMesh * verticesPerPosition;
-        int normalsLength = maxObjectsPerMesh * verticesPerPosition;
-
-        int verticesPerDetail = verticesLength / numDetailTypes;
-        int trianglesPerDetail = trianglesLength / numDetailTypes;
-        int uvsPerDetail = uvsLength / numDetailTypes;
-        int normalsPerDetail = normalsLength / numDetailTypes;
-
         int numJobs = totalNumObjects / maxObjectsPerMesh;
         int numMeshes = numJobs * numDetailTypes;
         Mesh[] meshes = new Mesh[numMeshes];
 
         for (int i = 0; i < numJobs; i++)
         {
+            int numObjectsInCurMesh = (i == numJobs - 1) ? totalNumObjects % maxObjectsPerMesh : maxObjectsPerMesh;
+
+            int verticesLength = numObjectsInCurMesh * verticesPerPosition;
+            int trianglesLength = numObjectsInCurMesh * trianglesPerPosition;
+            int uvsLength = numObjectsInCurMesh * verticesPerPosition;
+            int normalsLength = numObjectsInCurMesh * verticesPerPosition;
+
+            int verticesPerDetail = verticesLength / numDetailTypes;
+            int trianglesPerDetail = trianglesLength / numDetailTypes;
+            int uvsPerDetail = uvsLength / numDetailTypes;
+            int normalsPerDetail = normalsLength / numDetailTypes;
+
             NativeArray<Vector3> verticesNat = new NativeArray<Vector3>(verticesLength, Allocator.TempJob);
             NativeArray<int> trianglesNat = new NativeArray<int>(trianglesLength, Allocator.TempJob);
             NativeArray<Vector2> uvsNat = new NativeArray<Vector2>(uvsLength, Allocator.TempJob);
             NativeArray<Vector3> normalsNat = new NativeArray<Vector3>(normalsLength, Allocator.TempJob);
 
-            NativeArray<float> xCoordsNat = new NativeArray<float>(maxObjectsPerMesh, Allocator.TempJob);
-            NativeArray<float> yCoordsNat = new NativeArray<float>(maxObjectsPerMesh, Allocator.TempJob);
-            NativeArray<float> zCoordsNat = new NativeArray<float>(maxObjectsPerMesh, Allocator.TempJob);
-            NativeArray<Vector3> scalesNat = new NativeArray<Vector3>(maxObjectsPerMesh, Allocator.TempJob);
+            NativeArray<float> xCoordsNat = new NativeArray<float>(numObjectsInCurMesh, Allocator.TempJob);
+            NativeArray<float> yCoordsNat = new NativeArray<float>(numObjectsInCurMesh, Allocator.TempJob);
+            NativeArray<float> zCoordsNat = new NativeArray<float>(numObjectsInCurMesh, Allocator.TempJob);
+            NativeArray<Vector3> scalesNat = new NativeArray<Vector3>(numObjectsInCurMesh, Allocator.TempJob);
 
-            NativeArray<float>.Copy(this.positions.xCoords, i * maxObjectsPerMesh, xCoordsNat, 0, maxObjectsPerMesh);
-            NativeArray<float>.Copy(this.positions.yCoords, i * maxObjectsPerMesh, yCoordsNat, 0, maxObjectsPerMesh);
-            NativeArray<float>.Copy(this.positions.zCoords, i * maxObjectsPerMesh, zCoordsNat, 0, maxObjectsPerMesh);
-            NativeArray<Vector3>.Copy(this.positions.scales, i * maxObjectsPerMesh, scalesNat, 0, maxObjectsPerMesh);
+            NativeArray<float>.Copy(this.positions.xCoords, i * maxObjectsPerMesh, xCoordsNat, 0, numObjectsInCurMesh);
+            NativeArray<float>.Copy(this.positions.yCoords, i * maxObjectsPerMesh, yCoordsNat, 0, numObjectsInCurMesh);
+            NativeArray<float>.Copy(this.positions.zCoords, i * maxObjectsPerMesh, zCoordsNat, 0, numObjectsInCurMesh);
+            NativeArray<Vector3>.Copy(this.positions.scales, i * maxObjectsPerMesh, scalesNat, 0, numObjectsInCurMesh);
+            
 
             GenerateCircleDetailsMeshDataJob burstJob = new GenerateCircleDetailsMeshDataJob
             {
@@ -590,7 +593,7 @@ public class ObjectSpawner
                 zCoords = zCoordsNat,
                 scales = scalesNat,
                 numDetailTypes = numDetailTypes,
-                numObjects = maxObjectsPerMesh,
+                numObjects = numObjectsInCurMesh,
             };
                 
             burstJob.Schedule().Complete();

@@ -31,7 +31,7 @@ public class RandomPointsNode : BiomeGraphNode
         int increment = 10;
         int width = heightMapData.width;
 
-        int totalRandomPoints = numPoints * (width / increment + 1) * (width / increment + 1);
+        int totalRandomPoints = numPoints * ((width - 3) / increment + 1) * ((width - 3) / increment + 1);
         float[] xCoords = new float[totalRandomPoints];
         float[] yCoords = new float[totalRandomPoints];
         float[] zCoords = new float[totalRandomPoints];
@@ -83,6 +83,19 @@ public class RandomPointsNode : BiomeGraphNode
             }
         }
 
-        return new ObjectPositionData(new ObjectPositions(xCoords, yCoords, zCoords), heightMapData.heightMap, width);
+        ObjectPositionData positionData = new ObjectPositionData(new ObjectPositions(xCoords, yCoords, zCoords), heightMapData.heightMap, width);
+
+        // Filter all coords that are centred at 0,0 this is necessary as in the above
+        // random point generation loop we only add points according to a condition which
+        // isn't always true resulting in us not filling up the arrays
+        for (int i = 0; i < xCoords.Length; i++)
+        {
+            if (xCoords[i] == 0 && zCoords[i] == 0)
+            {
+                positionData.positions.filtered[i] = true;
+            }
+        }
+
+        return positionData;
     }
 }
