@@ -224,7 +224,7 @@ public static class HydraulicErosion
         ErosionSettings.erosionShader.SetBuffer(0, "ThermalFluxMap", thermalFluxBuffer);
         ErosionSettings.erosionShader.SetBuffer(0, "VelocityMap", velocityBuffer);
         
-        int numIterationsPerDispatch = settings.numHydraulicErosionIterations;
+        int numIterationsPerDispatch = 100;
         ErosionSettings.erosionShader.SetInt("numIterations", numIterationsPerDispatch);
         for (int i = 0; i < settings.numHydraulicErosionIterations / numIterationsPerDispatch; i++)
         {
