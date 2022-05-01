@@ -13,7 +13,7 @@ public class TerrainGeneratorEditor : Editor
     private SerializedProperty viewer;
     private SerializedProperty mapMaterial;
 
-    private SerializedProperty detailLevels;
+    private SerializedProperty lodLevels;
     private SerializedProperty colliderLODIndex;
 
     private SerializedProperty terrainSettings;
@@ -27,7 +27,7 @@ public class TerrainGeneratorEditor : Editor
         viewer = soTarget.FindProperty("viewer");
         mapMaterial = soTarget.FindProperty("mapMaterial");
 
-        detailLevels = soTarget.FindProperty("detailLevels");
+        lodLevels = soTarget.FindProperty("lodLevels");
         colliderLODIndex = soTarget.FindProperty("colliderLODIndex");
 
         terrainSettings = soTarget.FindProperty("terrainSettings");
@@ -41,7 +41,7 @@ public class TerrainGeneratorEditor : Editor
 
         EditorGUILayout.PropertyField(viewer);
         EditorGUILayout.PropertyField(mapMaterial);
-        EditorGUILayout.PropertyField(detailLevels);
+        EditorGUILayout.PropertyField(lodLevels);
         EditorGUILayout.PropertyField(colliderLODIndex);
         EditorGUILayout.Space();
 

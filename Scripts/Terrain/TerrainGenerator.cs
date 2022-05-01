@@ -6,7 +6,7 @@ public class TerrainGenerator : MonoBehaviour
     public Transform viewer;
     public Material mapMaterial;
 
-    public LODInfo[] detailLevels;
+    public LODInfo[] lodLevels;
     public int colliderLODIndex;
 
     public TerrainSettings terrainSettings;
@@ -28,7 +28,7 @@ public class TerrainGenerator : MonoBehaviour
         terrainSettings.ApplyToMaterial(mapMaterial);
         terrainSettings.Init();
 
-        maxChunkViewDist = detailLevels[detailLevels.Length - 1].chunkDistanceThreshold;
+        maxChunkViewDist = lodLevels[lodLevels.Length - 1].chunkDistanceThreshold;
 
         UpdateVisibleChunks();
     }
@@ -138,7 +138,7 @@ public class TerrainGenerator : MonoBehaviour
         TerrainChunk newChunk = new TerrainChunk(
             coord,
             this.terrainSettings,
-            this.detailLevels,
+            this.lodLevels,
             this.colliderLODIndex,
             this.transform,
             mapMaterial,
@@ -160,6 +160,25 @@ public class TerrainGenerator : MonoBehaviour
             visibleTerrainChunks.Remove(chunk);
         }
     }
+
+#if UNITY_EDITOR
+    public void OnValidate()
+    {
+        int prevDist = -1;
+        int prevLod = -1;
+        for (int i = 0; i < lodLevels.Length; i++)
+        {
+            lodLevels[i].chunkDistanceThreshold = Mathf.Clamp(lodLevels[i].chunkDistanceThreshold, 1, 15); // Ensure it is always within 1-15 range
+            lodLevels[i].chunkDistanceThreshold = Mathf.Max(prevDist, lodLevels[i].chunkDistanceThreshold); // Ensure cur dist threshold is always larger than prev
+            lodLevels[i].lod = Mathf.Max(prevLod, lodLevels[i].lod); // Ensure cur Lod level is always larger than prev
+            prevDist = lodLevels[i].chunkDistanceThreshold;
+            prevLod = lodLevels[i].lod;
+        }
+
+        this.colliderLODIndex = Mathf.Clamp(this.colliderLODIndex, 0, lodLevels.Length - 1);
+    }
+#endif
+
 }
 
 [System.Serializable]
@@ -170,4 +189,5 @@ public struct LODInfo
 
     [Range(1, 15)]
     public int chunkDistanceThreshold;
+
 }
