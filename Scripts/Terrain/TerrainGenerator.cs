@@ -24,6 +24,7 @@ public class TerrainGenerator : MonoBehaviour
 
     void Start()
     {
+        gameObject.AddComponent<ThreadedDataRequester>();
         terrainSettings.ApplyToMaterial(mapMaterial);
         terrainSettings.Init();
 
@@ -69,15 +70,11 @@ public class TerrainGenerator : MonoBehaviour
 
                     if (spawner.detailMode == ObjectSpawner.DetailMode.Billboard)
                     {
-                        // meshes = this.GenerateBillboardDetailsMesh();
+                        StartCoroutine(spawner.SpawnBillboardDetailsMesh());
                     }
-                    // else if (this.detailMode == DetailMode.Triangle)
-                    // {
-                    //     meshes = this.GenerateTriangleDetailsMesh();
-                    // }
-                    else if (spawner.detailMode == ObjectSpawner.DetailMode.Circle)
+                    else if (spawner.detailMode == ObjectSpawner.DetailMode.Triangle || spawner.detailMode == ObjectSpawner.DetailMode.Circle)
                     {
-                        StartCoroutine(spawner.SpawnCircleDetailsMesh());
+                        StartCoroutine(spawner.SpawnDetailsMesh());
                     }
                 }
                 else
