@@ -8,7 +8,7 @@ public class RandomPointsNode : BiomeGraphNode
 {
     [Output] public ObjectPositionData positionData;
 
-    public int numPoints; // TODO convert this to density
+    public int pointsPerSquare; // TODO convert this to density
 
     public override object GetValue(NodePort port)
     {
@@ -28,25 +28,24 @@ public class RandomPointsNode : BiomeGraphNode
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
 
-        int increment = 10;
         int width = heightMapData.width;
 
-        int totalRandomPoints = numPoints * ((width - 3) / increment + 1) * ((width - 3) / increment + 1);
+        int totalRandomPoints = pointsPerSquare * (width - 2) * (width - 2);
         float[] xCoords = new float[totalRandomPoints];
         float[] yCoords = new float[totalRandomPoints];
         float[] zCoords = new float[totalRandomPoints];
 
         int index = 0;
         int randIdx = prng.Next(0, this.numRandomValues);
-        for (int x = 0; x <= width - 3; x += increment)
+        for (int x = 0; x <= width - 3; x++)
         {
-            for (int z = 0; z <= width - 3; z += increment)
+            for (int z = 0; z <= width - 3; z++)
             {
-                for (int spawn = 0; spawn < numPoints; spawn++)
+                for (int spawn = 0; spawn < pointsPerSquare; spawn++)
                 {   
                     // Get random x and y coords and update index
-                    float xCoord = randomValues[randIdx] * increment + x;
-                    float zCoord = randomValues[randIdx + 1] * increment + z;
+                    float xCoord = randomValues[randIdx] + x;
+                    float zCoord = randomValues[randIdx + 1] + z;
                     randIdx += 2;
                     if (randIdx + 1 >= this.numRandomValues) 
                     {
@@ -82,6 +81,7 @@ public class RandomPointsNode : BiomeGraphNode
                 }
             }
         }
+        
 
         ObjectPositionData positionData = new ObjectPositionData(new ObjectPositions(xCoords, yCoords, zCoords), heightMapData.heightMap, width);
 

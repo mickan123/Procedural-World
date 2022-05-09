@@ -22,6 +22,31 @@ public static class Common
         return HeightFromFloatCoord(coord.x, coord.y, heightMap, width);
     }
 
+    public static float HeightFromFloatCoord(TerrainData terrainData, float x, float y, int width)
+    {
+        float maxIndex = width - 1.001f;
+        x = (x < maxIndex) ? x : maxIndex;
+        y = (y < maxIndex) ? y : maxIndex;
+        
+        int indexX = (int)x;
+        int indexY = (int)y;
+
+        x = x - indexX;
+        y = y - indexY;
+
+        float heightNW = terrainData.GetHeight(indexX, indexY);
+        float heightNE = terrainData.GetHeight(indexX + 1, indexY);
+        float heightSW = terrainData.GetHeight(indexX, indexY + 1);
+        float heightSE = terrainData.GetHeight(indexX + 1, indexY + 1);
+
+        float height = heightNW * (1 - x) * (1 - y)
+                     + heightNE * x * (1 - y)
+                     + heightSW * (1 - x) * y
+                     + heightSE * x * y;
+
+        return height;
+    }
+
     public static float HeightFromFloatCoord(float x, float y, float[] heightMap, int width)
     {
         // Technically subtracting 0.001f reduces slightly incorrect results however
@@ -85,6 +110,7 @@ public static class Common
         [WriteOnly] public NativeArray<float> angles;
 
         public int width;
+        public float scale;
 
         public void Execute()
         {
@@ -94,41 +120,24 @@ public static class Common
                 {
                     float height = heightMap[x * width + y];
 
-                    int dxIdx = math.min((x + 1), width - 1) * width + y;
-                    float dx = math.abs(heightMap[dxIdx] - height);
+                    int dxIdx1 = math.max((x - 1), 0) * width + y;
+                    int dxIdx2 = math.min((x + 1), width - 1) * width + y;
+                    float dx = math.abs(heightMap[dxIdx1] - heightMap[dxIdx2]);
 
-                    int dyIdx = x * width + math.min(y + 1, width - 1);
-                    float dy = math.abs(heightMap[x * width + math.min(y + 1, width - 1)] - height);
+                    int dyIdx1 = x * width + math.max(y - 1, 0);
+                    int dyIdx2 = x * width + math.min(y + 1, width - 1);
+                    float dy = math.abs(heightMap[dyIdx1] - heightMap[dyIdx2]);
 
                     float dMax = math.max(dx, dy);
                     angles[x * width + y] = math.degrees(math.atan2(
                         dMax, 
-                        1
+                        2 * scale
                     ));
                 }
             }
         }
     }
 
-    public static float[] CalculateAngles(float[] heightMap, int width)
-    {   
-        NativeArray<float> heightMapNat = new NativeArray<float>(width * width, Allocator.TempJob);
-        NativeArray<float> anglesNat = new NativeArray<float>(heightMap, Allocator.TempJob);
-
-        CalculateAnglesJob burstJob = new CalculateAnglesJob{
-            heightMap = heightMapNat,
-            angles = anglesNat,
-            width = width
-        };
-        burstJob.Schedule().Complete();
-
-        float[] angles = anglesNat.ToArray();
-
-        anglesNat.Dispose();
-        heightMapNat.Dispose();
-        
-        return angles;
-    }
 
     // Calculates slopes as opposed to angles, this is useful as angles
     // require many expensive Atan2 operations

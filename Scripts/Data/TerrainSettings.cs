@@ -1,36 +1,36 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using System.Threading;
-using System.Collections.Generic;
-using XNode;
 
 [System.Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/TerrainSettings")]
 public class TerrainSettings : ScriptableObject
 {
-
     // Custom editor toolbar tabs settings
     [HideInInspector] public int toolbarTop;
     [HideInInspector] public int toolbarBottom;
     [HideInInspector] public string currentTab;
 
+    // Common Settings
+    public int seed;
+
     // Biome settings
     public BiomeGraph humidityMapGraph;
     public BiomeGraph temperatureMapGraph;
-
     [Range(0, 1)] public float transitionDistance;
     public BiomeSettings[] biomeSettings;
 
-    // Mesh settings
-    public MeshSettings meshSettings;
-
-    // Always display these settings
-    public int seed;
-
-    // Constants
-    private const TextureFormat textureFormat = TextureFormat.RGB565;
-    private const int textureSize = 256;
-    public readonly int maxTexturesPerBiome = 8;
-    public readonly int maxBiomeCount = 8;
+    // Detail settings
+    [Range(0, 250)] public int detailViewDistance = 80;
+    [Range(0, 1)] public float wavingGrassAmount = 1f;
+    [Range(0, 1)] public float wavingGrassSpeed = 1f;
+    [Range(0, 1)] public float wavingGrassStrength = 1f;
+    public Color wavingGrassTint = new Color(0.5f, 0.5f, 0.5f);
+    
+    // Resolution and width settings
+    public int widthIdx = 0;
+    public int resolutionIdx = 0;
+    public readonly string[] validHeightMapWidths = { "129", "257", "513", "1025", "2049", "4097" };
+    public int detailResolutionPerPatch = 16;
+    [Range(0, 1)] public float detailDensity;
 
     // Preview objects
     private Renderer previewTextureObject;
@@ -38,13 +38,44 @@ public class TerrainSettings : ScriptableObject
     public Material previewMaterial;
 
     // Preview settings
-    public enum DrawMode { SingleBiomeMesh, BiomesMesh, NoiseMapTexture, FalloffMapTexture, BiomesTexture, HumidityMapTexture, TemperatureMapTexture };
+    public enum DrawMode { SingleBiomeMesh, BiomesMesh };
     public DrawMode drawMode;
     public Vector2 offset;
-    public LODInfo[] detailLevels;
-    [Range(0, MeshSettings.numSupportedLODs - 1)] public int editorPreviewLOD;
     public int singleBiomeIndex = 0;
     public int noiseMapBiomeIndex = 0;
+    
+    // Actual size of chunks in world space
+    public int width 
+    {
+        get 
+        {
+            return int.Parse(this.validHeightMapWidths[widthIdx]);
+        } 
+    }
+
+    // Width of heightmaps used to generate chunks, gets scaled up to width
+    public int resolution 
+    {
+        get 
+        {
+            return int.Parse(this.validHeightMapWidths[resolutionIdx]);
+        }
+    }
+
+    public float scale
+    {
+        get
+        {
+            return (float)this.width / (float)this.resolution;
+        }
+    }
+
+
+    // Constants
+    private const TextureFormat textureFormat = TextureFormat.RGB565;
+    private const int textureSize = 256;
+    public readonly int maxTexturesPerBiome = 8;
+    public readonly int maxBiomeCount = 8;
 
     public Thread mainThread;
 
@@ -93,56 +124,14 @@ public class TerrainSettings : ScriptableObject
 
         this.previewTextureObject = new Renderer();
 
-        int width = this.meshSettings.numVerticesPerLine;
-        int height = this.meshSettings.numVerticesPerLine;
 
-
-        if (drawMode == DrawMode.NoiseMapTexture)
+        if (drawMode == DrawMode.BiomesMesh)
         {
-            float[] heightMap = this.biomeSettings[noiseMapBiomeIndex].biomeGraph.GetHeightMap(
-                this,
-                this.offset,
-                width
-            );
-            DrawTexture(TextureGenerator.TextureFromHeightMap(heightMap, width));
-        }
-        else if (drawMode == DrawMode.FalloffMapTexture)
-        {
-            DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(width), width));
-        }
-        else if (drawMode == DrawMode.BiomesMesh)
-        {
-            DrawBiomeMesh(width, height);
+            DrawBiomeMesh(width);
         }
         else if (drawMode == DrawMode.SingleBiomeMesh)
         {
-            DrawSingleBiome(width, height);
-        }
-        else
-        {
-            float[] humidityMap = this.humidityMapGraph.GetHeightMap(
-                this,
-                offset,
-                width
-            );
-
-            float[] temperatureMap = this.temperatureMapGraph.GetHeightMap(
-                this,
-                offset,
-                width
-            );
-            if (drawMode == DrawMode.BiomesTexture)
-            {
-                DrawBiomes(width, humidityMap, temperatureMap);
-            }
-            else if (drawMode == DrawMode.HumidityMapTexture)
-            {
-                DrawTexture(TextureGenerator.TextureFromHeightMap(humidityMap, width));
-            }
-            else if (drawMode == DrawMode.TemperatureMapTexture)
-            {
-                DrawTexture(TextureGenerator.TextureFromHeightMap(temperatureMap, width));
-            }
+            DrawSingleBiome(width);
         }
     }
 
@@ -155,7 +144,7 @@ public class TerrainSettings : ScriptableObject
         }
     }
 
-    private void DrawSingleBiome(int width, int height)
+    private void DrawSingleBiome(int width)
     {
         BiomeSettings[] oldBiomes = new BiomeSettings[this.biomeSettings.Length];
         float oldTransitionDistance = this.transitionDistance;
@@ -179,7 +168,7 @@ public class TerrainSettings : ScriptableObject
             this.biomeSettings[singleBiomeIndex].endHumidity = 1f;
             this.biomeSettings[singleBiomeIndex].endTemperature = 1f;
             this.transitionDistance = 0f;
-            DrawBiomeMesh(width, height);
+            DrawBiomeMesh(width);
         }
         finally
         {
@@ -195,7 +184,7 @@ public class TerrainSettings : ScriptableObject
         }
     }
 
-    private void DrawBiomeMesh(int width, int height)
+    private void DrawBiomeMesh(int width)
     {
 #if UNITY_EDITOR
         float startTime = 0f;
@@ -208,16 +197,13 @@ public class TerrainSettings : ScriptableObject
         this.chunk = new TerrainChunk(
             new ChunkCoord(0, 0),
             this,
-            this.detailLevels,
-            0,
             null,
             this.previewMaterial,
-            null,
             "Preview Chunk"
         );
         this.chunk.LoadInEditor();
         this.chunk.SetVisible(true);
-        this.chunk.meshObject.AddComponent<HideOnPlay>();
+        this.chunk.chunkObject.AddComponent<HideOnPlay>();
 
 #if UNITY_EDITOR
         if (this.IsMainThread())
@@ -229,32 +215,9 @@ public class TerrainSettings : ScriptableObject
 #endif
     }
 
-    private void DrawBiomes(int width, float[] humidityMap, float[] temperatureMap)
-    {
-        BiomeInfo biomeInfo = BiomeHeightMapGenerator.GenerateBiomeInfo(width, humidityMap, temperatureMap, this);
-
-        int numBiomes = this.biomeSettings.Length;
-        float[] biomeTextureMap = new float[width * width];
-        for (int i = 0; i < width; i++)
-        {
-            for (int j = 0; j < width; j++)
-            {
-                biomeTextureMap[i * width + j] = (float)biomeInfo.biomeMap[i * width + j] / (float)(numBiomes - 1);
-            }
-        }
-
-        DrawTexture(TextureGenerator.TextureFromHeightMap(biomeTextureMap, width));
-    }
-
-    public void DrawTexture(Texture2D texture)
-    {
-        this.previewTextureObject.sharedMaterial.mainTexture = texture;
-        this.previewTextureObject.transform.localScale = new Vector3(-96, 1, 96);
-    }
-
     public void ApplyToMaterial(Material material)
     {
-        material.SetInt("chunkWidth", meshSettings.meshWorldSize);
+        material.SetInt("chunkWidth", this.width);
         material.SetFloat("minHeight", minHeight);
         material.SetFloat("maxHeight", maxHeight);
 
@@ -423,8 +386,6 @@ public class TerrainSettings : ScriptableObject
 
     public void OnValidate()
     {
-        meshSettings.OnValidate();
-
         for (int i = 0; i < biomeSettings.Length; i++)
         {
             if (biomeSettings[i] != null)
@@ -432,6 +393,7 @@ public class TerrainSettings : ScriptableObject
                 biomeSettings[i].OnValidate();
             }
         }
+        this.resolutionIdx = Mathf.Min(this.resolutionIdx, this.widthIdx);
     }
 
 #endif

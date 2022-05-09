@@ -30,10 +30,38 @@ public class ObjectsOutputNodeEditor : NodeEditor
         NodeEditorGUILayout.PropertyField(isDetail, true);
         if (node.isDetail)
         {
-            SerializedProperty detailMode = serializedObject.FindProperty("detailMode");
-            NodeEditorGUILayout.PropertyField(detailMode, true);
-            SerializedProperty detailMaterials = serializedObject.FindProperty("detailMaterials");
-            NodeEditorGUILayout.PropertyField(detailMaterials, true);
+            SerializedProperty renderMode = serializedObject.FindProperty("renderMode");
+            NodeEditorGUILayout.PropertyField(renderMode, true);
+            if (node.renderMode == DetailRenderMode.GrassBillboard)
+            {
+                SerializedProperty detailTexture = serializedObject.FindProperty("detailTexture");
+                NodeEditorGUILayout.PropertyField(detailTexture, true);
+            }
+            else if (node.renderMode == DetailRenderMode.VertexLit)
+            {
+                SerializedProperty detailPrototype = serializedObject.FindProperty("detailPrototype");
+                NodeEditorGUILayout.PropertyField(detailPrototype, true);
+            }
+            else if (node.renderMode == DetailRenderMode.Grass)
+            {
+                SerializedProperty usePrototypeMesh = serializedObject.FindProperty("usePrototypeMesh");
+                NodeEditorGUILayout.PropertyField(usePrototypeMesh, true);
+                if (node.usePrototypeMesh)
+                {
+                    SerializedProperty detailPrototype = serializedObject.FindProperty("detailPrototype");
+                    NodeEditorGUILayout.PropertyField(detailPrototype, true);
+                }
+                else
+                {
+                    SerializedProperty detailTexture = serializedObject.FindProperty("detailTexture");
+                    NodeEditorGUILayout.PropertyField(detailTexture, true);
+                }
+            }
+            
+            SerializedProperty dryColor = serializedObject.FindProperty("dryColor");
+            NodeEditorGUILayout.PropertyField(dryColor, true);
+            SerializedProperty healthyColor = serializedObject.FindProperty("healthyColor");
+            NodeEditorGUILayout.PropertyField(healthyColor, true);
         }
         else
         {

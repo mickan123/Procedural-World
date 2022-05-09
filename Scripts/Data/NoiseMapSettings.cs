@@ -5,7 +5,7 @@ using UnityEngine;
 [System.Serializable, CreateAssetMenu(menuName = "Procedural Generation Settings/NoiseMapSettings")]
 public class NoiseMapSettings : ScriptableObject
 {
-    public enum NoiseType { Perlin, Simplex, SandDune }
+    public enum NoiseType { Perlin, Simplex }
     public NoiseType noiseType;
     public PerlinNoiseSettings perlinNoiseSettings;
     public PerlinNoiseSettings simplexNoiseSettings;

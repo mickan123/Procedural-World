@@ -29,10 +29,6 @@ public static class HeightMapGenerator
         {
             heightMap = GenerateSimplexHeightMap(width, noiseSettings, terrainSettings, sampleCentre, normalizeMode, seed);
         }
-        else if (noiseSettings.noiseType == NoiseMapSettings.NoiseType.SandDune)
-        {
-            heightMap = GenerateSandDuneHeightMap(width, noiseSettings, terrainSettings.meshSettings, sampleCentre, seed);
-        }
         else
         {
             heightMap = GeneratePerlinHeightMap(width, noiseSettings, terrainSettings, sampleCentre, normalizeMode, seed);
@@ -284,60 +280,5 @@ public static class HeightMapGenerator
                 heightMap[x * width + y] = (maxDist - dist > halfCrackWidth) ? 1f : 0f;
             }
         }
-    }
-
-
-    public static float[] GenerateSandDuneHeightMap(
-        int width,
-        NoiseMapSettings noiseSettings,
-        MeshSettings meshSettings,
-        Vector2 sampleCentre,
-        int seed
-    )
-    {
-        float[] values = new float[width * width];
-        int padding = (width - meshSettings.meshWorldSize - 3) / 2;
-        int chunkIdxY = (int)(sampleCentre.y + padding) / meshSettings.meshWorldSize;
-
-        SandDuneSettings sandDuneSettings = noiseSettings.sandDuneSettings;
-
-        int length = noiseSettings.sandDuneSettings.sandDunePeriods.Length;
-        for (int k = 0; k < length; k++)
-        {
-            SandDunePeriod settings = noiseSettings.sandDuneSettings.sandDunePeriods[k];
-            float duneHeight = ((2 * sandDuneSettings.sigma * settings.duneWidth) / Mathf.PI) * Mathf.Max(1 - sandDuneSettings.xm, 0.01f);
-
-            float[] noiseValues = Noise.GenerateNoiseMap(
-                width,
-                noiseSettings.simplexNoiseSettings,
-                sampleCentre,
-                NoiseMapSettings.NoiseType.Simplex,
-                seed + k
-            );
-            for (int i = 0; i < width; i++)
-            {
-                for (int j = 0; j < width; j++)
-                {
-                    float duneLength = settings.duneWidth + settings.duneGap;
-                    float duneOffset = noiseValues[i * width + j] * settings.maxDuneVariation + settings.duneOffset;
-                    float x = (j + duneOffset + chunkIdxY * (width - (2 * padding) - 3)) % duneLength;
-
-                    x = (x < 0) ? x + duneLength : x;
-                    x = Mathf.Clamp(x / settings.duneWidth, 0, 1);
-
-                    // Calculate dune height and equation according to Laurent Avenel (Wiwine) Terragen tutorial
-                    float side = (x > sandDuneSettings.xm) ? 1f : 0f;
-                    float cosTerm = 1f - Mathf.Cos((Mathf.PI / (sandDuneSettings.p * side + 1)) * ((x - side) / (sandDuneSettings.xm - side)));
-                    float constant = ((sandDuneSettings.p * side + 1) / 2f);
-
-                    // Calculate height multiplier with range[0, 1], perlin height value must be > duneThreshold or it is clamped to 0 
-                    float duneThresholdMultiplier = Mathf.Max(0, noiseValues[i * width + j] - settings.duneThreshold) / (Mathf.Max(1f - settings.duneThreshold, 0.01f));
-
-                    values[i * width + j] += (constant * cosTerm) * duneHeight * duneThresholdMultiplier;
-                }
-            }
-
-        }
-        return values;
     }
 }

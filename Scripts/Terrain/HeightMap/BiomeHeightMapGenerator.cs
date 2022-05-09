@@ -7,7 +7,6 @@ public static class BiomeHeightMapGenerator
 {
     public static BiomeData GenerateBiomeNoiseMaps(
         int width, 
-        int height, 
         TerrainSettings terrainSettings, 
         Vector2 chunkCentre
     )

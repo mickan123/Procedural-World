@@ -6,45 +6,31 @@ public class TerrainGenerator : MonoBehaviour
     public Transform viewer;
     public Material mapMaterial;
 
-    public LODInfo[] lodLevels;
-    public int colliderLODIndex;
-
     public TerrainSettings terrainSettings;
 
     private const float viewerMoveThresholdForChunkUpdate = 5f;
     private const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
 
-    private int maxChunkViewDist;
+    private int maxChunkViewDist = 1;
 
     private Vector2 viewerPosition;
     private Vector2 viewerPositionOld;
 
     private Dictionary<ChunkCoord, TerrainChunk> terrainChunkDictionary = new Dictionary<ChunkCoord, TerrainChunk>();
-    private List<TerrainChunk> visibleTerrainChunks = new List<TerrainChunk>();
+    private List<TerrainChunk> loadedTerrainChunks = new List<TerrainChunk>();
 
     void Start()
     {
         gameObject.AddComponent<ThreadedDataRequester>();
         terrainSettings.ApplyToMaterial(mapMaterial);
         terrainSettings.Init();
-
-        maxChunkViewDist = lodLevels[lodLevels.Length - 1].chunkDistanceThreshold;
-
         UpdateVisibleChunks();
     }
 
     void Update()
     {
         viewerPosition = new Vector2(viewer.position.x, viewer.position.z);
-
-        if (viewerPosition != viewerPositionOld)
-        {
-            foreach (TerrainChunk chunk in visibleTerrainChunks)
-            {
-                chunk.UpdateCollisionMesh();
-            }
-        }
-
+        
         if ((viewerPositionOld - viewerPosition).sqrMagnitude > sqrViewerMoveThresholdForChunkUpdate)
         {
             viewerPositionOld = viewerPosition;
@@ -58,28 +44,10 @@ public class TerrainGenerator : MonoBehaviour
             
             foreach(ObjectSpawner spawner in objectSpawners)
             {
-                spawner.parent = chunk.meshObject.transform;
-
-                if (spawner.isDetail)
+                if (!spawner.isDetail)
                 {
-                    if (spawner.detailMode == ObjectSpawner.DetailMode.GeometryShader)
-                    {
-                        spawner.GeometryShaderDetails();
-                        break;
-                    }
-
-                    if (spawner.detailMode == ObjectSpawner.DetailMode.Billboard)
-                    {
-                        StartCoroutine(spawner.SpawnBillboardDetailsMesh());
-                    }
-                    else if (spawner.detailMode == ObjectSpawner.DetailMode.Triangle || spawner.detailMode == ObjectSpawner.DetailMode.Circle)
-                    {
-                        StartCoroutine(spawner.SpawnDetailsMesh());
-                    }
-                }
-                else
-                {
-                    StartCoroutine(spawner.SpawnMeshObjects());
+                    spawner.parent = chunk.chunkObject.transform;
+                    StartCoroutine(spawner.SpawnMeshObjects(chunk));
                 }
             }
         }
@@ -88,13 +56,12 @@ public class TerrainGenerator : MonoBehaviour
     public void UpdateVisibleChunks()
     {
         HashSet<ChunkCoord> alreadyUpdatedChunkCoords = new HashSet<ChunkCoord>();
-        for (int i = visibleTerrainChunks.Count - 1; i >= 0; i--)
+        for (int i = loadedTerrainChunks.Count - 1; i >= 0; i--)
         {
-            alreadyUpdatedChunkCoords.Add(visibleTerrainChunks[i].coord);
-            visibleTerrainChunks[i].UpdateTerrainChunk();
+            alreadyUpdatedChunkCoords.Add(loadedTerrainChunks[i].coord);
         }
 
-        float chunkWidth = terrainSettings.meshSettings.meshWorldSize;
+        float chunkWidth = terrainSettings.width;
 
         int currentChunkCoordX = Mathf.FloorToInt(viewerPosition.x / chunkWidth);
         int currentChunkCoordY = Mathf.FloorToInt(viewerPosition.y / chunkWidth);
@@ -104,16 +71,9 @@ public class TerrainGenerator : MonoBehaviour
             for (int xOffset = -maxChunkViewDist; xOffset <= maxChunkViewDist; xOffset++)
             {
                 ChunkCoord viewedChunkCoord = new ChunkCoord(currentChunkCoordX + xOffset, currentChunkCoordY + yOffset);
-                if (!alreadyUpdatedChunkCoords.Contains(viewedChunkCoord))
+                if (!alreadyUpdatedChunkCoords.Contains(viewedChunkCoord) && !terrainChunkDictionary.ContainsKey(viewedChunkCoord))
                 {
-                    if (terrainChunkDictionary.ContainsKey(viewedChunkCoord))
-                    {
-                        terrainChunkDictionary[viewedChunkCoord].UpdateTerrainChunk();
-                    }
-                    else
-                    {
-                        GenerateChunk(viewedChunkCoord);
-                    }
+                    GenerateChunk(viewedChunkCoord);
                 }
             }
         }
@@ -122,7 +82,7 @@ public class TerrainGenerator : MonoBehaviour
     public List<TerrainChunk> GetTerrainChunksReadyToSpawnObjects()
     {
         List<TerrainChunk> chunks = new List<TerrainChunk>();
-        foreach (TerrainChunk chunk in visibleTerrainChunks)
+        foreach (TerrainChunk chunk in loadedTerrainChunks)
         {
             if (chunk.readyToSpawnObjects)
             {
@@ -138,56 +98,24 @@ public class TerrainGenerator : MonoBehaviour
         TerrainChunk newChunk = new TerrainChunk(
             coord,
             this.terrainSettings,
-            this.lodLevels,
-            this.colliderLODIndex,
             this.transform,
-            mapMaterial,
-            viewer
+            mapMaterial
         );
         terrainChunkDictionary.Add(coord, newChunk);
-        newChunk.onVisibilityChanged += OnTerrainChunkVisibilityChanged;
+        newChunk.onChunkLoaded += OnTerrainChunkLoaded;
         newChunk.Load();
     }
 
-    void OnTerrainChunkVisibilityChanged(TerrainChunk chunk, bool isVisible)
+    void OnTerrainChunkLoaded(TerrainChunk chunk)
     {
-        if (isVisible)
-        {
-            visibleTerrainChunks.Add(chunk);
-        }
-        else
-        {
-            visibleTerrainChunks.Remove(chunk);
-        }
+        loadedTerrainChunks.Add(chunk);
     }
+
 
 #if UNITY_EDITOR
     public void OnValidate()
     {
-        int prevDist = -1;
-        int prevLod = -1;
-        for (int i = 0; i < lodLevels.Length; i++)
-        {
-            lodLevels[i].chunkDistanceThreshold = Mathf.Clamp(lodLevels[i].chunkDistanceThreshold, 1, 15); // Ensure it is always within 1-15 range
-            lodLevels[i].chunkDistanceThreshold = Mathf.Max(prevDist, lodLevels[i].chunkDistanceThreshold); // Ensure cur dist threshold is always larger than prev
-            lodLevels[i].lod = Mathf.Max(prevLod, lodLevels[i].lod); // Ensure cur Lod level is always larger than prev
-            prevDist = lodLevels[i].chunkDistanceThreshold;
-            prevLod = lodLevels[i].lod;
-        }
 
-        this.colliderLODIndex = Mathf.Clamp(this.colliderLODIndex, 0, lodLevels.Length - 1);
     }
 #endif
-
-}
-
-[System.Serializable]
-public struct LODInfo
-{
-    [Range(0, MeshSettings.numSupportedLODs - 1)]
-    public int lod;
-
-    [Range(1, 15)]
-    public int chunkDistanceThreshold;
-
 }

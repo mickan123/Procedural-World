@@ -17,8 +17,8 @@ public class RandomPointsNodeEditor : NodeEditor
 
         NodeEditorGUILayout.PortField(node.GetPort("heightMap"));
 
-        SerializedProperty numPoints = serializedObject.FindProperty("numPoints");
-        NodeEditorGUILayout.PropertyField(numPoints, true);
+        SerializedProperty pointsPerSquare = serializedObject.FindProperty("pointsPerSquare");
+        NodeEditorGUILayout.PropertyField(pointsPerSquare, true);
 
         NodeEditorGUILayout.PortField(node.GetPort("positionData"));
 

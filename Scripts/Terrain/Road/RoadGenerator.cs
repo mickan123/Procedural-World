@@ -280,6 +280,16 @@ public static class RoadGenerator
 
     public static NativeArray<int> GetClosestPathIndexes(int width, float maxRoadWidth, Vector3[] path, float[] originalHeightMap)
     {
+        if (path.Length == 0)
+        {
+            NativeArray<int> closestPathIndexes = new NativeArray<int>(width * width, Allocator.TempJob);
+            for (int i = 0; i < width * width; i++)
+            {
+                closestPathIndexes[i] = -1;
+            }
+            return closestPathIndexes;
+        }
+        
         bool[] getClosestPathIndex = new bool[width * width];
 
         for (int i = 0; i < path.Length; i++)

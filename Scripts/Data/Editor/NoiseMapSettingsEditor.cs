@@ -12,7 +12,6 @@ public class NoiseMapSettingsEditor : ScriptlessEditor
     private SerializedProperty noiseType;
     private SerializedProperty perlinNoiseSettings;
     private SerializedProperty simplexNoiseSettings;
-    private SerializedProperty sandDuneSettings;
 
     private void OnEnable()
     {
@@ -22,7 +21,6 @@ public class NoiseMapSettingsEditor : ScriptlessEditor
         noiseType = soTarget.FindProperty("noiseType");
         perlinNoiseSettings = soTarget.FindProperty("perlinNoiseSettings");
         simplexNoiseSettings = soTarget.FindProperty("simplexNoiseSettings");
-        sandDuneSettings = soTarget.FindProperty("sandDuneSettings");
     }
 
     public override void OnInspectorGUI()
@@ -38,10 +36,6 @@ public class NoiseMapSettingsEditor : ScriptlessEditor
         else if (noiseType.enumValueIndex == (int)NoiseMapSettings.NoiseType.Simplex)
         {
             EditorGUILayout.PropertyField(simplexNoiseSettings);
-        }
-        else if (noiseType.enumValueIndex == (int)NoiseMapSettings.NoiseType.SandDune)
-        {
-            EditorGUILayout.PropertyField(sandDuneSettings);
         }
         EditorGUILayout.Space();
 

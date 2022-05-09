@@ -62,7 +62,6 @@ public class PoissonPointsNode : BiomeGraphNode
             xCoords = poissonPointsX,
             yCoords = poissonPointsY,
             zCoords = poissonPointsZ,
-            meshScale = heightMapData.terrainSettings.meshSettings.meshScale,
             numSamplesBeforeRejection = 25,
             varyRadius = settings.varyRadius,
             radius = settings.radius,

@@ -12,8 +12,7 @@ public static class ChunkDataGenerator
     {
         // Generate heightmap and biomestrength data
         BiomeData biomeData = BiomeHeightMapGenerator.GenerateBiomeNoiseMaps(
-            terrainSettings.meshSettings.numVerticesPerLine,
-            terrainSettings.meshSettings.numVerticesPerLine,
+            terrainSettings.resolution,
             terrainSettings,
             chunkCentre
         );
@@ -28,17 +27,19 @@ public static class ChunkDataGenerator
 			biomeData.biomeInfo,
 			roadData.roadStrengthMap,
 			terrainSettings,
-			chunkCentre
+			chunkCentre,
+            terrainSettings.scale
         );
         
         int width = biomeData.width;
         NativeArray<float> heightMapNat = new NativeArray<float>(biomeData.heightNoiseMap, Allocator.TempJob);
         SharedArray<float> anglesNat = new SharedArray<float>(width * width); // Use shared array so that we convert between native and non native with no cost
 
-        Common.CalculateAnglesJob burstJob = new Common.CalculateAnglesJob{
+        Common.CalculateAnglesJob burstJob = new Common.CalculateAnglesJob {
             heightMap = heightMapNat,
             angles = anglesNat,
-            width = width
+            width = width,
+            scale = terrainSettings.scale
         };
         burstJob.Schedule().Complete();
 

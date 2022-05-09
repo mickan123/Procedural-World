@@ -38,6 +38,12 @@ public class ScaleObjectsNode : BiomeGraphNode
         System.Random prng = new System.Random(seed);
         int randIdx = prng.Next(0, this.numRandomValues);
         int length = positionData.positions.Length;
+
+        positionData.maxWidth = this.maxScaleUniform;
+        positionData.minWidth = this.minScaleUniform;
+        positionData.maxHeight = this.maxScaleUniform;
+        positionData.minHeight = this.minScaleUniform;
+
         if (this.uniformScale && !this.randomScale)
         {
             for (int i = 0; i < length; i++)
@@ -54,6 +60,7 @@ public class ScaleObjectsNode : BiomeGraphNode
         }
         else if (this.randomScale)
         {
+            
             if (this.uniformScale)
             {
                 for (int i = 0; i < length; i++)

@@ -15,23 +15,6 @@ public class TerrainSettingsEditor : Editor
     private ReorderableList biomeSettingsList;
     private Dictionary<BiomeSettings, BiomeSettingsEditor> biomeSettingsEditors;
 
-    // Erosion settings
-    private SerializedProperty erosionSettings;
-
-    // Mesh settings
-    private SerializedProperty meshSettings;
-
-    // Preview settings
-    private SerializedProperty previewMaterial;
-    private SerializedProperty drawMode;
-    private SerializedProperty offset;
-    private SerializedProperty editorPreviewLOD;
-    private SerializedProperty singleBiomeIndex;
-    private SerializedProperty noiseMapBiomeIndex;
-
-    // Always display settings
-    private SerializedProperty seed;
-
     // Editors are reset to ensure it is written to next time OnInspectorGUI is called
     private void OnEnable()
     {
@@ -41,23 +24,7 @@ public class TerrainSettingsEditor : Editor
         // Biomes settings
         biomeSettingsEditors = new Dictionary<BiomeSettings, BiomeSettingsEditor>();
         CreateBiomeSettingsList();
-
-        // Erosion settings
-        erosionSettings = soTarget.FindProperty("erosionSettings");
-
-        // Mesh settings
-        meshSettings = soTarget.FindProperty("meshSettings");
-
-        // Preview settings
-        previewMaterial = soTarget.FindProperty("previewMaterial");
-        drawMode = soTarget.FindProperty("drawMode");
-        offset = soTarget.FindProperty("offset");
-        editorPreviewLOD = soTarget.FindProperty("editorPreviewLOD");
-        singleBiomeIndex = soTarget.FindProperty("singleBiomeIndex");
-        noiseMapBiomeIndex = soTarget.FindProperty("noiseMapBiomeIndex");
-
-        // Always display settings
-        seed = soTarget.FindProperty("seed");
+        
     }
 
     private void CreateBiomeSettingsList()
@@ -118,31 +85,27 @@ public class TerrainSettingsEditor : Editor
 
         CommonOptions();
 
-        myTarget.toolbarTop = GUILayout.Toolbar(myTarget.toolbarTop, new string[] { "Biomes", "Mesh", "Rivers", "Preview" });
+        myTarget.toolbarTop = GUILayout.Toolbar(myTarget.toolbarTop, new string[] { "Biomes", "Preview", "Details" });
         switch (myTarget.toolbarTop)
         {
             case 0:
                 myTarget.toolbarBottom = -1;
                 myTarget.currentTab = "Biomes";
                 break;
-
             case 1:
                 myTarget.toolbarBottom = -1;
-                myTarget.currentTab = "Mesh";
+                myTarget.currentTab = "Preview";
                 break;
             case 2:
                 myTarget.toolbarBottom = -1;
-                myTarget.currentTab = "Rivers";
-                break;
-            case 3:
-                myTarget.toolbarBottom = -1;
-                myTarget.currentTab = "Preview";
+                myTarget.currentTab = "Details";
                 break;
         }
 
         if (EditorGUI.EndChangeCheck())
         {
             soTarget.ApplyModifiedProperties();
+            myTarget.OnValidate();
             GUI.FocusControl(null);
         }
 
@@ -153,14 +116,11 @@ public class TerrainSettingsEditor : Editor
             case "Biomes":
                 BiomesTab();
                 break;
-            case "Mesh":
-                MeshTab();
-                break;
-            case "Rivers":
-                RiversTab();
-                break;
             case "Preview":
                 PreviewTab();
+                break;
+            case "Details":
+                DetailsTab();
                 break;
         }
 
@@ -178,7 +138,15 @@ public class TerrainSettingsEditor : Editor
 
     private void CommonOptions()
     {
+        SerializedProperty seed = soTarget.FindProperty("seed");
         EditorGUILayout.PropertyField(seed);
+
+        GUIContent widthList = new GUIContent("Width");
+        myTarget.widthIdx = EditorGUILayout.Popup(widthList, myTarget.widthIdx, myTarget.validHeightMapWidths);
+
+        GUIContent resolutionList = new GUIContent("Resolution");
+        myTarget.resolutionIdx = EditorGUILayout.Popup(resolutionList, myTarget.resolutionIdx, myTarget.validHeightMapWidths);
+        
         EditorGUILayout.Space();
     }
 
@@ -196,32 +164,39 @@ public class TerrainSettingsEditor : Editor
         biomeSettingsList.DoLayoutList();
     }
 
-    private void MeshTab()
-    {
-        EditorGUILayout.ObjectField(meshSettings);
-        EditorGUILayout.Space();
-        EditorGUILayout.PropertyField(meshSettings);
-    }
-
-    private void RiversTab()
-    {
-
-    }
-
     private void PreviewTab()
     {
         EditorGUILayout.LabelField("Preview Settings", EditorStyles.boldLabel);
+    
+        SerializedProperty previewMaterial = soTarget.FindProperty("previewMaterial");
         EditorGUILayout.PropertyField(previewMaterial);
+        SerializedProperty drawMode = soTarget.FindProperty("drawMode");
         EditorGUILayout.PropertyField(drawMode, true);
+        SerializedProperty offset = soTarget.FindProperty("offset");
         EditorGUILayout.PropertyField(offset, true);
-        EditorGUILayout.PropertyField(editorPreviewLOD, true);
         if (drawMode.enumValueIndex == (int)TerrainSettings.DrawMode.SingleBiomeMesh)
         {
+            SerializedProperty singleBiomeIndex = soTarget.FindProperty("singleBiomeIndex");
             EditorGUILayout.PropertyField(singleBiomeIndex, true);
         }
-        if (drawMode.enumValueIndex == (int)TerrainSettings.DrawMode.NoiseMapTexture)
-        {
-            EditorGUILayout.PropertyField(noiseMapBiomeIndex, true);
-        }
+    }
+
+    private void DetailsTab()
+    {
+        SerializedProperty detailViewDistance = soTarget.FindProperty("detailViewDistance");
+        EditorGUILayout.PropertyField(detailViewDistance);
+        SerializedProperty detailResolutionPerPatch = soTarget.FindProperty("detailResolutionPerPatch");
+        EditorGUILayout.PropertyField(detailResolutionPerPatch);
+        SerializedProperty detailDensity = soTarget.FindProperty("detailDensity");
+        EditorGUILayout.PropertyField(detailDensity);
+        SerializedProperty wavingGrassAmount = soTarget.FindProperty("wavingGrassAmount");
+        EditorGUILayout.PropertyField(wavingGrassAmount);
+        SerializedProperty wavingGrassSpeed = soTarget.FindProperty("wavingGrassSpeed");
+        EditorGUILayout.PropertyField(wavingGrassSpeed);
+        SerializedProperty wavingGrassStrength = soTarget.FindProperty("wavingGrassStrength");
+        EditorGUILayout.PropertyField(wavingGrassStrength);
+        SerializedProperty wavingGrassTint = soTarget.FindProperty("wavingGrassTint");
+        EditorGUILayout.PropertyField(wavingGrassTint);
+        
     }
 }

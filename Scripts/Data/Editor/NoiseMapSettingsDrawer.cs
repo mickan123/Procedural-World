@@ -15,7 +15,6 @@ public class NoiseMapSettingsDrawer : PropertyDrawer
         var noiseType = serializedObject.FindProperty("noiseType");
         var perlinNoiseSettings = serializedObject.FindProperty("perlinNoiseSettings");
         var simplexNoiseSettings = serializedObject.FindProperty("simplexNoiseSettings");
-        var sandDuneSettings = serializedObject.FindProperty("sandDuneSettings");
 
         EditorGUI.BeginChangeCheck();
 
@@ -31,11 +30,6 @@ public class NoiseMapSettingsDrawer : PropertyDrawer
         {
             EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), simplexNoiseSettings, true);
             position.y += EditorGUI.GetPropertyHeight(simplexNoiseSettings, true);
-        }
-        else if (noiseType.enumValueIndex == (int)NoiseMapSettings.NoiseType.SandDune)
-        {
-            EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), sandDuneSettings, true);
-            position.y += EditorGUI.GetPropertyHeight(sandDuneSettings, true);
         }
 
         if (EditorGUI.EndChangeCheck())
@@ -55,7 +49,6 @@ public class NoiseMapSettingsDrawer : PropertyDrawer
         var noiseType = serializedObject.FindProperty("noiseType");
         var perlinNoiseSettings = serializedObject.FindProperty("perlinNoiseSettings");
         var simplexNoiseSettings = serializedObject.FindProperty("simplexNoiseSettings");
-        var sandDuneSettings = serializedObject.FindProperty("sandDuneSettings");
         var heightMultiplier = serializedObject.FindProperty("heightMultiplier");
         var heightCurve = serializedObject.FindProperty("heightCurve");
 
@@ -67,10 +60,6 @@ public class NoiseMapSettingsDrawer : PropertyDrawer
         else if (noiseType.enumValueIndex == (int)NoiseMapSettings.NoiseType.Simplex)
         {
             height += EditorGUI.GetPropertyHeight(simplexNoiseSettings, true);
-        }
-        else if (noiseType.enumValueIndex == (int)NoiseMapSettings.NoiseType.SandDune)
-        {
-            height += EditorGUI.GetPropertyHeight(sandDuneSettings, true);
         }
         height += EditorGUIUtility.singleLineHeight;
 

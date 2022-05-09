@@ -14,8 +14,13 @@ public class ObjectsOutputNode : BiomeGraphNode
     public bool generateCollider = false;
 
     public GameObject[] terrainObjects;
-    public Material[] detailMaterials;
-    public ObjectSpawner.DetailMode detailMode;
+
+    public DetailRenderMode renderMode;
+    public bool usePrototypeMesh; // Only valid for renderMode grass as it can use texture or gameobject
+    public GameObject detailPrototype;
+    public Texture2D detailTexture;
+    public Color dryColor;
+    public Color healthyColor;
 
     public ObjectSpawner GetValue()
     {
@@ -37,12 +42,13 @@ public class ObjectsOutputNode : BiomeGraphNode
         float[] updatedZCoords = new float[numCoords];
         Vector3[] updatedScales = new Vector3[numCoords];
         Quaternion[] updatedRotations = new Quaternion[numCoords];
-        
+
         int index = 0;
         for (int i = 0; i < length; i++)
         {
             if (!positionData.positions.filtered[i])
             {
+                // Have to swap x and z due to how height map is represented in Unity TerrainData object
                 updatedXCoords[index] = positionData.positions.xCoords[i];
                 updatedYCoords[index] = positionData.positions.yCoords[i];
                 updatedZCoords[index] = positionData.positions.zCoords[i];
@@ -57,9 +63,8 @@ public class ObjectsOutputNode : BiomeGraphNode
         if (this.isDetail)
         {
             return new ObjectSpawner(
-                this.detailMaterials,
-                this.detailMode,
-                positionData.positions,
+                this.GetDetailPrototype(positionData),
+                this.GetDetailDensity(updatedPositions, positionData.width),
                 new System.Random(seed),
                 this.hide
             );
@@ -108,4 +113,57 @@ public class ObjectsOutputNode : BiomeGraphNode
             }
         }
     }
+
+    private int[,] GetDetailDensity(ObjectPositions positions, int width)
+    {
+        int[,] detailDensity = new int[width, width];
+
+        for (int i = 0; i < positions.xCoords.Length; i++)
+        {
+            detailDensity[(int)positions.xCoords[i], (int)positions.zCoords[i]]++;
+        }
+
+        return detailDensity;
+    }
+
+    private DetailPrototype GetDetailPrototype(ObjectPositionData positionData)
+    {
+        DetailPrototype det = new DetailPrototype();
+
+        det.minHeight = positionData.minHeight;
+        det.maxHeight = positionData.maxHeight;
+        det.minWidth = positionData.minWidth;
+        det.maxWidth = positionData.maxWidth;
+        
+        det.healthyColor = this.healthyColor;
+        det.dryColor = this.dryColor;
+        det.renderMode = this.renderMode;
+
+        if (det.renderMode == DetailRenderMode.GrassBillboard)
+        {
+            det.usePrototypeMesh = false;
+            det.prototypeTexture = this.detailTexture;
+        }
+        else if (det.renderMode == DetailRenderMode.VertexLit)
+        {
+            det.usePrototypeMesh = true;
+            det.prototype = this.detailPrototype;
+        }
+        else if (det.renderMode == DetailRenderMode.Grass)
+        {   
+            if (this.usePrototypeMesh)
+            {
+                det.usePrototypeMesh = true;
+                det.prototype = this.detailPrototype;
+            }
+            else
+            {
+                det.usePrototypeMesh = false;
+                det.prototypeTexture = this.detailTexture;
+            }
+        }
+
+        return det;
+    }
+
 }

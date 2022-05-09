@@ -26,7 +26,6 @@ public static class PoissonDiskSampling
 
         public Vector2 sampleCentre;
 
-        public int meshScale;
         public int numSamplesBeforeRejection;
 
         // Poisson Disk Sampling settings
@@ -110,9 +109,9 @@ public static class PoissonDiskSampling
             {
                 float offset = 1f; // Take into account offset due to extra points around edges
 
-                float adjustedX = (points2d[point].x) * meshScale - offset;
+                float adjustedX = (points2d[point].x) - offset;
                 float adjustedY = Common.HeightFromFloatCoord(points2d[point].x, points2d[point].y, heightMap, width);
-                float adjustedZ = (points2d[point].y) * meshScale - offset;
+                float adjustedZ = (points2d[point].y) - offset;
 
                 if (adjustedX >= 0f && adjustedZ >= 0f && adjustedX <= width - 3 && adjustedZ <= width - 3)
                 {

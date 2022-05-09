@@ -8,7 +8,8 @@ public static class ObjectGenerator
         BiomeInfo info, 
         float[] roadStrengthMap, 
         TerrainSettings settings, 
-        Vector2 sampleCentre
+        Vector2 sampleCentre,
+        float scale
     )
     {
         int width = info.width;
