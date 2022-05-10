@@ -48,7 +48,6 @@ public class TerrainChunk
         sampleCentre = new Vector2((coord.x * resolution + halfChunkWidth) + terrainSettings.offset.x,
                                    (coord.y * resolution + halfChunkWidth) + terrainSettings.offset.y);
 
-        Debug.Log(sampleCentre);
         this.chunkObject = new GameObject(name);
         this.terrain = this.chunkObject.AddComponent<Terrain>();
         this.terrain.materialTemplate = material;
