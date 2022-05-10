@@ -116,11 +116,20 @@ public class ObjectsOutputNode : BiomeGraphNode
 
     private int[,] GetDetailDensity(ObjectPositions positions, int width)
     {
-        int[,] detailDensity = new int[width, width];
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
+        TerrainSettings terrainSettings = heightMapData.terrainSettings;
+
+        int[,] detailDensity = new int[width * terrainSettings.detailResolutionFactor, width * terrainSettings.detailResolutionFactor];
 
         for (int i = 0; i < positions.xCoords.Length; i++)
         {
-            detailDensity[(int)positions.xCoords[i], (int)positions.zCoords[i]]++;
+            float xCoord = positions.xCoords[i];
+            float yCoord = positions.zCoords[i];
+            int x = (int)(xCoord * terrainSettings.detailResolutionFactor);
+            int y = (int)(yCoord * terrainSettings.detailResolutionFactor);
+
+            detailDensity[x, y]++;
         }
 
         return detailDensity;

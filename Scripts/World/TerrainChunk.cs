@@ -44,18 +44,20 @@ public class TerrainChunk
         this.terrainSettings = terrainSettings;
         this.material = material;
         float halfChunkWidth = (float)(terrainSettings.resolution) / 2f;
-        sampleCentre = new Vector2((coord.x * terrainSettings.resolution + halfChunkWidth) + terrainSettings.offset.x,
-                                   (coord.y * terrainSettings.resolution + halfChunkWidth) + terrainSettings.offset.y);
+        float resolution = (terrainSettings.resolution - 1f);
+        sampleCentre = new Vector2((coord.x * resolution + halfChunkWidth) + terrainSettings.offset.x,
+                                   (coord.y * resolution + halfChunkWidth) + terrainSettings.offset.y);
 
         Debug.Log(sampleCentre);
         this.chunkObject = new GameObject(name);
         this.terrain = this.chunkObject.AddComponent<Terrain>();
         this.terrain.materialTemplate = material;
         this.terrain.detailObjectDistance = terrainSettings.detailViewDistance;
+        this.terrain.detailObjectDensity = terrainSettings.detailDensity;
         
         this.terrainData = new TerrainData();
         
-        this.terrainData.SetDetailResolution(this.terrainSettings.resolution, this.terrainSettings.detailResolutionPerPatch);
+        this.terrainData.SetDetailResolution(terrainSettings.resolution * terrainSettings.detailResolutionFactor, terrainSettings.detailResolutionPerPatch);
         this.terrainData.wavingGrassAmount = terrainSettings.wavingGrassAmount;
         this.terrainData.wavingGrassSpeed = terrainSettings.wavingGrassSpeed;
         this.terrainData.wavingGrassStrength = terrainSettings.wavingGrassStrength;

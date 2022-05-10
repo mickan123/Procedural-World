@@ -24,13 +24,15 @@ public class TerrainSettings : ScriptableObject
     [Range(0, 1)] public float wavingGrassSpeed = 1f;
     [Range(0, 1)] public float wavingGrassStrength = 1f;
     public Color wavingGrassTint = new Color(0.5f, 0.5f, 0.5f);
+    public int detailResolutionPerPatch = 16;
+    [Range(0, 1)] public float detailDensity;
+    public readonly int detailResolutionFactor = 1;
     
     // Resolution and width settings
     public int widthIdx = 0;
     public int resolutionIdx = 0;
     public readonly string[] validHeightMapWidths = { "129", "257", "513", "1025", "2049", "4097" };
-    public int detailResolutionPerPatch = 16;
-    [Range(0, 1)] public float detailDensity;
+    
 
     // Preview objects
     private Renderer previewTextureObject;
