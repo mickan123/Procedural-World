@@ -43,6 +43,15 @@ public class BiomeGraph : NodeGraph
         return null;
     }
 
+    public bool ContainsKey(System.Threading.Thread key) 
+    {
+        if (initialized && this.heightMapData != null && this.heightMapData.ContainsKey(key))
+        {
+            return true;
+        }
+        return false;
+    }
+
     public float[] GetHeightMap(
         BiomeInfo info,
         TerrainSettings terrainSettings,

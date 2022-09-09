@@ -16,14 +16,12 @@ public class HydraulicErosionNode : BiomeGraphNode
 
     public override object GetValue(NodePort port)
     {
-        if (port.fieldName == "heightMapOut")
-        {
-            return ErodeHeightMap();
-        }
-        else
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        if (!biomeGraph.ContainsKey(System.Threading.Thread.CurrentThread) || port.fieldName != "heightMapOut" || this.heightMapIn == null)
         {
             return null;
         }
+        return ErodeHeightMap();
     }
 
     public float[] ErodeHeightMap()

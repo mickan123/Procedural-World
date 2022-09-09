@@ -14,14 +14,12 @@ public class PoissonPointsNode : BiomeGraphNode
 
     public override object GetValue(NodePort port)
     {
-        if (port.fieldName == "positionData")
-        {
-            return GetPositionData();
-        }
-        else
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        if (!biomeGraph.ContainsKey(System.Threading.Thread.CurrentThread) || port.fieldName != "positionData")
         {
             return null;
         }
+        return GetPositionData();
     }
 
     public ObjectPositionData GetPositionData()

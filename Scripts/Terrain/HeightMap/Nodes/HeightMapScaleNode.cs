@@ -14,17 +14,16 @@ public class HeightMapScaleNode : BiomeGraphNode
 
     public override object GetValue(NodePort port)
     {
-        float[] heightMapIn = GetInputValue<float[]>("heightMapIn", this.heightMapIn);
-
-        int width = heightMapIn.Length;
-
-        float[] result = new float[width];
-
-        if (port.fieldName == "heightMapOut")
+        if (port.fieldName != "heightMapOut" || this.heightMapIn == null)
         {
-            ScaleHeightMap(heightMapIn, ref result);
+            return null;
         }
 
+        float[] heightMapIn = GetInputValue<float[]>("heightMapIn", this.heightMapIn);
+        int width = heightMapIn.Length;
+        float[] result = new float[width];
+        ScaleHeightMap(heightMapIn, ref result);
+    
         return result;
     }
 

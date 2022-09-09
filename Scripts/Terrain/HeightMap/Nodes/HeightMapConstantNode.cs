@@ -13,6 +13,10 @@ public class HeightMapConstantNode : BiomeGraphNode
     public override object GetValue(NodePort port)
     {
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        if (!biomeGraph.ContainsKey(System.Threading.Thread.CurrentThread)) 
+        {
+            return null;
+        }
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
 
         int width = heightMapData.width;

@@ -16,16 +16,13 @@ public class FilterObjectsHeightNode : BiomeGraphNode
 
     public override object GetValue(NodePort port)
     {
-        if (port.fieldName == "positionDataOut")
-        {
-            ObjectPositionData data = GetInputValue<ObjectPositionData>("positionDataIn", this.positionDataIn);
-            FilterByHeight(data);
-            return data;
-        }
-        else
+        if (port.fieldName != "positionDataOut" || (object)this.positionDataIn == null)
         {
             return null;
         }
+        ObjectPositionData data = GetInputValue<ObjectPositionData>("positionDataIn", this.positionDataIn);
+        FilterByHeight(data);
+        return data;
     }
 
     private void FilterByHeight(ObjectPositionData positionData)

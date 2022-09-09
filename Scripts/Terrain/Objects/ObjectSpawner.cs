@@ -72,6 +72,9 @@ public struct ObjectPositions
     
     public int Length {
         get {
+            if (this.xCoords == null) {
+                return 0;
+            }
             return this.xCoords.Length;
         } 
     }

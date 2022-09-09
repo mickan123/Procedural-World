@@ -14,19 +14,11 @@ public class SimplexNoiseNode : BiomeGraphNode
     public override object GetValue(NodePort port)
     {
         var biomeGraph = this.graph as BiomeGraph;
-        if (!biomeGraph.initialized)
+        if (port.fieldName != "heightMap" || !biomeGraph.ContainsKey(System.Threading.Thread.CurrentThread))
         {
             return null;
         }
-
-        if (port.fieldName == "heightMap")
-        {
-            return GetHeightMap();
-        }
-        else
-        {
-            return null;
-        }
+        return GetHeightMap();
     }
 
     public float[] GetHeightMap()

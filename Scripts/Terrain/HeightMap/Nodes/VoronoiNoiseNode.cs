@@ -16,14 +16,12 @@ public class VoronoiNoiseNode : BiomeGraphNode
 
     public override object GetValue(NodePort port)
     {
-        if (port.fieldName == "heightMap")
-        {
-            return GetVoronoiNoiseHeightMap();
-        }
-        else
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        if (!biomeGraph.ContainsKey(System.Threading.Thread.CurrentThread) || port.fieldName != "heightMap")
         {
             return null;
         }
+        return GetVoronoiNoiseHeightMap();
     }
 
     public float[] GetVoronoiNoiseHeightMap()

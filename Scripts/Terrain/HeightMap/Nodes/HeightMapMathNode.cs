@@ -15,6 +15,10 @@ public class HeightMapMathNode : BiomeGraphNode
 
     public override object GetValue(NodePort port)
     {
+        if (this.heightMapInA == null || this.heightMapInA == null)
+        {
+            return null;
+        }
         float[] heightMapInA = GetInputValue<float[]>("heightMapInA", this.heightMapInA);
         float[] heightMapInB = GetInputValue<float[]>("heightMapInB", this.heightMapInB);
 

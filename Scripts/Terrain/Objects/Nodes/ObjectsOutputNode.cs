@@ -86,6 +86,10 @@ public class ObjectsOutputNode : BiomeGraphNode
     {
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
+        if (!biomeGraph.ContainsKey(System.Threading.Thread.CurrentThread)) 
+        {
+            return;
+        }
 
         int length = positionData.positions.Length;
         int randIdx = 0;
@@ -118,6 +122,10 @@ public class ObjectsOutputNode : BiomeGraphNode
     {
         BiomeGraph biomeGraph = this.graph as BiomeGraph;
         HeightMapGraphData heightMapData = biomeGraph.heightMapData[System.Threading.Thread.CurrentThread];
+        if (!biomeGraph.heightMapData.ContainsKey(System.Threading.Thread.CurrentThread)) 
+        {
+            return null;
+        }
         TerrainSettings terrainSettings = heightMapData.terrainSettings;
 
         int[,] detailDensity = new int[width * terrainSettings.detailResolutionFactor, width * terrainSettings.detailResolutionFactor];

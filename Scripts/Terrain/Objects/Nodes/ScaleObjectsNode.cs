@@ -23,14 +23,11 @@ public class ScaleObjectsNode : BiomeGraphNode
 
     public override object GetValue(NodePort port)
     {
-        if (port.fieldName == "positionDataOut")
-        {
-            return GetPositionData(GetInputValue<ObjectPositionData>("positionDataIn", this.positionDataIn));
-        }
-        else
+        if (port.fieldName != "positionDataOut" && (object)this.positionDataIn != null)
         {
             return null;
         }
+        return GetPositionData(GetInputValue<ObjectPositionData>("positionDataIn", this.positionDataIn));
     }
 
     private ObjectPositionData GetPositionData(ObjectPositionData positionData)

@@ -13,14 +13,12 @@ public class RidgedTurbulenceNode : BiomeGraphNode
 
     public override object GetValue(NodePort port)
     {
-        if (port.fieldName == "heightMap")
-        {
-            return GetRidgedturbulanceHeightMap();
-        }
-        else
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        if (!biomeGraph.ContainsKey(System.Threading.Thread.CurrentThread) || port.fieldName != "heightMap")
         {
             return null;
         }
+        return GetRidgedturbulanceHeightMap();
     }
 
     public float[] GetRidgedturbulanceHeightMap()

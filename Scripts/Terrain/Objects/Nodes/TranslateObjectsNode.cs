@@ -18,14 +18,12 @@ public class TranslateObjectsNode : BiomeGraphNode
 
     public override object GetValue(NodePort port)
     {
-        if (port.fieldName == "positionDataOut")
-        {
-            return GetPositionData(GetInputValue<ObjectPositionData>("positionDataIn", this.positionDataIn));
-        }
-        else
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        if (!biomeGraph.ContainsKey(System.Threading.Thread.CurrentThread) || port.fieldName != "positionDataOut" || (object)this.positionDataIn == null)
         {
             return null;
         }
+        return GetPositionData(GetInputValue<ObjectPositionData>("positionDataIn", this.positionDataIn));
     }
 
     private ObjectPositionData GetPositionData(ObjectPositionData positionData)

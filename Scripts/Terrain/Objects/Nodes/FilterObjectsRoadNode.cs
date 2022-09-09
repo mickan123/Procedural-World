@@ -11,16 +11,14 @@ public class FilterObjectsRoadNode : BiomeGraphNode
 
     public override object GetValue(NodePort port)
     {
-        if (port.fieldName == "positionDataOut")
-        {
-            ObjectPositionData data = GetInputValue<ObjectPositionData>("positionDataIn", this.positionDataIn);
-            FilterOnRoad(data);
-            return data;
-        }
-        else
+        BiomeGraph biomeGraph = this.graph as BiomeGraph;
+        if (!biomeGraph.ContainsKey(System.Threading.Thread.CurrentThread) || port.fieldName != "positionDataOut" || (object)this.positionDataIn == null)
         {
             return null;
         }
+        ObjectPositionData data = GetInputValue<ObjectPositionData>("positionDataIn", this.positionDataIn);
+        FilterOnRoad(data);
+        return data;
     }
 
     private void FilterOnRoad(ObjectPositionData positionData)
