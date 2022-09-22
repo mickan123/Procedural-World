@@ -12,8 +12,6 @@ public class HydraulicErosionNode : BiomeGraphNode
     [Input] public float[] heightMapIn;
     [Output] public float[] heightMapOut;
 
-    private static readonly int[,] neighBouroffsets = { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
-
     public override object GetValue(NodePort port)
     {
         BiomeGraph biomeGraph = this.graph as BiomeGraph;

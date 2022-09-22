@@ -186,8 +186,6 @@ public static class Common
         return slopes;
     }
 
-    private static readonly int[,] offsets = { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
-
     public static float DistanceFromLine(Vector2 point, Vector2 origin, Vector2 direction)
     {
         return DistanceFromLine(
