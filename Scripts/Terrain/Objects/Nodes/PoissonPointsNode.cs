@@ -56,7 +56,6 @@ public class PoissonPointsNode : BiomeGraphNode
         {
             heightMap = heightMapNat,
             spawnNoiseMap = spawnNoiseMapNat,
-            sampleCentre = heightMapData.sampleCentre,
             xCoords = poissonPointsX,
             yCoords = poissonPointsY,
             zCoords = poissonPointsZ,

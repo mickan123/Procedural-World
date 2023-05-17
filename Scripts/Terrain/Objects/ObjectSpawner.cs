@@ -176,7 +176,6 @@ public class ObjectSpawner
         }
     }
 
-
     public IEnumerator SpawnMeshObjects(TerrainChunk chunk)
     {
         int length = positions.Length;
@@ -190,7 +189,6 @@ public class ObjectSpawner
             float scale = chunk.terrainSettings.scale; // Scale in context of world position rather than size of object
             float y = chunk.terrain.SampleHeight(new Vector3(positions.zCoords[i] * scale, 0f, positions.xCoords[i] * scale));
             obj.transform.localPosition = new Vector3(positions.zCoords[i] * scale, y, positions.xCoords[i] * scale);
-
             
             obj.transform.rotation = positions.rotations[i];
             obj.transform.localScale = positions.scales[i];

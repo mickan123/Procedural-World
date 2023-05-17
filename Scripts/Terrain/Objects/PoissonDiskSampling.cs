@@ -24,8 +24,6 @@ public static class PoissonDiskSampling
         [WriteOnly]
         public NativeList<float> zCoords;
 
-        public Vector2 sampleCentre;
-
         public int numSamplesBeforeRejection;
 
         // Poisson Disk Sampling settings

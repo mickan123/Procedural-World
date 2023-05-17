@@ -170,10 +170,12 @@ public class TerrainSettingsEditor : Editor
     
         SerializedProperty previewMaterial = soTarget.FindProperty("previewMaterial");
         EditorGUILayout.PropertyField(previewMaterial);
+        SerializedProperty previewName = soTarget.FindProperty("previewName");
+        EditorGUILayout.PropertyField(previewName);
         SerializedProperty drawMode = soTarget.FindProperty("drawMode");
         EditorGUILayout.PropertyField(drawMode, true);
-        SerializedProperty offset = soTarget.FindProperty("offset");
-        EditorGUILayout.PropertyField(offset, true);
+        SerializedProperty chunkCoord = soTarget.FindProperty("chunkCoord");
+        EditorGUILayout.PropertyField(chunkCoord, true);
         if (drawMode.enumValueIndex == (int)TerrainSettings.DrawMode.SingleBiomeMesh)
         {
             SerializedProperty singleBiomeIndex = soTarget.FindProperty("singleBiomeIndex");
@@ -197,6 +199,5 @@ public class TerrainSettingsEditor : Editor
         EditorGUILayout.PropertyField(wavingGrassStrength);
         SerializedProperty wavingGrassTint = soTarget.FindProperty("wavingGrassTint");
         EditorGUILayout.PropertyField(wavingGrassTint);
-        
     }
 }

@@ -33,16 +33,15 @@ public class TerrainSettings : ScriptableObject
     public int resolutionIdx = 0;
     public readonly string[] validHeightMapWidths = { "129", "257", "513", "1025", "2049", "4097" };
     
-
     // Preview objects
     private Renderer previewTextureObject;
-    private GameObject previewMeshObject;
+    public string previewName = "Preview Chunk";
     public Material previewMaterial;
 
     // Preview settings
     public enum DrawMode { SingleBiomeMesh, BiomesMesh };
     public DrawMode drawMode;
-    public Vector2 offset;
+    public Vector2 chunkCoord;
     public int singleBiomeIndex = 0;
     public int noiseMapBiomeIndex = 0;
     
@@ -139,7 +138,7 @@ public class TerrainSettings : ScriptableObject
 
     private void ResetPreview()
     {
-        GameObject prevPreviewObject = GameObject.Find("Preview Chunk");
+        GameObject prevPreviewObject = GameObject.Find(previewName);
         if (prevPreviewObject)
         {
             DestroyImmediate(prevPreviewObject.gameObject);
@@ -195,13 +194,12 @@ public class TerrainSettings : ScriptableObject
             startTime = Time.realtimeSinceStartup;
         }
 #endif
-
         this.chunk = new TerrainChunk(
-            new ChunkCoord(0, 0),
+            new ChunkCoord((int)chunkCoord.x, (int)chunkCoord.y),
             this,
             null,
             this.previewMaterial,
-            "Preview Chunk"
+            previewName
         );
         this.chunk.LoadInEditor();
         this.chunk.SetVisible(true);
